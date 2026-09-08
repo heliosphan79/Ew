@@ -4,7 +4,7 @@ require __DIR__ . '/../../includes/bootstrap.php';
 require_login();
 
 $pages = $mysqli->query(
-    'SELECT id, slug, title, published, is_homepage, nav_order, updated_at FROM pages ORDER BY nav_order ASC, title ASC'
+    'SELECT id, slug, title, theme_variant, published, is_homepage, nav_order, updated_at FROM pages ORDER BY nav_order ASC, title ASC'
 )->fetch_all(MYSQLI_ASSOC);
 
 $pageTitle = "Pagina's";
@@ -24,6 +24,7 @@ require __DIR__ . '/includes/header.php';
         <tr>
             <th>Titel</th>
             <th>Slug</th>
+            <th>Variant</th>
             <th>Status</th>
             <th>Homepagina</th>
             <th>Laatst bewerkt</th>
@@ -35,6 +36,7 @@ require __DIR__ . '/includes/header.php';
             <tr>
                 <td><?= e($page['title']) ?></td>
                 <td><code>/pagina.php?slug=<?= e($page['slug']) ?></code></td>
+                <td><?= e(THEME_VARIANTS[$page['theme_variant']] ?? $page['theme_variant']) ?></td>
                 <td><?= $page['published'] ? '<span class="badge badge-ok">Gepubliceerd</span>' : '<span class="badge badge-draft">Concept</span>' ?></td>
                 <td><?= $page['is_homepage'] ? 'Ja' : '' ?></td>
                 <td><?= e(date('d/m/Y H:i', strtotime($page['updated_at']))) ?></td>

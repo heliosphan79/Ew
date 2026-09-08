@@ -45,6 +45,13 @@ $nav = $mysqli->query(
     'SELECT slug, title FROM pages WHERE published = 1 AND is_homepage = 0 ORDER BY nav_order ASC, title ASC'
 )->fetch_all(MYSQLI_ASSOC);
 
+// Contact isn't a CMS page itself — match the homepage's variant so the
+// site doesn't suddenly look different on this one utility page.
+$homepageVariant = $mysqli->query(
+    'SELECT theme_variant FROM pages WHERE is_homepage = 1 LIMIT 1'
+)->fetch_assoc();
+$themeVariant = $homepageVariant['theme_variant'] ?? 'a';
+
 require __DIR__ . '/../includes/header.php';
 ?>
 

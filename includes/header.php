@@ -8,8 +8,9 @@
     <meta name="description" content="<?= e($metaDescription) ?>">
     <?php endif; ?>
     <link rel="stylesheet" href="/assets/css/style.css">
+    <script>document.documentElement.classList.add('js');</script>
 </head>
-<body>
+<body data-theme="<?= e(normalize_theme_variant($themeVariant ?? null)) ?>">
 <header class="site-header">
     <div class="wrap">
         <a class="site-title" href="/">eigen-wijzer.be</a>

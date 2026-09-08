@@ -96,8 +96,38 @@ body { margin: 0; background: var(--color-bg); color: var(--color-text); }
 .page-form input[type=text], .page-form input[type=number] {
     width: 100%; padding: 0.55rem 0.65rem; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.95rem;
 }
-.page-form #editor { background: #fff; min-height: 260px; }
+.page-form select {
+    width: 100%; padding: 0.55rem 0.65rem; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.95rem; background: #fff;
+}
 .page-form-row { display: flex; gap: 1.5rem; align-items: center; margin-top: 1.25rem; flex-wrap: wrap; }
+
+.block-editor { display: flex; flex-direction: column; gap: 0.9rem; margin-top: 0.25rem; }
+.block-editor-empty { color: var(--color-muted); font-size: 0.9rem; margin: 0.5rem 0; }
+
+.block-card { border: 1px solid var(--color-border); border-radius: 8px; background: #fdfdfd; padding: 0.9rem 1rem; }
+.block-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; }
+.block-card-header strong { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-muted); }
+.block-card-controls { display: flex; gap: 0.4rem; }
+.block-card-controls button {
+    background: #fff; border: 1px solid var(--color-border); border-radius: 5px; cursor: pointer;
+    padding: 0.2rem 0.55rem; font-size: 0.85rem; color: var(--color-text);
+}
+.block-card-controls button:disabled { opacity: 0.35; cursor: default; }
+.block-card-controls button.link-button-danger { color: var(--color-error); border-color: #f3c6c0; }
+.block-card-fields label { display: block; font-weight: 600; margin: 0.6rem 0 0.3rem; font-size: 0.85rem; }
+.block-card-fields label:first-child { margin-top: 0; }
+.block-card-fields input[type=text],
+.block-card-fields textarea,
+.block-card-fields select {
+    width: 100%; padding: 0.5rem 0.6rem; border: 1px solid var(--color-border); border-radius: 6px; font-size: 0.92rem; font-family: inherit;
+}
+
+.block-toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.block-toolbar button {
+    background: var(--color-panel); border: 1px dashed var(--color-accent); color: var(--color-accent);
+    border-radius: 6px; padding: 0.45rem 0.9rem; font-size: 0.88rem; cursor: pointer;
+}
+.block-toolbar button:hover { background: #eef5f0; }
 .checkbox-label { display: flex !important; align-items: center; gap: 0.4rem; font-weight: 500 !important; margin: 0 !important; }
 .page-form button[type=submit] { margin-top: 1.5rem; background: var(--color-accent); color: #fff; border: none; padding: 0.6rem 1.5rem; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
 

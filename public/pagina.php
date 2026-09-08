@@ -10,7 +10,7 @@ if ($slug === '') {
 }
 
 $stmt = $mysqli->prepare(
-    'SELECT title, content, meta_description FROM pages WHERE slug = ? AND published = 1 LIMIT 1'
+    'SELECT title, content, theme_variant, meta_description FROM pages WHERE slug = ? AND published = 1 LIMIT 1'
 );
 $stmt->bind_param('s', $slug);
 $stmt->execute();
@@ -27,6 +27,7 @@ $nav = $mysqli->query(
 
 $pageTitle = $page['title'] ?? 'Pagina niet gevonden';
 $metaDescription = $page['meta_description'] ?? '';
+$themeVariant = $page['theme_variant'] ?? 'a';
 
 require __DIR__ . '/../includes/header.php';
 ?>
@@ -34,7 +35,7 @@ require __DIR__ . '/../includes/header.php';
 <?php if ($page): ?>
     <article class="page-content">
         <h1><?= e($page['title']) ?></h1>
-        <div class="content-body"><?= $page['content'] ?></div>
+        <?= render_blocks(decode_blocks($page['content'])) ?>
     </article>
 <?php else: ?>
     <article class="page-content">
