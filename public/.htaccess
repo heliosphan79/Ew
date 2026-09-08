@@ -1,0 +1,12 @@
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Pretty URL: /pagina/mijn-slug -> pagina.php?slug=mijn-slug
+    RewriteRule ^pagina/([a-z0-9-]+)/?$ pagina.php?slug=$1 [L,QSA]
+</IfModule>
+
+<FilesMatch "\.(sql|md)$">
+    Require all denied
+</FilesMatch>
