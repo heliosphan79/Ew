@@ -1,0 +1,112 @@
+:root {
+    --color-text: #1f2933;
+    --color-muted: #616e7c;
+    --color-bg: #ffffff;
+    --color-accent: #2f6f4f;
+    --color-border: #e4e7eb;
+    --color-error: #b42318;
+    --color-success: #1a7f37;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    color: var(--color-text);
+    background: var(--color-bg);
+    line-height: 1.6;
+}
+
+.wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+
+.site-header {
+    border-bottom: 1px solid var(--color-border);
+    padding: 1.25rem 0;
+}
+
+.site-header .wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.site-title {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.site-nav a {
+    margin-left: 1.25rem;
+    color: var(--color-muted);
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.site-nav a:hover { color: var(--color-accent); }
+
+main.wrap { padding: 2.5rem 1.25rem 4rem; min-height: 50vh; }
+
+.page-content h1 { margin-top: 0; }
+
+.content-body img { max-width: 100%; height: auto; border-radius: 4px; }
+
+.flash {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.flash-success { background: #e6f4ea; color: var(--color-success); }
+.flash-error { background: #fdecea; color: var(--color-error); }
+
+.form-errors {
+    background: #fdecea;
+    color: var(--color-error);
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+}
+
+.contact-form { display: flex; flex-direction: column; gap: 0.4rem; max-width: 480px; }
+
+.contact-form label { font-weight: 600; margin-top: 0.75rem; font-size: 0.9rem; }
+
+.contact-form input,
+.contact-form textarea {
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.contact-form button {
+    margin-top: 1.25rem;
+    align-self: flex-start;
+    background: var(--color-accent);
+    color: #fff;
+    border: none;
+    padding: 0.65rem 1.5rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.contact-form button:hover { opacity: 0.9; }
+
+.site-footer {
+    border-top: 1px solid var(--color-border);
+    padding: 1.5rem 0;
+    color: var(--color-muted);
+    font-size: 0.85rem;
+}
