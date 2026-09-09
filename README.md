@@ -2,9 +2,11 @@
 
 Eenvoudig CMS (PHP + MySQLi + vanilla JS/HTML, geen frameworks of Composer)
 om de website eigen-wijzer.be te beheren: pagina's opgebouwd uit eenvoudige
-content-blokken (tekst, foto, quote, lijst, knoppen), 4 kiesbare
-frontend-varianten met rustige scroll/klik-animatie, en een contactformulier
-waarvan de inzendingen in het beheerpaneel terechtkomen.
+content-blokken (tekst, foto, quote, lijst, knoppen — met eigen
+afbeeldingsupload), 4 kiesbare frontend-varianten met rustige
+scroll/klik-animatie, een contactformulier waarvan de inzendingen in het
+beheerpaneel terechtkomen, en ingebouwde SEO-optimalisatie inclusief
+vindbaarheid voor AI-zoekfuncties (zie "SEO & vindbaarheid" hieronder).
 
 ## Projectstructuur
 
@@ -103,6 +105,37 @@ document root ingesteld worden.
   markeerbaar/verwijderbaar in het beheerpaneel.
 - Consistente output-escaping (XSS) en prepared statements overal (SQL
   injection) — zie "Beveiliging" hieronder.
+- **Opruiming van uploads**: verwijder je een fotoblok of vervang je de
+  afbeelding, dan wordt het oude bestand in `public/uploads/` automatisch
+  verwijderd — maar alleen als geen andere pagina het nog gebruikt (er
+  wordt telkens over alle pagina's gecontroleerd, niet enkel de pagina die
+  je net bewerkte).
+
+## SEO & vindbaarheid voor AI-zoekfuncties
+
+- **Schone URL's**: pagina's zijn bereikbaar via `/pagina/{slug}` en het
+  contactformulier via `/contact` (geen `.php`/`?slug=` meer in de
+  adresbalk) — beter voor zowel klassieke zoekmachines als AI-crawlers.
+- **Canonical URL + Open Graph + Twitter cards** op elke pagina, automatisch
+  ingevuld vanuit titel, meta-omschrijving en (indien aanwezig) de eerste
+  foto van de pagina — zodat een gedeelde link op social media/WhatsApp
+  er verzorgd uitziet.
+- **Structured data (JSON-LD)**: elke pagina krijgt `Organization`- en
+  `WebPage`-schema.org-markup. Bewust minimaal — enkel site-naam en URL,
+  nooit verzonnen bedrijfsgegevens (adres, telefoon, ...) die je nergens
+  hebt ingevuld.
+- **`sitemap.xml`** (dynamisch, `public/sitemap.php`) — lijst van alle
+  gepubliceerde pagina's voor zoekmachines.
+- **`robots.txt`** (dynamisch, `public/robots.php`) — sluit enkel
+  `/admin/` uit; staat expliciet open voor de bekende AI-crawlers
+  (GPTBot, ChatGPT-User, Google-Extended, ClaudeBot, PerplexityBot, ...)
+  zodat de site ook via AI-zoekfuncties gevonden en geciteerd kan worden.
+- **`llms.txt`** (dynamisch, `public/llms.php`) — een opkomende, informele
+  standaard: een korte, platte-tekstsamenvatting van de site speciaal voor
+  AI-systemen, naast de klassieke `sitemap.xml` voor zoekmachines.
+- Elk fotoblok vereist een alt-tekst (toegankelijkheid **en** SEO), en de
+  site is licht en snel (geen zware JS-frameworks, geen externe lettertypes)
+  — laadsnelheid en mobielvriendelijkheid zijn zelf ook rankingfactoren.
 
 ## Beveiliging — belangrijk voor je gaat live
 
@@ -129,6 +162,3 @@ document root ingesteld worden.
   een transactionele e-maildienst).
 - Meerdere beheerders met rollen, wachtwoord-reset via e-mail.
 - Paginering als het aantal pagina's/berichten groot wordt.
-- Opruiming van ongebruikte bestanden in `public/uploads/` (momenteel blijft
-  een geüploade afbeelding staan ook als je ze nadien uit een blok
-  verwijdert).

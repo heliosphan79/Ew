@@ -35,7 +35,10 @@ require __DIR__ . '/includes/header.php';
         <?php foreach ($pages as $page): ?>
             <tr>
                 <td><?= e($page['title']) ?></td>
-                <td><code>/pagina.php?slug=<?= e($page['slug']) ?></code></td>
+                <td>
+                    <?php $liveUrl = $page['is_homepage'] ? '/' : '/pagina/' . $page['slug']; ?>
+                    <a href="<?= e($liveUrl) ?>" target="_blank" rel="noopener"><code><?= e($liveUrl) ?></code></a>
+                </td>
                 <td><?= e(THEME_VARIANTS[$page['theme_variant']] ?? $page['theme_variant']) ?></td>
                 <td><?= $page['published'] ? '<span class="badge badge-ok">Gepubliceerd</span>' : '<span class="badge badge-draft">Concept</span>' ?></td>
                 <td><?= $page['is_homepage'] ? 'Ja' : '' ?></td>

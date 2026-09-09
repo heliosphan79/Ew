@@ -5,6 +5,12 @@ DirectoryIndex index.php
     RewriteEngine On
     # Pretty URL: /pagina/mijn-slug -> pagina.php?slug=mijn-slug
     RewriteRule ^pagina/([a-z0-9-]+)/?$ pagina.php?slug=$1 [L,QSA]
+    RewriteRule ^contact/?$ contact.php [L,QSA]
+    # SEO/AI-discoverability endpoints, generated dynamically so they always
+    # match the domain configured in config/config.php.
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
+    RewriteRule ^robots\.txt$ robots.php [L]
+    RewriteRule ^llms\.txt$ llms.php [L]
 </IfModule>
 
 <FilesMatch "\.(sql|md)$">

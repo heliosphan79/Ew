@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Honeypot field: real visitors never fill this in, bots usually do.
     if (!empty($_POST['website'])) {
-        redirect('/contact.php?verzonden=1');
+        redirect('/contact?verzonden=1');
     }
 
     $old['name'] = trim((string) ($_POST['name'] ?? ''));
@@ -36,11 +36,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
 
-        redirect('/contact.php?verzonden=1');
+        redirect('/contact?verzonden=1');
     }
 }
 
 $pageTitle = 'Contact';
+$metaDescription = 'Neem contact op met ' . $siteName . '.';
+$canonicalUrl = absolute_url($siteUrl, '/contact');
 $nav = $mysqli->query(
     'SELECT slug, title FROM pages WHERE published = 1 AND is_homepage = 0 ORDER BY nav_order ASC, title ASC'
 )->fetch_all(MYSQLI_ASSOC);
@@ -70,7 +72,7 @@ require __DIR__ . '/../includes/header.php';
             </ul>
         <?php endif; ?>
 
-        <form method="post" action="/contact.php" class="contact-form">
+        <form method="post" action="/contact" class="contact-form">
             <?= csrf_field() ?>
             <div class="form-field" style="position:absolute;left:-9999px;" aria-hidden="true">
                 <label for="website">Website</label>

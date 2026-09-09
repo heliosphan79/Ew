@@ -345,3 +345,126 @@ function render_buttons_block(array $block): string
     }
     return '<div class="block block-buttons" data-animate>' . $inner . '</div>';
 }
+
+// ---------------------------------------------------------------------
+// Upload cleanup: images live in public/uploads/ and are only ever
+// referenced by URL from inside a page's blocks JSON — there is no
+// foreign key. So "is this file still needed" is answered by re-scanning
+// every page's current content rather than maintaining a reference count.
+// ---------------------------------------------------------------------
+
+function extract_upload_urls(array $blocks): array
+{
+    $urls = [];
+    foreach ($blocks as $block) {
+        if (is_array($block) && ($block['type'] ?? '') === 'image') {
+            $url = (string) ($block['url'] ?? '');
+            if (str_starts_with($url, '/uploads/')) {
+                $urls[] = $url;
+            }
+        }
+    }
+    return $urls;
+}
+
+function all_referenced_upload_urls(mysqli $mysqli): array
+{
+    $referenced = [];
+    $result = $mysqli->query('SELECT content FROM pages');
+    while ($row = $result->fetch_assoc()) {
+        foreach (extract_upload_urls(decode_blocks($row['content'])) as $url) {
+            $referenced[$url] = true;
+        }
+    }
+    return $referenced;
+}
+
+// Deletes any of $candidateUrls that are no longer referenced by any page.
+// Call this AFTER the database change that might have dropped a reference
+// (page save/delete) has already been committed, so the scan above is
+// accurate.
+function delete_orphaned_uploads(mysqli $mysqli, array $candidateUrls): void
+{
+    $candidateUrls = array_unique(array_filter($candidateUrls));
+    if (empty($candidateUrls)) {
+        return;
+    }
+
+    $referenced = all_referenced_upload_urls($mysqli);
+
+    foreach ($candidateUrls as $url) {
+        if (isset($referenced[$url])) {
+            continue;
+        }
+
+        // Only ever delete a flat file directly under uploads/ — guards
+        // against a manually-typed URL (this field also accepts free text)
+        // containing "../" or extra path segments.
+        $filename = basename($url);
+        if ($filename === '' || '/uploads/' . $filename !== $url) {
+            continue;
+        }
+
+        $path = APP_ROOT . '/public/uploads/' . $filename;
+        if (is_file($path)) {
+            @unlink($path);
+        }
+    }
+}
+
+// ---------------------------------------------------------------------
+// SEO / discoverability: canonical URLs, Open Graph + Twitter card tags,
+// and minimal, honest JSON-LD (only fields we actually have data for —
+// never fabricated business details like address/phone).
+// ---------------------------------------------------------------------
+
+function absolute_url(string $siteUrl, string $path): string
+{
+    return rtrim($siteUrl, '/') . '/' . ltrim($path, '/');
+}
+
+// Like absolute_url(), but for values that might already be a full external
+// URL (an image block's url can be either an /uploads/... path or an
+// external http(s):// link) — never double-prefixes an already-absolute URL.
+function media_absolute_url(string $siteUrl, string $url): string
+{
+    if (preg_match('#^https?://#i', $url)) {
+        return $url;
+    }
+    return absolute_url($siteUrl, $url);
+}
+
+function first_image_url(array $blocks): ?string
+{
+    foreach ($blocks as $block) {
+        if (is_array($block) && ($block['type'] ?? '') === 'image') {
+            $url = trim((string) ($block['url'] ?? ''));
+            if ($url !== '') {
+                return $url;
+            }
+        }
+    }
+    return null;
+}
+
+function organization_schema(string $siteName, string $siteUrl): array
+{
+    return [
+        '@context' => 'https://schema.org',
+        '@type' => 'Organization',
+        'name' => $siteName,
+        'url' => $siteUrl,
+    ];
+}
+
+function webpage_schema(string $name, ?string $description, ?string $url): array
+{
+    $schema = ['@context' => 'https://schema.org', '@type' => 'WebPage', 'name' => $name];
+    if (!empty($description)) {
+        $schema['description'] = $description;
+    }
+    if (!empty($url)) {
+        $schema['url'] = $url;
+    }
+    return $schema;
+}

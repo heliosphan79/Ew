@@ -73,6 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         $contentJson = json_encode($sanitized['blocks'], JSON_UNESCAPED_UNICODE);
+        $removedUploadUrls = $id
+            ? array_diff(extract_upload_urls(decode_blocks($page['content'])), extract_upload_urls($sanitized['blocks']))
+            : [];
 
         $mysqli->begin_transaction();
         try {
@@ -122,6 +125,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mysqli->rollback();
             throw $e;
         }
+
+        delete_orphaned_uploads($mysqli, $removedUploadUrls);
 
         set_flash('success', 'Pagina opgeslagen.');
         redirect('pages.php');
