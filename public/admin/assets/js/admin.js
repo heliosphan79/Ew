@@ -100,7 +100,17 @@
                 );
             case 'image':
                 return (
-                    fieldRow('Afbeeldings-URL', '<input type="text" data-field="url" value="' + escapeAttr(block.url) + '" placeholder="https://... of /uploads/foto.jpg">') +
+                    fieldRow('Afbeelding', (
+                        '<div class="image-field">' +
+                            '<input type="text" data-field="url" value="' + escapeAttr(block.url) + '" placeholder="https://... of upload hieronder">' +
+                            '<label class="upload-button">' +
+                                'Bestand kiezen…' +
+                                '<input type="file" data-image-upload accept="image/jpeg,image/png,image/gif,image/webp">' +
+                            '</label>' +
+                        '</div>' +
+                        '<p class="image-upload-status" data-role="upload-status"></p>' +
+                        '<img class="image-preview" data-role="preview"' + (block.url ? ' src="' + escapeAttr(block.url) + '"' : ' hidden') + '>'
+                    )) +
                     fieldRow('Alt-tekst (beschrijving voor toegankelijkheid)', '<input type="text" data-field="alt" value="' + escapeAttr(block.alt) + '">') +
                     fieldRow('Bijschrift (optioneel)', '<input type="text" data-field="caption" value="' + escapeAttr(block.caption) + '">')
                 );
@@ -164,6 +174,73 @@
         var card = e.target.closest('.block-card');
         var index = parseInt(card.getAttribute('data-index'), 10);
         blocks[index][field] = e.target.value;
+
+        if (field === 'url') {
+            setPreview(card, e.target.value);
+        }
+    });
+
+    function setPreview(card, url) {
+        var preview = card.querySelector('[data-role="preview"]');
+        if (!preview) return;
+        if (url) {
+            preview.src = url;
+            preview.hidden = false;
+        } else {
+            preview.hidden = true;
+            preview.removeAttribute('src');
+        }
+    }
+
+    function setUploadStatus(card, message, isError) {
+        var status = card.querySelector('[data-role="upload-status"]');
+        if (!status) return;
+        status.textContent = message;
+        status.classList.toggle('is-error', Boolean(isError));
+    }
+
+    container.addEventListener('change', function (e) {
+        if (!e.target.hasAttribute('data-image-upload')) return;
+
+        var input = e.target;
+        var card = input.closest('.block-card');
+        var index = parseInt(card.getAttribute('data-index'), 10);
+        var file = input.files && input.files[0];
+        if (!file) return;
+
+        var maxBytes = 5 * 1024 * 1024;
+        if (file.size > maxBytes) {
+            setUploadStatus(card, 'Bestand is te groot (max. 5 MB).', true);
+            input.value = '';
+            return;
+        }
+
+        setUploadStatus(card, 'Bezig met uploaden…', false);
+
+        var csrfToken = form.querySelector('input[name="csrf_token"]').value;
+        var formData = new FormData();
+        formData.append('image', file);
+        formData.append('csrf_token', csrfToken);
+
+        fetch('upload-image.php', { method: 'POST', body: formData })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (!data || !data.ok) {
+                    setUploadStatus(card, (data && data.error) || 'Upload mislukt.', true);
+                    return;
+                }
+                blocks[index].url = data.url;
+                var urlInput = card.querySelector('[data-field="url"]');
+                if (urlInput) urlInput.value = data.url;
+                setPreview(card, data.url);
+                setUploadStatus(card, 'Geüpload.', false);
+            })
+            .catch(function () {
+                setUploadStatus(card, 'Upload mislukt door een netwerk- of serverfout.', true);
+            })
+            .finally(function () {
+                input.value = '';
+            });
     });
 
     container.addEventListener('change', function (e) {

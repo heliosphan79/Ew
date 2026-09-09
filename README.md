@@ -74,7 +74,9 @@ document root ingesteld worden.
   opmaak of scripts in te voegen:
   - **Tekst** — optionele titel + platte tekst (alinea's gescheiden door
     een lege regel).
-  - **Foto** — afbeeldings-URL, alt-tekst (verplicht, toegankelijkheid) en
+  - **Foto** — kies "Bestand kiezen…" om een JPG/PNG/GIF/WEBP te uploaden
+    (max. 5 MB, direct herbekeken als miniatuur), of vul zelf een
+    afbeeldings-URL in. Plus alt-tekst (verplicht, toegankelijkheid) en
     optioneel bijschrift.
   - **Quote** — citaat + optionele bron.
   - **Lijst** — titel, stijl (opsomming/vinkjes) en items (één per regel).
@@ -110,11 +112,23 @@ document root ingesteld worden.
 - `public/admin/install.php` sluit zichzelf automatisch af zodra er één
   account bestaat — dat is de enige manier waarop nieuwe accounts kunnen
   ontstaan; er is bewust geen registratiepagina.
+- Afbeeldingsuploads (`public/admin/upload-image.php`) zijn alleen
+  bereikbaar als ingelogde beheerder, controleren het werkelijke
+  bestandstype (niet enkel de extensie) via `finfo` + `getimagesize()`,
+  slaan op onder een gegenereerde bestandsnaam (nooit de originele naam)
+  en `public/uploads/.htaccess` verhindert dat er ooit iets in die map als
+  script kan uitvoeren — zelfs als een bestand die controles ooit zou
+  omzeilen.
+- Als een upload op je hosting mislukt met een generieke foutmelding,
+  controleer dan `upload_max_filesize` en `post_max_size` in de
+  PHP-instellingen van je hostingpaneel (moeten minstens 5 MB toelaten).
 
 ## Mogelijke volgende stappen (niet in deze MVP)
 
-- Media/afbeeldingen-uploadbeheer (map `public/uploads/` staat al klaar).
 - E-mailnotificatie bij een nieuw contactformulier (bv. via PHP `mail()` of
   een transactionele e-maildienst).
 - Meerdere beheerders met rollen, wachtwoord-reset via e-mail.
 - Paginering als het aantal pagina's/berichten groot wordt.
+- Opruiming van ongebruikte bestanden in `public/uploads/` (momenteel blijft
+  een geüploade afbeelding staan ook als je ze nadien uit een blok
+  verwijdert).
