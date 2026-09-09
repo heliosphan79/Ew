@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Honeypot field: real visitors never fill this in, bots usually do.
     if (!empty($_POST['website'])) {
-        redirect('/contact.php?verzonden=1');
+        redirect('/contact?verzonden=1');
     }
 
     $old['name'] = trim((string) ($_POST['name'] ?? ''));
@@ -36,14 +36,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
 
-        redirect('/contact.php?verzonden=1');
+        redirect('/contact?verzonden=1');
     }
 }
 
 $pageTitle = 'Contact';
+$metaDescription = 'Neem contact op met ' . $siteName . '.';
+$canonicalUrl = absolute_url($siteUrl, '/contact');
 $nav = $mysqli->query(
-    'SELECT slug, title FROM pages WHERE published = 1 AND is_homepage = 0 ORDER BY nav_order ASC, title ASC'
+    'SELECT slug, title FROM pages WHERE published = 1 AND is_homepage = 0 AND show_in_menu = 1 ORDER BY nav_order ASC, title ASC'
 )->fetch_all(MYSQLI_ASSOC);
+
+// Contact isn't a CMS page itself — match the homepage's variant so the
+// site doesn't suddenly look different on this one utility page.
+$homepageVariant = $mysqli->query(
+    'SELECT theme_variant FROM pages WHERE is_homepage = 1 LIMIT 1'
+)->fetch_assoc();
+$themeVariant = $homepageVariant['theme_variant'] ?? 'a';
 
 require __DIR__ . '/../includes/header.php';
 ?>
@@ -63,7 +72,7 @@ require __DIR__ . '/../includes/header.php';
             </ul>
         <?php endif; ?>
 
-        <form method="post" action="/contact.php" class="contact-form">
+        <form method="post" action="/contact" class="contact-form">
             <?= csrf_field() ?>
             <div class="form-field" style="position:absolute;left:-9999px;" aria-hidden="true">
                 <label for="website">Website</label>

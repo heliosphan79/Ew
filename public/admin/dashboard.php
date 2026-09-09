@@ -36,6 +36,7 @@ require __DIR__ . '/includes/header.php';
 <?php if (empty($recentSubmissions)): ?>
     <p>Nog geen berichten ontvangen.</p>
 <?php else: ?>
+    <div class="table-scroll">
     <table class="admin-table">
         <thead>
         <tr><th>Naam</th><th>E-mail</th><th>Datum</th></tr>
@@ -50,6 +51,7 @@ require __DIR__ . '/includes/header.php';
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
     <p><a href="submissions.php">Alle berichten bekijken →</a></p>
 <?php endif; ?>
 

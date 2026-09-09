@@ -1,0 +1,8 @@
+Options -Indexes
+
+# Uploaded files are never allowed to execute as scripts, whatever their
+# extension — defense in depth in case a disguised file ever slips past
+# the MIME/getimagesize checks in admin/upload-image.php.
+<FilesMatch "\.(php|phtml|php\d|phar|cgi|pl|py|sh)$">
+    Require all denied
+</FilesMatch>

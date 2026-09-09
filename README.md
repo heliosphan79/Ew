@@ -1,20 +1,25 @@
 # Eigen-Wijzer CMS
 
 Eenvoudig CMS (PHP + MySQLi + vanilla JS/HTML, geen frameworks of Composer)
-om de website eigen-wijzer.be te beheren: pagina's met een WYSIWYG-editor en
-een contactformulier waarvan de inzendingen in het beheerpaneel terechtkomen.
+om de website eigen-wijzer.be te beheren: pagina's opgebouwd uit eenvoudige
+content-blokken (tekst, foto, quote, lijst, knoppen — met eigen
+afbeeldingsupload), 4 kiesbare frontend-varianten met rustige
+scroll/klik-animatie, een contactformulier waarvan de inzendingen in het
+beheerpaneel terechtkomen, en ingebouwde SEO-optimalisatie inclusief
+vindbaarheid voor AI-zoekfuncties (zie "SEO & vindbaarheid" hieronder).
 
 ## Projectstructuur
 
 ```
-config/             configuratie (config.php bevat echte databasegegevens — niet in git)
-database/schema.sql  database-structuur, eenmalig importeren
-includes/            gedeelde PHP-code (db-connectie, helpers, auth, publieke layout)
-public/              webroot — dit is wat je hosting als document root moet gebruiken
-  index.php           homepagina
-  pagina.php          toont een individuele pagina op basis van ?slug=
-  contact.php         contactformulier
-  admin/              beheerpaneel (login, pagina's, contactberichten)
+config/                     configuratie (config.php bevat echte databasegegevens — niet in git)
+database/schema.sql          database-structuur, eenmalig importeren (nieuwe installatie)
+database/migrations/         wijzigingen op een bestaande database (zie hieronder)
+includes/                    gedeelde PHP-code (db-connectie, helpers, auth, blok-rendering, publieke layout)
+public/                      webroot — dit is wat je hosting als document root moet gebruiken
+  index.php                   homepagina
+  pagina.php                  toont een individuele pagina op basis van ?slug=
+  contact.php                 contactformulier
+  admin/                      beheerpaneel (login, pagina's + blokkenbouwer, contactberichten)
 ```
 
 `config/`, `database/` en `includes/` staan **buiten** `public/` en zijn dus
@@ -24,7 +29,12 @@ document root ingesteld worden.
 ## Lokaal opzetten (testen)
 
 1. Zorg voor PHP 8.1+ met de mysqli-extensie, en een MySQL/MariaDB-server.
-2. Maak een database aan en importeer `database/schema.sql`.
+2. Maak een database aan en importeer `database/schema.sql` (nieuwe
+   installatie). Draai je al een oudere versie van deze database, importeer
+   dan in plaats daarvan de ontbrekende bestanden uit `database/migrations/`
+   op volgnummer — `002_blocks_and_theme.sql` (lees de opmerking bovenaan,
+   want bestaande paginainhoud wordt daarbij geleegd) en/of
+   `003_menu_visibility.sql`.
 3. `cp config/config.example.php config/config.php` en vul je lokale
    databasegegevens in.
 4. Start de ingebouwde PHP-server vanaf de projectroot:
@@ -58,15 +68,81 @@ document root ingesteld worden.
 - Login voor beheerders (wachtwoorden gehasht met `password_hash`,
   sessie-gebaseerd, met een eenvoudige brute-force-vertraging na 5 mislukte
   pogingen).
-- Pagina's aanmaken/bewerken/verwijderen met een WYSIWYG-editor (Quill),
-  publiceren/concept, een instelbare homepagina en een handmatige
-  menuvolgorde.
-- Automatische, unieke URL-slugs afgeleid van de titel (aanpasbaar).
+- Pagina's aanmaken/bewerken/verwijderen, publiceren/concept, een
+  instelbare homepagina en een handmatige menuvolgorde. Automatische,
+  unieke URL-slugs afgeleid van de titel (aanpasbaar).
+- **Aanpasbaar hoofdmenu**: elke pagina heeft een schakelaar "Tonen in
+  hoofdmenu". Staat die uit, dan blijft de pagina gewoon gepubliceerd en
+  bereikbaar via haar eigen URL of een knop/link elders op de site — ze
+  krijgt alleen geen plaats in de navigatie. Zo kan je bv. een
+  privacybeleid of een campagnepagina maken die niet in het menu hoeft te
+  staan.
+- **Blokkenbouwer**: elke pagina bestaat uit een lijst eenvoudige blokken
+  die je toevoegt, herschikt (↑/↓) en verwijdert in het beheerpaneel —
+  geen vrije HTML-editor meer, dus geen manier om per ongeluk kapotte
+  opmaak of scripts in te voegen:
+  - **Tekst** — optionele titel + platte tekst (alinea's gescheiden door
+    een lege regel).
+  - **Foto** — kies "Bestand kiezen…" om een JPG/PNG/GIF/WEBP te uploaden
+    (max. 5 MB, direct herbekeken als miniatuur), of vul zelf een
+    afbeeldings-URL in. Plus alt-tekst (verplicht, toegankelijkheid) en
+    optioneel bijschrift.
+  - **Quote** — citaat + optionele bron.
+  - **Lijst** — titel, stijl (opsomming/vinkjes) en items (één per regel).
+  - **Knoppen** — tot 3 knoppen, één per regel als `Tekst | link`.
+  - Links/afbeeldings-URL's worden serverside gevalideerd (enkel `/...`,
+    `http(s)://`, `mailto:` of `tel:` — geen `javascript:`-injectie
+    mogelijk).
+- **4 frontend-varianten**, per pagina instelbaar (dropdown in de
+  pagina-editor): A "Helder & rustig", B "Warm & zacht", C "Natuurlijk &
+  aards", D "Strak & minimalistisch". Alle vier delen dezelfde rustige,
+  ruime opbouw — enkel kleuren, typografie en afronding wisselen; de
+  contactpagina volgt automatisch de variant van de homepagina voor een
+  consistente uitstraling.
+- **Subtiele animatie**: blokken faden rustig in bij scroll (één keer,
+  IntersectionObserver, met een no-JS/`prefers-reduced-motion`-fallback
+  zodat content altijd zichtbaar blijft), en knoppen/links geven een
+  zachte terugkoppeling bij hover/klik. Bewust ingetogen — geen bounces of
+  herhaalde animaties, om de rustige uitstraling niet te verstoren.
+- **Mobile-first CSS**: basisstijlen zijn geschreven voor kleine schermen,
+  met `min-width`-media queries die layout (nav, knoppenrij, contentbreedte)
+  geleidelijk verrijken voor tablet/desktop.
 - Contactformulier op de site met validatie, CSRF-bescherming en een
   honeypot-veld tegen spambots; inzendingen zijn zichtbaar en
   markeerbaar/verwijderbaar in het beheerpaneel.
 - Consistente output-escaping (XSS) en prepared statements overal (SQL
   injection) — zie "Beveiliging" hieronder.
+- **Opruiming van uploads**: verwijder je een fotoblok of vervang je de
+  afbeelding, dan wordt het oude bestand in `public/uploads/` automatisch
+  verwijderd — maar alleen als geen andere pagina het nog gebruikt (er
+  wordt telkens over alle pagina's gecontroleerd, niet enkel de pagina die
+  je net bewerkte).
+
+## SEO & vindbaarheid voor AI-zoekfuncties
+
+- **Schone URL's**: pagina's zijn bereikbaar via `/pagina/{slug}` en het
+  contactformulier via `/contact` (geen `.php`/`?slug=` meer in de
+  adresbalk) — beter voor zowel klassieke zoekmachines als AI-crawlers.
+- **Canonical URL + Open Graph + Twitter cards** op elke pagina, automatisch
+  ingevuld vanuit titel, meta-omschrijving en (indien aanwezig) de eerste
+  foto van de pagina — zodat een gedeelde link op social media/WhatsApp
+  er verzorgd uitziet.
+- **Structured data (JSON-LD)**: elke pagina krijgt `Organization`- en
+  `WebPage`-schema.org-markup. Bewust minimaal — enkel site-naam en URL,
+  nooit verzonnen bedrijfsgegevens (adres, telefoon, ...) die je nergens
+  hebt ingevuld.
+- **`sitemap.xml`** (dynamisch, `public/sitemap.php`) — lijst van alle
+  gepubliceerde pagina's voor zoekmachines.
+- **`robots.txt`** (dynamisch, `public/robots.php`) — sluit enkel
+  `/admin/` uit; staat expliciet open voor de bekende AI-crawlers
+  (GPTBot, ChatGPT-User, Google-Extended, ClaudeBot, PerplexityBot, ...)
+  zodat de site ook via AI-zoekfuncties gevonden en geciteerd kan worden.
+- **`llms.txt`** (dynamisch, `public/llms.php`) — een opkomende, informele
+  standaard: een korte, platte-tekstsamenvatting van de site speciaal voor
+  AI-systemen, naast de klassieke `sitemap.xml` voor zoekmachines.
+- Elk fotoblok vereist een alt-tekst (toegankelijkheid **en** SEO), en de
+  site is licht en snel (geen zware JS-frameworks, geen externe lettertypes)
+  — laadsnelheid en mobielvriendelijkheid zijn zelf ook rankingfactoren.
 
 ## Beveiliging — belangrijk voor je gaat live
 
@@ -76,10 +152,19 @@ document root ingesteld worden.
 - `public/admin/install.php` sluit zichzelf automatisch af zodra er één
   account bestaat — dat is de enige manier waarop nieuwe accounts kunnen
   ontstaan; er is bewust geen registratiepagina.
+- Afbeeldingsuploads (`public/admin/upload-image.php`) zijn alleen
+  bereikbaar als ingelogde beheerder, controleren het werkelijke
+  bestandstype (niet enkel de extensie) via `finfo` + `getimagesize()`,
+  slaan op onder een gegenereerde bestandsnaam (nooit de originele naam)
+  en `public/uploads/.htaccess` verhindert dat er ooit iets in die map als
+  script kan uitvoeren — zelfs als een bestand die controles ooit zou
+  omzeilen.
+- Als een upload op je hosting mislukt met een generieke foutmelding,
+  controleer dan `upload_max_filesize` en `post_max_size` in de
+  PHP-instellingen van je hostingpaneel (moeten minstens 5 MB toelaten).
 
 ## Mogelijke volgende stappen (niet in deze MVP)
 
-- Media/afbeeldingen-uploadbeheer (map `public/uploads/` staat al klaar).
 - E-mailnotificatie bij een nieuw contactformulier (bv. via PHP `mail()` of
   een transactionele e-maildienst).
 - Meerdere beheerders met rollen, wachtwoord-reset via e-mail.
