@@ -7,7 +7,7 @@ $homepage = $mysqli->query(
 )->fetch_assoc();
 
 $nav = $mysqli->query(
-    'SELECT slug, title FROM pages WHERE published = 1 AND is_homepage = 0 ORDER BY nav_order ASC, title ASC'
+    'SELECT slug, title FROM pages WHERE published = 1 AND is_homepage = 0 AND show_in_menu = 1 ORDER BY nav_order ASC, title ASC'
 )->fetch_all(MYSQLI_ASSOC);
 
 $homepageBlocks = $homepage ? decode_blocks($homepage['content']) : [];

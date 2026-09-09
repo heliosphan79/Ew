@@ -20,6 +20,10 @@ CREATE TABLE IF NOT EXISTS pages (
     meta_description  VARCHAR(300) DEFAULT NULL,
     is_homepage       TINYINT(1) NOT NULL DEFAULT 0,
     published         TINYINT(1) NOT NULL DEFAULT 0,
+    -- Whether this page gets a main-menu link. A published page with this
+    -- off is still reachable at its own URL — just only via a direct link
+    -- or a button block, not from the site navigation.
+    show_in_menu      TINYINT(1) NOT NULL DEFAULT 1,
     nav_order         INT NOT NULL DEFAULT 0,
     created_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

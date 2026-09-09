@@ -26,6 +26,7 @@ $form = [
     'meta_description' => $page['meta_description'] ?? '',
     'published' => $page['published'] ?? 0,
     'is_homepage' => $page['is_homepage'] ?? 0,
+    'show_in_menu' => $page['show_in_menu'] ?? 1,
     'nav_order' => $page['nav_order'] ?? 0,
     'theme_variant' => normalize_theme_variant($page['theme_variant'] ?? null),
 ];
@@ -40,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['meta_description'] = trim((string) ($_POST['meta_description'] ?? ''));
     $form['published'] = isset($_POST['published']) ? 1 : 0;
     $form['is_homepage'] = isset($_POST['is_homepage']) ? 1 : 0;
+    $form['show_in_menu'] = isset($_POST['show_in_menu']) ? 1 : 0;
     $form['nav_order'] = (int) ($_POST['nav_order'] ?? 0);
     $form['theme_variant'] = normalize_theme_variant($_POST['theme_variant'] ?? null);
 
@@ -85,7 +87,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($id) {
                 $stmt = $mysqli->prepare(
-                    'UPDATE pages SET title = ?, slug = ?, content = ?, theme_variant = ?, meta_description = ?, published = ?, is_homepage = ?, nav_order = ? WHERE id = ?'
+                    'UPDATE pages SET title = ?, slug = ?, content = ?, theme_variant = ?, meta_description = ?, published = ?, is_homepage = ?, show_in_menu = ?, nav_order = ? WHERE id = ?'
+                );
+                $stmt->bind_param(
+                    'sssssiiiii',
+                    $form['title'],
+                    $form['slug'],
+                    $contentJson,
+                    $form['theme_variant'],
+                    $form['meta_description'],
+                    $form['published'],
+                    $form['is_homepage'],
+                    $form['show_in_menu'],
+                    $form['nav_order'],
+                    $id
+                );
+                $stmt->execute();
+                $stmt->close();
+            } else {
+                $stmt = $mysqli->prepare(
+                    'INSERT INTO pages (title, slug, content, theme_variant, meta_description, published, is_homepage, show_in_menu, nav_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 );
                 $stmt->bind_param(
                     'sssssiiii',
@@ -96,24 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $form['meta_description'],
                     $form['published'],
                     $form['is_homepage'],
-                    $form['nav_order'],
-                    $id
-                );
-                $stmt->execute();
-                $stmt->close();
-            } else {
-                $stmt = $mysqli->prepare(
-                    'INSERT INTO pages (title, slug, content, theme_variant, meta_description, published, is_homepage, nav_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-                );
-                $stmt->bind_param(
-                    'sssssiii',
-                    $form['title'],
-                    $form['slug'],
-                    $contentJson,
-                    $form['theme_variant'],
-                    $form['meta_description'],
-                    $form['published'],
-                    $form['is_homepage'],
+                    $form['show_in_menu'],
                     $form['nav_order']
                 );
                 $stmt->execute();
@@ -181,11 +185,20 @@ require __DIR__ . '/includes/header.php';
             <input type="checkbox" name="is_homepage" <?= $form['is_homepage'] ? 'checked' : '' ?>>
             Als homepagina instellen
         </label>
+        <label class="checkbox-label">
+            <input type="checkbox" name="show_in_menu" <?= $form['show_in_menu'] ? 'checked' : '' ?>>
+            Tonen in hoofdmenu
+        </label>
         <label>
             Volgorde in menu
             <input type="number" name="nav_order" value="<?= (int) $form['nav_order'] ?>" style="width:5rem;">
         </label>
     </div>
+    <p class="field-hint">
+        Staat "Tonen in hoofdmenu" uit, dan blijft de pagina bereikbaar via
+        haar eigen link (bv. vanuit een knoppenblok) maar krijgt ze geen
+        plaats in de navigatie.
+    </p>
 
     <button type="submit">Opslaan</button>
     <a href="pages.php" class="button-secondary">Annuleren</a>

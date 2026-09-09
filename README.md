@@ -29,11 +29,12 @@ document root ingesteld worden.
 ## Lokaal opzetten (testen)
 
 1. Zorg voor PHP 8.1+ met de mysqli-extensie, en een MySQL/MariaDB-server.
-2. Maak een database aan en importeer `database/schema.sql`.
-   Had je al een oudere versie van deze database draaien (vóór de
-   blokkenbouwer)? Importeer dan in plaats daarvan
-   `database/migrations/002_blocks_and_theme.sql` — lees de opmerking
-   bovenaan dat bestand, want bestaande paginainhoud wordt daarbij geleegd.
+2. Maak een database aan en importeer `database/schema.sql` (nieuwe
+   installatie). Draai je al een oudere versie van deze database, importeer
+   dan in plaats daarvan de ontbrekende bestanden uit `database/migrations/`
+   op volgnummer — `002_blocks_and_theme.sql` (lees de opmerking bovenaan,
+   want bestaande paginainhoud wordt daarbij geleegd) en/of
+   `003_menu_visibility.sql`.
 3. `cp config/config.example.php config/config.php` en vul je lokale
    databasegegevens in.
 4. Start de ingebouwde PHP-server vanaf de projectroot:
@@ -70,6 +71,12 @@ document root ingesteld worden.
 - Pagina's aanmaken/bewerken/verwijderen, publiceren/concept, een
   instelbare homepagina en een handmatige menuvolgorde. Automatische,
   unieke URL-slugs afgeleid van de titel (aanpasbaar).
+- **Aanpasbaar hoofdmenu**: elke pagina heeft een schakelaar "Tonen in
+  hoofdmenu". Staat die uit, dan blijft de pagina gewoon gepubliceerd en
+  bereikbaar via haar eigen URL of een knop/link elders op de site — ze
+  krijgt alleen geen plaats in de navigatie. Zo kan je bv. een
+  privacybeleid of een campagnepagina maken die niet in het menu hoeft te
+  staan.
 - **Blokkenbouwer**: elke pagina bestaat uit een lijst eenvoudige blokken
   die je toevoegt, herschikt (↑/↓) en verwijdert in het beheerpaneel —
   geen vrije HTML-editor meer, dus geen manier om per ongeluk kapotte
