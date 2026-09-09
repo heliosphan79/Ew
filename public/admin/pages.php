@@ -19,6 +19,7 @@ require __DIR__ . '/includes/header.php';
 <?php if (empty($pages)): ?>
     <p>Nog geen pagina's aangemaakt.</p>
 <?php else: ?>
+    <div class="table-scroll">
     <table class="admin-table">
         <thead>
         <tr>
@@ -57,6 +58,7 @@ require __DIR__ . '/includes/header.php';
         <?php endforeach; ?>
         </tbody>
     </table>
+    </div>
 <?php endif; ?>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>
