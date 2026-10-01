@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/../../includes/bootstrap.php';
+require __DIR__ . '/../includes/bootstrap.php';
 
 // One-time setup screen: only usable while the admin_users table is empty.
 // Once the first admin exists, this page locks itself and redirects to login.

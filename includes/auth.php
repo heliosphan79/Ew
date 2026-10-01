@@ -7,8 +7,6 @@ function is_logged_in(): bool
 }
 
 // Call at the top of every admin page except the login/install screens.
-// $adminBaseUrl is the relative path back to public/admin/ from the
-// calling script (e.g. '' for scripts inside admin/, '../admin/' from elsewhere).
 function require_login(string $loginUrl = 'index.php'): void
 {
     if (!is_logged_in()) {

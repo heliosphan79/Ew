@@ -1,0 +1,11 @@
+# Blokkeert alle directe HTTP-toegang tot deze map. Nu de site vanuit de
+# repository-root draait, staat config.php (met databasewachtwoord) naast
+# de publieke bestanden — zonder deze regel zou config/config.php gewoon
+# opvraagbaar zijn via de browser.
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 // Resolved relative to this file's own location so it works no matter
-// how deep the calling script is nested (public/, public/admin/, ...).
+// how deep the calling script is nested (root, admin/, ...).
 $configFile = APP_ROOT . '/config/config.php';
 
 if (!file_exists($configFile)) {
