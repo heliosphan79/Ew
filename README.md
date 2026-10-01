@@ -38,7 +38,7 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
    dan in plaats daarvan de ontbrekende bestanden uit `database/migrations/`
    op volgnummer — `002_blocks_and_theme.sql` (lees de opmerking bovenaan,
    want bestaande paginainhoud wordt daarbij geleegd), `003_menu_visibility.sql`,
-   `004_calendar_slots.sql` en `005_events.sql`.
+   `004_calendar_slots.sql`, `005_events.sql` en `006_site_settings.sql`.
 3. `cp config/config.example.php config/config.php` en vul je lokale
    databasegegevens in.
 4. Start de ingebouwde PHP-server vanaf de projectroot, met `router.php`
@@ -211,8 +211,18 @@ placeholder stonden — vul zelf aan via het beheerpaneel zodra je ze hebt:
 - Een echte cliëntreactie als quote-blok (het testimonial in het ontwerp
   was zelf een placeholder, dus niet overgenomen).
 - Adres, telefoonnummer en e-mailadres — die staan nergens in Wendy's
-  ontwerp en worden dus nergens verzonnen; de voettekst van de site toont
-  voorlopig enkel de sitenaam.
+  ontwerp en worden dus nergens verzonnen; vul ze aan via "Instellingen"
+  in het beheerpaneel (zie "Site-instellingen" hieronder), anders toont de
+  voettekst voorlopig enkel de sitenaam.
+
+## Site-instellingen (footer)
+
+Via "Instellingen" in het beheerpaneel (`admin/settings.php`) vul je adres,
+telefoonnummer en e-mailadres in — die verschijnen dan automatisch in de
+voettekst van elke pagina (telefoon/e-mail als klikbare `tel:`/`mailto:`-
+links). Een leeg veld wordt gewoon niet getoond; er wordt nergens iets
+verzonnen. Opgeslagen in de eenrijige tabel `site_settings`
+(`database/migrations/006_site_settings.sql`).
 - Beschikbare tijdsloten voor het kalenderblok (anders toont dat blok niets).
 
 ## SEO & vindbaarheid voor AI-zoekfuncties

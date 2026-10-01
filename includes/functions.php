@@ -596,6 +596,22 @@ function first_image_url(array $blocks): ?string
     return null;
 }
 
+// Contactgegevens (adres/telefoon/e-mail) voor de footer, beheerd via
+// admin/settings.php. Eén vaste rij (id = 1) — zie site_settings in schema.sql.
+function get_site_settings(mysqli $mysqli): array
+{
+    static $settings = null;
+    if ($settings === null) {
+        $row = $mysqli->query('SELECT address, phone, email FROM site_settings WHERE id = 1')->fetch_assoc();
+        $settings = [
+            'address' => $row['address'] ?? '',
+            'phone' => $row['phone'] ?? '',
+            'email' => $row['email'] ?? '',
+        ];
+    }
+    return $settings;
+}
+
 function organization_schema(string $siteName, string $siteUrl): array
 {
     return [

@@ -16,6 +16,7 @@
             <a href="submissions.php">Contactberichten</a>
             <a href="calendar.php">Kalender</a>
             <a href="events.php">Evenementen</a>
+            <a href="settings.php">Instellingen</a>
         </nav>
         <form method="post" action="logout.php" class="admin-logout">
             <button type="submit">Uitloggen</button>
