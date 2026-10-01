@@ -1,5 +1,5 @@
 config/config.php
-public/uploads/*
-!public/uploads/.gitkeep
-!public/uploads/.htaccess
+uploads/*
+!uploads/.gitkeep
+!uploads/.htaccess
 .DS_Store

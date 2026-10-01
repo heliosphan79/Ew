@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/../includes/bootstrap.php';
+require __DIR__ . '/includes/bootstrap.php';
 
 $slug = $_GET['slug'] ?? '';
 
@@ -34,7 +34,7 @@ $canonicalUrl = $page ? absolute_url($siteUrl, '/pagina/' . $page['slug']) : nul
 $imageUrl = first_image_url($pageBlocks);
 $ogImage = $imageUrl ? media_absolute_url($siteUrl, $imageUrl) : null;
 
-require __DIR__ . '/../includes/header.php';
+require __DIR__ . '/includes/header.php';
 ?>
 
 <?php if ($page): ?>
@@ -49,4 +49,4 @@ require __DIR__ . '/../includes/header.php';
     </article>
 <?php endif; ?>
 
-<?php require __DIR__ . '/../includes/footer.php'; ?>
+<?php require __DIR__ . '/includes/footer.php'; ?>

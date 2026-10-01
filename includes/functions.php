@@ -370,7 +370,7 @@ function render_buttons_block(array $block): string
 
 // Available slots are shared, global data (calendar_slots), managed in
 // admin/calendar.php — not part of the block content. This just renders
-// the mount point; public/assets/js/calendar-block.js fetches availability
+// the mount point; assets/js/calendar-block.js fetches availability
 // and handles the booking flow against calendar-availability.php /
 // book-slot.php, using the CSRF token embedded below.
 function render_calendar_block(array $block): string
@@ -496,7 +496,7 @@ function render_events_block(array $block, mysqli $mysqli): string
 }
 
 // ---------------------------------------------------------------------
-// Upload cleanup: images live in public/uploads/ and are only ever
+// Upload cleanup: images live in uploads/ and are only ever
 // referenced by URL from inside a page's blocks JSON — there is no
 // foreign key. So "is this file still needed" is answered by re-scanning
 // every page's current content rather than maintaining a reference count.
@@ -554,7 +554,7 @@ function delete_orphaned_uploads(mysqli $mysqli, array $candidateUrls): void
             continue;
         }
 
-        $path = APP_ROOT . '/public/uploads/' . $filename;
+        $path = APP_ROOT . '/uploads/' . $filename;
         if (is_file($path)) {
             @unlink($path);
         }

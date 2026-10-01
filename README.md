@@ -17,16 +17,18 @@ config/                     configuratie (config.php bevat echte databasegegeven
 database/schema.sql          database-structuur, eenmalig importeren (nieuwe installatie)
 database/migrations/         wijzigingen op een bestaande database (zie hieronder)
 includes/                    gedeelde PHP-code (db-connectie, helpers, auth, blok-rendering, publieke layout)
-public/                      webroot — dit is wat je hosting als document root moet gebruiken
-  index.php                   homepagina
-  pagina.php                  toont een individuele pagina op basis van ?slug=
-  contact.php                 contactformulier
-  admin/                      beheerpaneel (login, pagina's + blokkenbouwer, contactberichten)
+index.php                   homepagina
+pagina.php                  toont een individuele pagina op basis van ?slug=
+contact.php                 contactformulier
+admin/                      beheerpaneel (login, pagina's + blokkenbouwer, contactberichten)
 ```
 
-`config/`, `database/` en `includes/` staan **buiten** `public/` en zijn dus
-niet rechtstreeks via de browser bereikbaar — enkel `public/` moet als
-document root ingesteld worden.
+De website draait volledig vanuit de projectroot — die stel je in als
+document root van je hosting. `config/`, `database/` en `includes/` staan
+dus **naast** de publieke bestanden in plaats van er fysiek buiten; ze
+worden expliciet afgeschermd via een `.htaccess`-bestand in elk van die
+mappen (`Require all denied`), zodat ze nooit rechtstreeks via de browser
+opvraagbaar zijn. Zie "Beveiliging" hieronder.
 
 ## Lokaal opzetten (testen)
 
@@ -39,9 +41,12 @@ document root ingesteld worden.
    `004_calendar_slots.sql` en `005_events.sql`.
 3. `cp config/config.example.php config/config.php` en vul je lokale
    databasegegevens in.
-4. Start de ingebouwde PHP-server vanaf de projectroot:
+4. Start de ingebouwde PHP-server vanaf de projectroot, met `router.php`
+   zodat `config/`, `database/` en `includes/` ook lokaal afgeschermd zijn
+   (PHP's ingebouwde server negeert `.htaccess`, in tegenstelling tot
+   Apache op je uiteindelijke hosting):
    ```
-   php -S localhost:8000 -t public
+   php -S localhost:8000 router.php
    ```
 5. Open `http://localhost:8000/admin/` — omdat er nog geen beheerder bestaat,
    kom je automatisch op de installatiepagina terecht om het eerste account
@@ -55,13 +60,16 @@ document root ingesteld worden.
 
 1. Maak in je hostingpaneel een MySQL-database en -gebruiker aan, en
    importeer `database/schema.sql` via phpMyAdmin.
-2. Upload de volledige projectmap naar je account, **buiten** `public_html`
-   (bv. in een map `eigenwijzer-cms` naast `public_html`).
-3. Verwijder de standaard `public_html`-inhoud en zet in plaats daarvan de
-   inhoud van `public/` in `public_html` — of, als je host toelaat om het
-   document root-pad aan te passen, wijs dat pad rechtstreeks naar de
-   `public/`-map van de upload. Zo blijven `config/`, `database/` en
-   `includes/` buiten bereik van de browser.
+2. Upload de volledige projectmap rechtstreeks naar `public_html` (de
+   website draait vanuit de projectroot, dus die moet je document root zijn
+   — er is geen aparte `public/`-submap meer).
+3. Controleer dat `config/.htaccess`, `database/.htaccess` en
+   `includes/.htaccess` mee geüpload zijn en dat je hosting `.htaccess`
+   effectief toepast (Apache met `mod_authz_core`, de standaard op zo goed
+   als elke gedeelde hosting). Dit is wat `config/`, `database/` en
+   `includes/` afschermt van de browser nu ze naast de publieke bestanden
+   staan — test dit na deploy door bv. `jouwdomein.be/config/config.php`
+   te bezoeken: dat moet een 403 Forbidden geven, nooit de bestandsinhoud.
 4. Maak `config/config.php` aan op basis van `config/config.example.php` met
    de echte databasegegevens van je hosting.
 5. Bezoek `jouwdomein.be/admin/` om het eerste beheerdersaccount aan te
@@ -134,7 +142,7 @@ document root ingesteld worden.
 - Consistente output-escaping (XSS) en prepared statements overal (SQL
   injection) — zie "Beveiliging" hieronder.
 - **Opruiming van uploads**: verwijder je een fotoblok of vervang je de
-  afbeelding, dan wordt het oude bestand in `public/uploads/` automatisch
+  afbeelding, dan wordt het oude bestand in `uploads/` automatisch
   verwijderd — maar alleen als geen andere pagina het nog gebruikt (er
   wordt telkens over alle pagina's gecontroleerd, niet enkel de pagina die
   je net bewerkte).
@@ -195,7 +203,7 @@ inschrijving — geen individuele tijdsloten zoals bij een afspraak, gewoon
 `database/seed-homepage.php` (eenmalig via de command line te draaien, zie
 "Lokaal opzetten") zet Wendy's eigen tekst uit haar ontwerp meteen klaar als
 homepage — titel, de vier diensten, de echte foto van de praktijkruimte
-(`public/assets/images/praktijkruimte.jpg`), en een kalenderblok onderaan.
+(`assets/images/praktijkruimte.jpg`), en een kalenderblok onderaan.
 Bewust **niet** meegenomen, omdat ze ook in Wendy's eigen ontwerp nog als
 placeholder stonden — vul zelf aan via het beheerpaneel zodra je ze hebt:
 
@@ -220,13 +228,13 @@ placeholder stonden — vul zelf aan via het beheerpaneel zodra je ze hebt:
   `WebPage`-schema.org-markup. Bewust minimaal — enkel site-naam en URL,
   nooit verzonnen bedrijfsgegevens (adres, telefoon, ...) die je nergens
   hebt ingevuld.
-- **`sitemap.xml`** (dynamisch, `public/sitemap.php`) — lijst van alle
+- **`sitemap.xml`** (dynamisch, `sitemap.php`) — lijst van alle
   gepubliceerde pagina's voor zoekmachines.
-- **`robots.txt`** (dynamisch, `public/robots.php`) — sluit enkel
+- **`robots.txt`** (dynamisch, `robots.php`) — sluit enkel
   `/admin/` uit; staat expliciet open voor de bekende AI-crawlers
   (GPTBot, ChatGPT-User, Google-Extended, ClaudeBot, PerplexityBot, ...)
   zodat de site ook via AI-zoekfuncties gevonden en geciteerd kan worden.
-- **`llms.txt`** (dynamisch, `public/llms.php`) — een opkomende, informele
+- **`llms.txt`** (dynamisch, `llms.php`) — een opkomende, informele
   standaard: een korte, platte-tekstsamenvatting van de site speciaal voor
   AI-systemen, naast de klassieke `sitemap.xml` voor zoekmachines.
 - Elk fotoblok vereist een alt-tekst (toegankelijkheid **en** SEO), en de
@@ -235,17 +243,24 @@ placeholder stonden — vul zelf aan via het beheerpaneel zodra je ze hebt:
 
 ## Beveiliging — belangrijk voor je gaat live
 
+- **`config/`, `database/` en `includes/` zijn afgeschermd via `.htaccess`**
+  (`Require all denied` in elke map). Omdat de site vanuit de projectroot
+  draait, staan deze mappen naast de publieke bestanden in plaats van er
+  fysiek buiten — zonder die `.htaccess`-bestanden zouden
+  `config/config.php` (databasewachtwoord) en `database/schema.sql`
+  (databasestructuur) gewoon via de browser opvraagbaar zijn. Test dit na
+  elke deploy: `jouwdomein.be/config/config.php` moet een 403 geven.
 - **Nooit** `config/config.php` in git committen (staat al in `.gitignore`).
 - Gebruik een sterk, uniek wachtwoord voor het beheerdersaccount.
 - Zet HTTPS aan zodra de site live staat.
-- `public/admin/install.php` sluit zichzelf automatisch af zodra er één
+- `admin/install.php` sluit zichzelf automatisch af zodra er één
   account bestaat — dat is de enige manier waarop nieuwe accounts kunnen
   ontstaan; er is bewust geen registratiepagina.
-- Afbeeldingsuploads (`public/admin/upload-image.php`) zijn alleen
+- Afbeeldingsuploads (`admin/upload-image.php`) zijn alleen
   bereikbaar als ingelogde beheerder, controleren het werkelijke
   bestandstype (niet enkel de extensie) via `finfo` + `getimagesize()`,
   slaan op onder een gegenereerde bestandsnaam (nooit de originele naam)
-  en `public/uploads/.htaccess` verhindert dat er ooit iets in die map als
+  en `uploads/.htaccess` verhindert dat er ooit iets in die map als
   script kan uitvoeren — zelfs als een bestand die controles ooit zou
   omzeilen.
 - Als een upload op je hosting mislukt met een generieke foutmelding,

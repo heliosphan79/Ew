@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/../includes/bootstrap.php';
+require __DIR__ . '/includes/bootstrap.php';
 
 // llms.txt: an emerging (unofficial but widely adopted) convention that
 // gives AI systems a concise, structured summary of a site's content —

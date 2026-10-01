@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/../includes/bootstrap.php';
+require __DIR__ . '/includes/bootstrap.php';
 
 $errors = [];
 $old = ['name' => '', 'email' => '', 'message' => ''];
@@ -54,7 +54,7 @@ $homepageVariant = $mysqli->query(
 )->fetch_assoc();
 $themeVariant = $homepageVariant['theme_variant'] ?? 'a';
 
-require __DIR__ . '/../includes/header.php';
+require __DIR__ . '/includes/header.php';
 ?>
 
 <article class="page-content">
@@ -93,4 +93,4 @@ require __DIR__ . '/../includes/header.php';
     <?php endif; ?>
 </article>
 
-<?php require __DIR__ . '/../includes/footer.php'; ?>
+<?php require __DIR__ . '/includes/footer.php'; ?>

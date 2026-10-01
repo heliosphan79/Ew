@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/../../includes/bootstrap.php';
+require __DIR__ . '/../includes/bootstrap.php';
 require_login();
 
 header('Content-Type: application/json');
@@ -58,7 +58,7 @@ if (@getimagesize($file['tmp_name']) === false) {
 
 $extension = $allowedMimeToExtension[$mime];
 $filename = bin2hex(random_bytes(12)) . '.' . $extension;
-$uploadDir = APP_ROOT . '/public/uploads/';
+$uploadDir = APP_ROOT . '/uploads/';
 $destination = $uploadDir . $filename;
 
 if (!is_dir($uploadDir) || !is_writable($uploadDir)) {

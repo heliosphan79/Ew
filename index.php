@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require __DIR__ . '/../includes/bootstrap.php';
+require __DIR__ . '/includes/bootstrap.php';
 
 $homepage = $mysqli->query(
     'SELECT title, content, theme_variant, meta_description FROM pages WHERE is_homepage = 1 AND published = 1 LIMIT 1'
@@ -19,7 +19,7 @@ $canonicalUrl = absolute_url($siteUrl, '/');
 $imageUrl = first_image_url($homepageBlocks);
 $ogImage = $imageUrl ? media_absolute_url($siteUrl, $imageUrl) : null;
 
-require __DIR__ . '/../includes/header.php';
+require __DIR__ . '/includes/header.php';
 ?>
 
 <?php if ($homepage): ?>
@@ -34,4 +34,4 @@ require __DIR__ . '/../includes/header.php';
     </article>
 <?php endif; ?>
 
-<?php require __DIR__ . '/../includes/footer.php'; ?>
+<?php require __DIR__ . '/includes/footer.php'; ?>
