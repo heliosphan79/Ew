@@ -353,6 +353,83 @@ main.wrap {
 .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
 .btn:active { transform: translateY(0) scale(0.97); transition-duration: 100ms; }
 
+/* ---------- Map block (Google Maps embed) ---------- */
+
+.block-map h2 { font-size: 1.4rem; margin-bottom: 0.75rem; }
+
+.map-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+.map-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* Breaks the map out to full viewport width, ignoring .wrap's max-width —
+   relies on main.wrap being centered via margin:auto. */
+.map-stretch .map-frame {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    border-radius: 0;
+    box-shadow: none;
+    aspect-ratio: 21 / 9;
+}
+
+/* ---------- Media + text block (photo beside text) ---------- */
+
+.block-media-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.media-text-figure { margin: 0; }
+.media-text-figure img { width: 100%; height: auto; border-radius: var(--radius); display: block; }
+.media-text-figure figcaption {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.media-text-content h2 { font-size: 1.4rem; margin-bottom: 0.75rem; }
+.media-text-content p { margin: 0 0 1rem; }
+.media-text-content p:last-child { margin-bottom: 0; }
+
+@media (min-width: 640px) {
+    .block-media-text {
+        flex-direction: row;
+        align-items: center;
+        gap: 2.5rem;
+    }
+    .block-media-text.media-text-right { flex-direction: row-reverse; }
+    .media-text-figure,
+    .media-text-content { flex: 1 1 0; min-width: 0; }
+}
+
+/* ---------- Columns block (2 or 3 side-by-side columns) ---------- */
+
+.block-columns {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+.block-columns .column > .block:last-child { margin-bottom: 0; }
+
+@media (min-width: 640px) {
+    .block-columns { flex-direction: row; align-items: flex-start; }
+    .block-columns .column { flex: 1 1 0; min-width: 0; }
+}
+
 /* ---------- Calendar block (appointment booking) ---------- */
 
 .calendar-widget {

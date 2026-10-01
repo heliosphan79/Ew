@@ -27,7 +27,6 @@ $form = [
     'published' => $page['published'] ?? 0,
     'is_homepage' => $page['is_homepage'] ?? 0,
     'show_in_menu' => $page['show_in_menu'] ?? 1,
-    'nav_order' => $page['nav_order'] ?? 0,
     'theme_variant' => normalize_theme_variant($page['theme_variant'] ?? null),
 ];
 $blocksForEditor = $page ? decode_blocks($page['content']) : [];
@@ -42,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['published'] = isset($_POST['published']) ? 1 : 0;
     $form['is_homepage'] = isset($_POST['is_homepage']) ? 1 : 0;
     $form['show_in_menu'] = isset($_POST['show_in_menu']) ? 1 : 0;
-    $form['nav_order'] = (int) ($_POST['nav_order'] ?? 0);
     $form['theme_variant'] = normalize_theme_variant($_POST['theme_variant'] ?? null);
 
     $rawBlocks = json_decode((string) ($_POST['blocks_json'] ?? '[]'), true);
@@ -86,11 +84,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($id) {
+                // nav_order isn't touched here — it's managed exclusively via
+                // the drag-and-drop reorder list in pages.php.
                 $stmt = $mysqli->prepare(
-                    'UPDATE pages SET title = ?, slug = ?, content = ?, theme_variant = ?, meta_description = ?, published = ?, is_homepage = ?, show_in_menu = ?, nav_order = ? WHERE id = ?'
+                    'UPDATE pages SET title = ?, slug = ?, content = ?, theme_variant = ?, meta_description = ?, published = ?, is_homepage = ?, show_in_menu = ? WHERE id = ?'
                 );
                 $stmt->bind_param(
-                    'sssssiiiii',
+                    'sssssiiii',
                     $form['title'],
                     $form['slug'],
                     $contentJson,
@@ -99,12 +99,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $form['published'],
                     $form['is_homepage'],
                     $form['show_in_menu'],
-                    $form['nav_order'],
                     $id
                 );
                 $stmt->execute();
                 $stmt->close();
             } else {
+                // New pages are appended at the end of the menu order; drag
+                // them into place afterwards via pages.php.
+                $nextOrder = (int) ($mysqli->query('SELECT COALESCE(MAX(nav_order), -1) + 1 AS next FROM pages')->fetch_assoc()['next']);
+
                 $stmt = $mysqli->prepare(
                     'INSERT INTO pages (title, slug, content, theme_variant, meta_description, published, is_homepage, show_in_menu, nav_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 );
@@ -118,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $form['published'],
                     $form['is_homepage'],
                     $form['show_in_menu'],
-                    $form['nav_order']
+                    $nextOrder
                 );
                 $stmt->execute();
                 $stmt->close();
@@ -189,15 +192,12 @@ require __DIR__ . '/includes/header.php';
             <input type="checkbox" name="show_in_menu" <?= $form['show_in_menu'] ? 'checked' : '' ?>>
             Tonen in hoofdmenu
         </label>
-        <label>
-            Volgorde in menu
-            <input type="number" name="nav_order" value="<?= (int) $form['nav_order'] ?>" style="width:5rem;">
-        </label>
     </div>
     <p class="field-hint">
         Staat "Tonen in hoofdmenu" uit, dan blijft de pagina bereikbaar via
         haar eigen link (bv. vanuit een knoppenblok) maar krijgt ze geen
-        plaats in de navigatie.
+        plaats in de navigatie. De volgorde in het menu stel je in door
+        pagina's te verslepen bij <a href="pages.php">Pagina's</a>.
     </p>
 
     <button type="submit">Opslaan</button>

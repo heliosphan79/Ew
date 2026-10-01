@@ -81,7 +81,15 @@ const BLOCK_TYPE_LABELS = [
     'buttons' => 'Knoppen',
     'calendar' => 'Kalender',
     'events' => 'Evenementen',
+    'map' => 'Kaart',
+    'media_text' => 'Foto + tekst',
+    'columns' => 'Kolommen',
 ];
+
+// Block types allowed inside a columns-block's column. Deliberately a
+// narrow subset — no calendar/events/map/media_text/columns — to avoid
+// runaway nesting in both the editor UI and the rendering.
+const COLUMN_CHILD_TYPES = ['text', 'image', 'quote', 'list', 'buttons'];
 
 const THEME_VARIANTS = [
     'a' => 'A — Crème, salie & terracotta',
@@ -232,12 +240,162 @@ function sanitize_blocks(array $rawBlocks): array
                 $clean[] = ['type' => 'events', 'heading' => $heading];
                 break;
 
+            case 'map':
+                $address = mb_substr(trim((string) ($raw['address'] ?? '')), 0, 255);
+                $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
+                $layout = ($raw['layout'] ?? '') === 'stretch' ? 'stretch' : 'box';
+                if ($address === '') {
+                    $errors[] = "Kaartblok #$count: vul het adres van de praktijk in.";
+                    continue 2;
+                }
+                $clean[] = ['type' => 'map', 'address' => $address, 'heading' => $heading, 'layout' => $layout];
+                break;
+
+            case 'media_text':
+                $url = mb_substr(trim((string) ($raw['url'] ?? '')), 0, 500);
+                $alt = mb_substr(trim((string) ($raw['alt'] ?? '')), 0, 200);
+                $caption = mb_substr(trim((string) ($raw['caption'] ?? '')), 0, 200);
+                $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
+                $body = mb_substr(trim((string) ($raw['body'] ?? '')), 0, 3000);
+                $imagePosition = ($raw['image_position'] ?? '') === 'right' ? 'right' : 'left';
+                if ($url === '' || !is_safe_url($url)) {
+                    $errors[] = "Foto+tekstblok #$count: vul een geldige afbeeldings-URL in (begin met http(s):// of /).";
+                    continue 2;
+                }
+                if ($alt === '') {
+                    $errors[] = "Foto+tekstblok #$count: vul een korte alt-tekst in (toegankelijkheid).";
+                    continue 2;
+                }
+                if ($body === '' && $heading === '') {
+                    $errors[] = "Foto+tekstblok #$count: vul een titel of tekst in.";
+                    continue 2;
+                }
+                $clean[] = [
+                    'type' => 'media_text',
+                    'url' => $url,
+                    'alt' => $alt,
+                    'caption' => $caption,
+                    'heading' => $heading,
+                    'body' => $body,
+                    'image_position' => $imagePosition,
+                ];
+                break;
+
+            case 'columns':
+                $columnCount = (int) ($raw['column_count'] ?? 2);
+                $columnCount = in_array($columnCount, [2, 3], true) ? $columnCount : 2;
+                $rawColumns = array_values((array) ($raw['columns'] ?? []));
+                $columns = [];
+                for ($col = 0; $col < $columnCount; $col++) {
+                    $rawChildren = is_array($rawColumns[$col] ?? null) ? $rawColumns[$col] : [];
+                    $children = [];
+                    foreach ($rawChildren as $child) {
+                        if (count($children) >= 10) {
+                            break;
+                        }
+                        if (!is_array($child) || empty($child['type']) || !is_string($child['type'])) {
+                            continue;
+                        }
+                        $cleanChild = sanitize_column_child($child['type'], $child);
+                        if ($cleanChild !== null) {
+                            $children[] = $cleanChild;
+                        }
+                    }
+                    $columns[] = $children;
+                }
+                $hasContent = array_filter($columns, fn($children) => !empty($children));
+                if (empty($hasContent)) {
+                    $errors[] = "Kolommenblok #$count: voeg minstens één blok toe aan een kolom.";
+                    continue 2;
+                }
+                $clean[] = ['type' => 'columns', 'column_count' => $columnCount, 'columns' => $columns];
+                break;
+
             default:
                 continue 2;
         }
     }
 
     return ['blocks' => $clean, 'errors' => $errors];
+}
+
+// Validates one block inside a columns-block's column. Mirrors the
+// relevant case in sanitize_blocks() for the types COLUMN_CHILD_TYPES
+// allows, but — unlike the top-level editor — drops invalid entries
+// silently instead of raising a page-level error, same as an unknown
+// top-level block type would be dropped.
+function sanitize_column_child(string $type, array $raw): ?array
+{
+    if (!in_array($type, COLUMN_CHILD_TYPES, true)) {
+        return null;
+    }
+
+    switch ($type) {
+        case 'text':
+            $eyebrow = mb_substr(trim((string) ($raw['eyebrow'] ?? '')), 0, 80);
+            $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
+            $body = mb_substr(trim((string) ($raw['body'] ?? '')), 0, 5000);
+            if ($body === '' && $heading === '') {
+                return null;
+            }
+            return ['type' => 'text', 'eyebrow' => $eyebrow, 'heading' => $heading, 'body' => $body];
+
+        case 'image':
+            $url = mb_substr(trim((string) ($raw['url'] ?? '')), 0, 500);
+            $alt = mb_substr(trim((string) ($raw['alt'] ?? '')), 0, 200);
+            $caption = mb_substr(trim((string) ($raw['caption'] ?? '')), 0, 200);
+            if ($url === '' || !is_safe_url($url) || $alt === '') {
+                return null;
+            }
+            return ['type' => 'image', 'url' => $url, 'alt' => $alt, 'caption' => $caption];
+
+        case 'quote':
+            $text = mb_substr(trim((string) ($raw['text'] ?? '')), 0, 1000);
+            $source = mb_substr(trim((string) ($raw['source'] ?? '')), 0, 200);
+            if ($text === '') {
+                return null;
+            }
+            return ['type' => 'quote', 'text' => $text, 'source' => $source];
+
+        case 'list':
+            $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
+            $style = ($raw['style'] ?? '') === 'check' ? 'check' : 'bullet';
+            $items = [];
+            foreach ((array) ($raw['items'] ?? []) as $item) {
+                if (count($items) >= 20) {
+                    break;
+                }
+                $item = mb_substr(trim((string) $item), 0, 300);
+                if ($item !== '') {
+                    $items[] = $item;
+                }
+            }
+            if (empty($items)) {
+                return null;
+            }
+            return ['type' => 'list', 'heading' => $heading, 'style' => $style, 'items' => $items];
+
+        case 'buttons':
+            $buttons = [];
+            foreach ((array) ($raw['buttons'] ?? []) as $btn) {
+                if (count($buttons) >= 3) {
+                    break;
+                }
+                $btnLabel = mb_substr(trim((string) ($btn['label'] ?? '')), 0, 60);
+                $btnUrl = mb_substr(trim((string) ($btn['url'] ?? '')), 0, 500);
+                if ($btnLabel === '' || $btnUrl === '' || !is_safe_url($btnUrl)) {
+                    continue;
+                }
+                $buttons[] = ['label' => $btnLabel, 'url' => $btnUrl];
+            }
+            if (empty($buttons)) {
+                return null;
+            }
+            return ['type' => 'buttons', 'buttons' => $buttons];
+
+        default:
+            return null;
+    }
 }
 
 function render_blocks(array $blocks, mysqli $mysqli): string
@@ -255,6 +413,9 @@ function render_blocks(array $blocks, mysqli $mysqli): string
             'buttons' => render_buttons_block($block),
             'calendar' => render_calendar_block($block),
             'events' => render_events_block($block, $mysqli),
+            'map' => render_map_block($block),
+            'media_text' => render_media_text_block($block),
+            'columns' => render_columns_block($block),
             default => '',
         };
     }
@@ -366,6 +527,103 @@ function render_buttons_block(array $block): string
         return '';
     }
     return '<div class="block block-buttons" data-animate>' . $inner . '</div>';
+}
+
+// Plain Google Maps iframe embed (https://www.google.com/maps?q=...&output=embed)
+// — no API key, no JS SDK, no Google Cloud account needed. $address drives the
+// query, so the practice's location never has to be looked up/hardcoded as coordinates.
+function render_map_block(array $block): string
+{
+    $address = trim((string) ($block['address'] ?? ''));
+    if ($address === '') {
+        return '';
+    }
+    $heading = trim((string) ($block['heading'] ?? ''));
+    $layout = ($block['layout'] ?? '') === 'stretch' ? 'stretch' : 'box';
+    $embedUrl = 'https://www.google.com/maps?q=' . urlencode($address) . '&output=embed';
+
+    $out = '<div class="block block-map map-' . $layout . '" data-animate>';
+    if ($heading !== '') {
+        $out .= '<h2>' . e($heading) . '</h2>';
+    }
+    $out .= '<div class="map-frame"><iframe src="' . e($embedUrl) . '" title="' . e($address) . '" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>';
+    $out .= '</div>';
+    return $out;
+}
+
+function render_media_text_block(array $block): string
+{
+    $url = trim((string) ($block['url'] ?? ''));
+    if ($url === '' || !is_safe_url($url)) {
+        return '';
+    }
+    $alt = trim((string) ($block['alt'] ?? ''));
+    $heading = trim((string) ($block['heading'] ?? ''));
+    $body = trim((string) ($block['body'] ?? ''));
+    if ($heading === '' && $body === '') {
+        return '';
+    }
+    $caption = trim((string) ($block['caption'] ?? ''));
+    $position = ($block['image_position'] ?? '') === 'right' ? 'right' : 'left';
+
+    $out = '<div class="block block-media-text media-text-' . $position . '" data-animate>';
+    $out .= '<figure class="media-text-figure">';
+    $out .= '<img src="' . e($url) . '" alt="' . e($alt) . '" loading="lazy">';
+    if ($caption !== '') {
+        $out .= '<figcaption>' . e($caption) . '</figcaption>';
+    }
+    $out .= '</figure>';
+    $out .= '<div class="media-text-content">';
+    if ($heading !== '') {
+        $out .= '<h2>' . e($heading) . '</h2>';
+    }
+    foreach (preg_split('/\n{2,}/', $body) as $paragraph) {
+        $paragraph = trim($paragraph);
+        if ($paragraph === '') {
+            continue;
+        }
+        $out .= '<p>' . nl2br(e($paragraph)) . '</p>';
+    }
+    $out .= '</div></div>';
+    return $out;
+}
+
+// Renders a columns-block's children with the same render_*_block()
+// functions the top-level editor uses — see COLUMN_CHILD_TYPES for the
+// allowed subset. Child blocks keep their own `.block`/data-animate, so
+// they fade in individually and get normal inter-block spacing within
+// the column.
+function render_columns_block(array $block): string
+{
+    $columnCount = in_array($block['column_count'] ?? 2, [2, 3], true) ? $block['column_count'] : 2;
+    $columnsHtml = '';
+    $hasContent = false;
+
+    foreach ((array) ($block['columns'] ?? []) as $children) {
+        $inner = '';
+        foreach ((array) $children as $child) {
+            if (!is_array($child) || empty($child['type'])) {
+                continue;
+            }
+            $inner .= match ($child['type']) {
+                'text' => render_text_block($child),
+                'image' => render_image_block($child),
+                'quote' => render_quote_block($child),
+                'list' => render_list_block($child),
+                'buttons' => render_buttons_block($child),
+                default => '',
+            };
+        }
+        if ($inner !== '') {
+            $hasContent = true;
+        }
+        $columnsHtml .= '<div class="column">' . $inner . '</div>';
+    }
+
+    if (!$hasContent) {
+        return '';
+    }
+    return '<div class="block block-columns columns-' . $columnCount . '">' . $columnsHtml . '</div>';
 }
 
 // Available slots are shared, global data (calendar_slots), managed in
