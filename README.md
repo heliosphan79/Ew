@@ -90,9 +90,12 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
   bereikbaar via haar eigen URL of een knop/link elders op de site — ze
   krijgt alleen geen plaats in de navigatie. Zo kan je bv. een
   privacybeleid of een campagnepagina maken die niet in het menu hoeft te
-  staan.
+  staan. De volgorde in het menu stel je in door pagina's te verslepen in
+  het overzicht bij "Pagina's" — de nieuwe volgorde wordt meteen
+  opgeslagen, geen aparte opslaanknop nodig.
 - **Blokkenbouwer**: elke pagina bestaat uit een lijst eenvoudige blokken
-  die je toevoegt, herschikt (↑/↓) en verwijdert in het beheerpaneel —
+  die je toevoegt, herschikt (verslepen aan het handvat ⠿, of ↑/↓ als
+  toetsenbord-/geen-JS-alternatief) en verwijdert in het beheerpaneel —
   geen vrije HTML-editor meer, dus geen manier om per ongeluk kapotte
   opmaak of scripts in te voegen:
   - **Tekst** — optionele eyebrow (klein label boven de titel, bv.
@@ -114,6 +117,16 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
     evenementen met inschrijfformulier (zie "Evenementenblok" hieronder);
     de evenementen zelf beheer je los via "Evenementen" in het
     beheerpaneel, niet per blok.
+  - **Kaart** — een gratis Google Maps-kaart op basis van een adres (geen
+    API-key nodig), met een titel en een weergave-optie: binnen de
+    tekstkolom ("box") of over de volle paginabreedte ("stretch").
+  - **Foto + tekst** — een foto naast een stuk tekst, met de foto links of
+    rechts instelbaar; stapelt op mobiel (foto boven tekst).
+  - **Kolommen** — 2 of 3 kolommen naast elkaar, elk met een eigen mini-lijst
+    van blokken (tekst, foto, quote, lijst, knoppen — geen kalender,
+    evenementen, kaart of geneste kolommen, om het behapbaar te houden).
+    Elke kolom heeft zijn eigen toolbar om blokken toe te voegen; stapelt
+    verticaal op mobiel.
   - Links/afbeeldings-URL's worden serverside gevalideerd (enkel `/...`,
     `http(s)://`, `mailto:` of `tel:` — geen `javascript:`-injectie
     mogelijk).

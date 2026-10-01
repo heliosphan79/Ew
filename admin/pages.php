@@ -19,10 +19,17 @@ require __DIR__ . '/includes/header.php';
 <?php if (empty($pages)): ?>
     <p>Nog geen pagina's aangemaakt.</p>
 <?php else: ?>
+    <p class="field-hint">
+        Versleep een rij aan het handvat (⠿) om de volgorde in het hoofdmenu
+        te wijzigen — de nieuwe volgorde wordt meteen opgeslagen.
+        <span id="reorder-status" aria-live="polite"></span>
+    </p>
+    <input type="hidden" id="pages-csrf" value="<?= e(csrf_token()) ?>">
     <div class="table-scroll">
-    <table class="admin-table">
+    <table class="admin-table" id="pages-table">
         <thead>
         <tr>
+            <th></th>
             <th>Titel</th>
             <th>Slug</th>
             <th>Variant</th>
@@ -33,9 +40,10 @@ require __DIR__ . '/includes/header.php';
             <th></th>
         </tr>
         </thead>
-        <tbody>
+        <tbody id="pages-tbody">
         <?php foreach ($pages as $page): ?>
-            <tr>
+            <tr data-id="<?= (int) $page['id'] ?>">
+                <td><span class="block-drag-handle" draggable="true" title="Verslepen om te herordenen" aria-hidden="true">⠿</span></td>
                 <td><?= e($page['title']) ?></td>
                 <td>
                     <?php $liveUrl = $page['is_homepage'] ? '/' : '/pagina/' . $page['slug']; ?>
