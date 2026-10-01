@@ -23,23 +23,30 @@ $errors = [];
 $form = [
     'title' => $page['title'] ?? '',
     'slug' => $page['slug'] ?? '',
-    'content' => $page['content'] ?? '',
     'meta_description' => $page['meta_description'] ?? '',
     'published' => $page['published'] ?? 0,
     'is_homepage' => $page['is_homepage'] ?? 0,
+    'show_in_menu' => $page['show_in_menu'] ?? 1,
     'nav_order' => $page['nav_order'] ?? 0,
+    'theme_variant' => normalize_theme_variant($page['theme_variant'] ?? null),
 ];
+$blocksForEditor = $page ? decode_blocks($page['content']) : [];
+$contentJson = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
 
     $form['title'] = trim((string) ($_POST['title'] ?? ''));
     $form['slug'] = slugify((string) ($_POST['slug'] !== '' ? $_POST['slug'] : $form['title']));
-    $form['content'] = (string) ($_POST['content'] ?? '');
     $form['meta_description'] = trim((string) ($_POST['meta_description'] ?? ''));
     $form['published'] = isset($_POST['published']) ? 1 : 0;
     $form['is_homepage'] = isset($_POST['is_homepage']) ? 1 : 0;
+    $form['show_in_menu'] = isset($_POST['show_in_menu']) ? 1 : 0;
     $form['nav_order'] = (int) ($_POST['nav_order'] ?? 0);
+    $form['theme_variant'] = normalize_theme_variant($_POST['theme_variant'] ?? null);
+
+    $rawBlocks = json_decode((string) ($_POST['blocks_json'] ?? '[]'), true);
+    $blocksForEditor = is_array($rawBlocks) ? $rawBlocks : [];
 
     if ($form['title'] === '' || mb_strlen($form['title']) > 200) {
         $errors[] = 'Vul een titel in (max. 200 tekens).';
@@ -47,8 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($form['slug'] === '') {
         $errors[] = 'De slug mag niet leeg zijn.';
     }
-    if (trim(strip_tags($form['content'])) === '') {
-        $errors[] = "Vul inhoud in voor de pagina.";
+
+    $sanitized = sanitize_blocks($blocksForEditor);
+    $errors = array_merge($errors, $sanitized['errors']);
+    if (empty($sanitized['blocks'])) {
+        $errors[] = 'Voeg minstens één geldig blok toe aan de pagina.';
     }
 
     if (empty($errors)) {
@@ -64,6 +74,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
+        $contentJson = json_encode($sanitized['blocks'], JSON_UNESCAPED_UNICODE);
+        $removedUploadUrls = $id
+            ? array_diff(extract_upload_urls(decode_blocks($page['content'])), extract_upload_urls($sanitized['blocks']))
+            : [];
+
         $mysqli->begin_transaction();
         try {
             if ($form['is_homepage']) {
@@ -72,16 +87,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($id) {
                 $stmt = $mysqli->prepare(
-                    'UPDATE pages SET title = ?, slug = ?, content = ?, meta_description = ?, published = ?, is_homepage = ?, nav_order = ? WHERE id = ?'
+                    'UPDATE pages SET title = ?, slug = ?, content = ?, theme_variant = ?, meta_description = ?, published = ?, is_homepage = ?, show_in_menu = ?, nav_order = ? WHERE id = ?'
                 );
                 $stmt->bind_param(
-                    'ssssiiii',
+                    'sssssiiiii',
                     $form['title'],
                     $form['slug'],
-                    $form['content'],
+                    $contentJson,
+                    $form['theme_variant'],
                     $form['meta_description'],
                     $form['published'],
                     $form['is_homepage'],
+                    $form['show_in_menu'],
                     $form['nav_order'],
                     $id
                 );
@@ -89,16 +106,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->close();
             } else {
                 $stmt = $mysqli->prepare(
-                    'INSERT INTO pages (title, slug, content, meta_description, published, is_homepage, nav_order) VALUES (?, ?, ?, ?, ?, ?, ?)'
+                    'INSERT INTO pages (title, slug, content, theme_variant, meta_description, published, is_homepage, show_in_menu, nav_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 );
                 $stmt->bind_param(
-                    'ssssiii',
+                    'sssssiiii',
                     $form['title'],
                     $form['slug'],
-                    $form['content'],
+                    $contentJson,
+                    $form['theme_variant'],
                     $form['meta_description'],
                     $form['published'],
                     $form['is_homepage'],
+                    $form['show_in_menu'],
                     $form['nav_order']
                 );
                 $stmt->execute();
@@ -110,6 +129,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mysqli->rollback();
             throw $e;
         }
+
+        delete_orphaned_uploads($mysqli, $removedUploadUrls);
 
         set_flash('success', 'Pagina opgeslagen.');
         redirect('pages.php');
@@ -142,10 +163,18 @@ require __DIR__ . '/includes/header.php';
     <label for="meta_description">Meta-omschrijving (SEO)</label>
     <input type="text" id="meta_description" name="meta_description" value="<?= e($form['meta_description']) ?>" maxlength="300">
 
-    <label for="editor">Inhoud</label>
-    <div id="editor-toolbar"></div>
-    <div id="editor"><?= $form['content'] ?></div>
-    <textarea id="content" name="content" style="display:none;"><?= e($form['content']) ?></textarea>
+    <label for="theme_variant">Frontend-variant</label>
+    <select id="theme_variant" name="theme_variant">
+        <?php foreach (THEME_VARIANTS as $key => $label): ?>
+            <option value="<?= e($key) ?>" <?= $form['theme_variant'] === $key ? 'selected' : '' ?>><?= e($label) ?></option>
+        <?php endforeach; ?>
+    </select>
+
+    <label>Inhoud</label>
+    <div id="block-editor" class="block-editor"></div>
+    <div id="block-toolbar" class="block-toolbar"></div>
+    <script type="application/json" id="initial-blocks"><?= json_encode($blocksForEditor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
+    <input type="hidden" id="blocks_json" name="blocks_json">
 
     <div class="page-form-row">
         <label class="checkbox-label">
@@ -156,48 +185,23 @@ require __DIR__ . '/includes/header.php';
             <input type="checkbox" name="is_homepage" <?= $form['is_homepage'] ? 'checked' : '' ?>>
             Als homepagina instellen
         </label>
+        <label class="checkbox-label">
+            <input type="checkbox" name="show_in_menu" <?= $form['show_in_menu'] ? 'checked' : '' ?>>
+            Tonen in hoofdmenu
+        </label>
         <label>
             Volgorde in menu
             <input type="number" name="nav_order" value="<?= (int) $form['nav_order'] ?>" style="width:5rem;">
         </label>
     </div>
+    <p class="field-hint">
+        Staat "Tonen in hoofdmenu" uit, dan blijft de pagina bereikbaar via
+        haar eigen link (bv. vanuit een knoppenblok) maar krijgt ze geen
+        plaats in de navigatie.
+    </p>
 
     <button type="submit">Opslaan</button>
     <a href="pages.php" class="button-secondary">Annuleren</a>
 </form>
-
-<link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
-<script>
-    var quill = new Quill('#editor', {
-        theme: 'snow',
-        modules: { toolbar: [
-            [{ header: [2, 3, false] }],
-            ['bold', 'italic', 'underline', 'link'],
-            [{ list: 'ordered' }, { list: 'bullet' }],
-            ['image', 'blockquote'],
-            ['clean']
-        ] }
-    });
-
-    var contentField = document.getElementById('content');
-    var form = document.querySelector('.page-form');
-    form.addEventListener('submit', function () {
-        contentField.value = quill.root.innerHTML;
-    });
-
-    var titleField = document.getElementById('title');
-    var slugField = document.getElementById('slug');
-    var slugManuallyEdited = <?= $id ? 'true' : 'false' ?>;
-    slugField.addEventListener('input', function () { slugManuallyEdited = true; });
-    titleField.addEventListener('input', function () {
-        if (slugManuallyEdited) return;
-        slugField.value = titleField.value
-            .toLowerCase()
-            .normalize('NFD').replace(new RegExp('[̀-ͯ]', 'g'), '')
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/(^-|-$)/g, '');
-    });
-</script>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>

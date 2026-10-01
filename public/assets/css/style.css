@@ -1,67 +1,189 @@
+/* ==========================================================================
+   Eigen-Wijzer — front-end styles
+   Mobile-first: base rules target small screens, min-width queries layer
+   on refinements for tablet/desktop. Look-and-feel tokens are grouped per
+   theme variant (a/b/c) below the base tokens — components reference
+   var(--...) so switching data-theme on <body> is enough to reskin.
+   Variants A/B/C are sourced from Wendy's design (Main/Rose/Groen
+   artboards) — colors and fonts are matched as closely as a system-font
+   stack allows (no Google Fonts CDN, for the same privacy reasons as the
+   rest of this project — self-hosted webfonts are a possible follow-up).
+   ========================================================================== */
+
 :root {
-    --color-text: #1f2933;
-    --color-muted: #616e7c;
-    --color-bg: #ffffff;
-    --color-accent: #2f6f4f;
-    --color-border: #e4e7eb;
+    /* Variant A "Crème, salie & terracotta" — also the fallback if data-theme is missing */
+    --bg: #f7f3ee;
+    --surface: #ffffff;
+    --text: #262420;
+    --text-muted: #6f6c68;
+    --text-subtle: #8b8478;
+    --accent: #6b7360;
+    --accent-hover: #5d6353;
+    --accent-contrast: #f7f3ee;
+    --btn-primary-bg: var(--accent);
+    --btn-primary-hover: var(--accent-hover);
+    --border: #eae6e0;
+    --eyebrow-color: var(--text-muted);
+    --quote-bg: #726c62;
+    --quote-text: #f7f3ee;
+    --radius: 3px;
+    --shadow: 0 1px 3px rgba(38, 36, 32, 0.08);
+    --font-heading: Georgia, "Times New Roman", Times, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
     --color-error: #b42318;
     --color-success: #1a7f37;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --dur: 400ms;
+    --content-width: 720px;
+}
+
+/* Variant B "Koraal" */
+body[data-theme="b"] {
+    --bg: #faf4f0;
+    --surface: #ffffff;
+    --text: #2b2622;
+    --text-muted: #5a5249;
+    --text-subtle: #8a8177;
+    --accent: #a85f49;
+    --accent-hover: #7a4534;
+    --accent-contrast: #faf4f0;
+    --btn-primary-bg: #d98f79;
+    --btn-primary-hover: #c77e68;
+    --border: #ede0d8;
+    --eyebrow-color: var(--accent);
+    --quote-bg: #141416;
+    --quote-text: #faf4f0;
+    --radius: 4px;
+    --shadow: 0 2px 8px rgba(20, 20, 22, 0.1);
+    --font-heading: "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Variant C "Salie-groen" */
+body[data-theme="c"] {
+    --bg: #faf4f0;
+    --surface: #ffffff;
+    --text: #2b2622;
+    --text-muted: #5a5249;
+    --text-subtle: #8a8177;
+    --accent: #55624a;
+    --accent-hover: #414a38;
+    --accent-contrast: #faf4f0;
+    --btn-primary-bg: #6b7a5e;
+    --btn-primary-hover: #56634a;
+    --border: #ede0d8;
+    --eyebrow-color: var(--accent);
+    --quote-bg: #141416;
+    --quote-text: #faf4f0;
+    --radius: 4px;
+    --shadow: 0 2px 8px rgba(20, 20, 22, 0.1);
+    --font-heading: "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }
 
+html { -webkit-text-size-adjust: 100%; }
+
 body {
     margin: 0;
-    color: var(--color-text);
-    background: var(--color-bg);
-    line-height: 1.6;
+    color: var(--text);
+    background: var(--bg);
+    font-family: var(--font-body);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
 }
 
+h1, h2, h3 { font-family: var(--font-heading); line-height: 1.25; }
+
 .wrap {
-    max-width: 860px;
+    max-width: var(--content-width);
     margin: 0 auto;
     padding: 0 1.25rem;
 }
 
+/* ---------- Header / nav (shared site chrome, mobile-first) ---------- */
+
 .site-header {
-    border-bottom: 1px solid var(--color-border);
-    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 0;
 }
 
 .site-header .wrap {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.75rem;
+    flex-direction: column;
+    gap: 0.6rem;
 }
 
 .site-title {
     font-weight: 700;
-    font-size: 1.15rem;
-    color: var(--color-text);
+    font-size: 1.1rem;
+    color: var(--text);
     text-decoration: none;
 }
+
+.site-nav {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.site-nav::-webkit-scrollbar { display: none; }
 
 .site-nav a {
-    margin-left: 1.25rem;
-    color: var(--color-muted);
+    color: var(--text-muted);
     text-decoration: none;
-    font-size: 0.95rem;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    padding-bottom: 0.15rem;
+    border-bottom: 2px solid transparent;
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
-.site-nav a:hover { color: var(--color-accent); }
+.site-nav a:hover,
+.site-nav a:focus-visible { color: var(--accent); border-color: var(--accent); }
 
-main.wrap { padding: 2.5rem 1.25rem 4rem; min-height: 50vh; }
+@media (min-width: 640px) {
+    .site-header .wrap {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
 
-.page-content h1 { margin-top: 0; }
+main.wrap {
+    padding: 2.5rem 1.25rem 4rem;
+    min-height: 50vh;
+}
 
-.content-body img { max-width: 100%; height: auto; border-radius: 4px; }
+@media (min-width: 640px) {
+    main.wrap { padding: 3.5rem 1.25rem 5rem; }
+}
+
+.page-content h1 {
+    margin-top: 0;
+    font-size: 1.75rem;
+}
+
+@media (min-width: 640px) {
+    .page-content h1 { font-size: 2.25rem; }
+}
+
+.site-footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* ---------- Flash / form-errors (shared) ---------- */
 
 .flash {
     padding: 0.75rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius);
     margin-bottom: 1.5rem;
     font-size: 0.95rem;
 }
@@ -73,9 +195,11 @@ main.wrap { padding: 2.5rem 1.25rem 4rem; min-height: 50vh; }
     background: #fdecea;
     color: var(--color-error);
     padding: 0.75rem 1.25rem;
-    border-radius: 6px;
+    border-radius: var(--radius);
     margin-bottom: 1.5rem;
 }
+
+/* ---------- Contact form (mobile-first, single column) ---------- */
 
 .contact-form { display: flex; flex-direction: column; gap: 0.4rem; max-width: 480px; }
 
@@ -83,30 +207,283 @@ main.wrap { padding: 2.5rem 1.25rem 4rem; min-height: 50vh; }
 
 .contact-form input,
 .contact-form textarea {
-    padding: 0.6rem 0.7rem;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
+    padding: 0.65rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     font-size: 1rem;
     font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
 }
 
 .contact-form button {
     margin-top: 1.25rem;
     align-self: flex-start;
-    background: var(--color-accent);
-    color: #fff;
+    background: var(--accent);
+    color: var(--accent-contrast);
     border: none;
-    padding: 0.65rem 1.5rem;
-    border-radius: 6px;
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--radius);
     font-size: 1rem;
     cursor: pointer;
+    transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
 }
 
 .contact-form button:hover { opacity: 0.9; }
+.contact-form button:active { transform: scale(0.97); }
 
-.site-footer {
-    border-top: 1px solid var(--color-border);
-    padding: 1.5rem 0;
-    color: var(--color-muted);
+/* ==========================================================================
+   Content blocks — shared structure across all 3 variants; only the
+   custom-property tokens (and a few per-variant touches below) differ.
+   ========================================================================== */
+
+.block { margin-bottom: clamp(2rem, 6vw, 3.25rem); }
+.block:last-child { margin-bottom: 0; }
+
+.block-text h2 { font-size: 1.4rem; margin-bottom: 0.75rem; }
+.block-text p { margin: 0 0 1rem; }
+.block-text p:last-child { margin-bottom: 0; }
+
+.block-image img { width: 100%; height: auto; border-radius: var(--radius); display: block; }
+.block-image figcaption {
+    margin-top: 0.6rem;
     font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.block-quote {
+    background: var(--quote-bg);
+    color: var(--quote-text);
+    border-radius: var(--radius);
+    padding: 2rem 1.75rem;
+    position: relative;
+}
+.block-quote::before {
+    content: "\201C";
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 3rem;
+    line-height: 1;
+    opacity: 0.5;
+    margin-bottom: -0.75rem;
+}
+.block-quote p {
+    font-size: 1.15rem;
+    font-family: var(--font-heading);
+    font-style: italic;
+    margin: 0 0 0.5rem;
+    color: inherit;
+}
+.block-quote cite {
+    display: block;
+    font-style: normal;
+    font-size: 0.85rem;
+    opacity: 0.75;
+    color: inherit;
+}
+
+.eyebrow {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--eyebrow-color);
+    margin-bottom: 0.5rem;
+}
+
+.block-list h3 { font-size: 1.1rem; margin-bottom: 0.75rem; }
+.block-list ul { margin: 0; padding-left: 1.25rem; }
+.block-list li { margin-bottom: 0.5rem; }
+.block-list li:last-child { margin-bottom: 0; }
+
+.list-check { list-style: none; padding-left: 0 !important; }
+.list-check li { position: relative; padding-left: 1.75rem; }
+.list-check li::before {
+    content: "\2713";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.block-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@media (min-width: 480px) {
+    .block-buttons { flex-direction: row; flex-wrap: wrap; }
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.6rem;
+    border-radius: var(--radius);
+    border: 2px solid transparent;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+        background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.btn-primary { background: var(--btn-primary-bg); color: var(--accent-contrast); }
+.btn-primary:hover { background: var(--btn-primary-hover); }
+.btn-secondary { background: transparent; color: var(--text); border-color: var(--text); }
+.btn-secondary:hover { background: var(--text); color: var(--bg); }
+
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.btn:active { transform: translateY(0) scale(0.97); transition-duration: 100ms; }
+
+/* ---------- Calendar block (appointment booking) ---------- */
+
+.calendar-widget {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+    .calendar-widget { flex-direction: row; align-items: flex-start; }
+}
+
+.calendar-loading { color: var(--text-muted); font-size: 0.92rem; }
+
+.cal-grid {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem;
+    flex: 0 0 auto;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .cal-grid { width: 310px; }
+}
+
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
+.cal-month-label { font-family: var(--font-heading); font-size: 0.95rem; font-weight: 600; color: var(--text); }
+.cal-nav {
+    background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--text-subtle);
+    padding: 0.2rem 0.5rem; line-height: 1;
+}
+.cal-nav:hover { color: var(--accent); }
+
+.cal-weekdays, .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.25rem; }
+.cal-weekdays { font-size: 0.68rem; color: var(--text-subtle); text-align: center; margin-bottom: 0.4rem; }
+
+.cal-day {
+    appearance: none; background: none; border: 1px solid transparent; border-radius: var(--radius);
+    padding: 0.45rem 0; font-size: 0.82rem; color: var(--text); cursor: pointer; font-family: inherit;
+}
+.cal-day:not(:disabled) { border-color: var(--border); }
+.cal-day:not(:disabled):hover { border-color: var(--accent); }
+.cal-day.is-selected { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
+.cal-day:disabled { color: var(--border); cursor: default; }
+
+.cal-side { flex: 1; min-width: 0; }
+
+.cal-times-label { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 0.75rem; }
+.cal-time-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem; }
+.cal-time {
+    appearance: none; background: var(--bg); border: 1px solid var(--border); border-radius: 100px;
+    padding: 0.5rem 1rem; font-size: 0.85rem; color: var(--text); cursor: pointer; font-family: inherit;
+}
+.cal-time:hover { border-color: var(--accent); }
+.cal-time.is-selected { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
+
+.cal-form { display: flex; flex-direction: column; gap: 0.4rem; max-width: 420px; }
+.cal-form label { font-weight: 600; margin-top: 0.75rem; font-size: 0.85rem; }
+.cal-form input,
+.cal-form textarea {
+    padding: 0.6rem 0.7rem; border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text);
+}
+.cal-form button {
+    margin-top: 1rem; align-self: flex-start; background: var(--btn-primary-bg); color: var(--accent-contrast);
+    border: none; padding: 0.7rem 1.5rem; border-radius: var(--radius); font-size: 0.92rem; font-weight: 600; cursor: pointer;
+}
+.cal-form button:hover { background: var(--btn-primary-hover); }
+.cal-form button:disabled { opacity: 0.6; cursor: default; }
+.cal-form-status { font-size: 0.85rem; color: var(--text-muted); margin: 0.6rem 0 0; min-height: 1.1em; }
+.cal-form-status.is-error { color: var(--color-error); }
+
+.cal-confirmed {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.25rem 1.5rem; color: var(--text); font-weight: 600;
+}
+
+/* ---------- Events block (lectures/workshops, with optional registration) ---------- */
+
+.events-list { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.event-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem;
+}
+.event-card h3 { font-family: var(--font-heading); font-size: 1.2rem; margin: 0.35rem 0 0.5rem; }
+.event-location { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem; }
+.event-description { margin: 0 0 1rem; }
+.event-description:last-child { margin-bottom: 0; }
+
+.event-badge {
+    display: inline-block; padding: 0.2rem 0.7rem; border-radius: 100px;
+    font-size: 0.78rem; font-weight: 600; margin-bottom: 1rem;
+}
+.badge-spots { background: var(--bg); border: 1px solid var(--border); color: var(--text-muted); }
+.badge-full { background: var(--color-error); color: #fff; }
+
+.event-register { margin-top: 0.25rem; }
+.event-register summary {
+    display: inline-block; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+    color: var(--accent); list-style: none;
+}
+.event-register summary::-webkit-details-marker { display: none; }
+.event-register summary::before { content: "+ "; }
+.event-register[open] summary::before { content: "– "; }
+
+.event-register form {
+    display: flex; flex-direction: column; gap: 0.4rem; max-width: 380px; margin-top: 1rem;
+}
+.event-register label { font-weight: 600; margin-top: 0.6rem; font-size: 0.85rem; }
+.event-register input {
+    padding: 0.6rem 0.7rem; border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text);
+}
+.event-register button {
+    margin-top: 1rem; align-self: flex-start; background: var(--btn-primary-bg); color: var(--accent-contrast);
+    border: none; padding: 0.65rem 1.4rem; border-radius: var(--radius); font-size: 0.9rem; font-weight: 600; cursor: pointer;
+}
+.event-register button:hover { background: var(--btn-primary-hover); }
+
+/* ---------- Scroll-triggered reveal (progressive enhancement) ----------
+   The "js" class is added by an inline script in <head> before paint, so
+   content stays fully visible if JavaScript is unavailable. Motion is a
+   single, small, one-time fade-up per block — calm, not attention-grabbing. */
+
+html.js [data-animate] {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 700ms var(--ease), transform 700ms var(--ease);
+}
+
+html.js [data-animate].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.js [data-animate] {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
 }
