@@ -179,6 +179,17 @@ main.wrap {
     font-size: 0.85rem;
 }
 
+.footer-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.footer-contact a {
+    color: inherit;
+}
+
 /* ---------- Flash / form-errors (shared) ---------- */
 
 .flash {
