@@ -3,9 +3,20 @@ DirectoryIndex index.php
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    # Expliciet gezet als defensieve maatregel (standaardgedrag getest en
+    # correct bevonden zonder deze regel, maar sommige hostingconfiguraties
+    # leiden de basis anders af dan verwacht).
+    RewriteBase /
+
     # Pretty URL: /pagina/mijn-slug -> pagina.php?slug=mijn-slug
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^pagina/([a-z0-9-]+)/?$ pagina.php?slug=$1 [L,QSA]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^contact/?$ contact.php [L,QSA]
+
     # SEO/AI-discoverability endpoints, generated dynamically so they always
     # match the domain configured in config/config.php.
     RewriteRule ^sitemap\.xml$ sitemap.php [L]
