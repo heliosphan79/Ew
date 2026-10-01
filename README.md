@@ -2,8 +2,9 @@
 
 Eenvoudig CMS (PHP + MySQLi + vanilla JS/HTML, geen frameworks of Composer)
 om de website eigen-wijzer.be te beheren: pagina's opgebouwd uit eenvoudige
-content-blokken (tekst, foto, quote, lijst, knoppen — met eigen
-afbeeldingsupload), 4 kiesbare frontend-varianten met rustige
+content-blokken (tekst, foto, quote, lijst, knoppen, kalender — met eigen
+afbeeldingsupload en een zelfbedieningsafsprakenkalender), 3 kiesbare
+frontend-varianten op basis van Wendy's ontwerp met rustige
 scroll/klik-animatie, een contactformulier waarvan de inzendingen in het
 beheerpaneel terechtkomen, en ingebouwde SEO-optimalisatie inclusief
 vindbaarheid voor AI-zoekfuncties (zie "SEO & vindbaarheid" hieronder).
@@ -33,8 +34,8 @@ document root ingesteld worden.
    installatie). Draai je al een oudere versie van deze database, importeer
    dan in plaats daarvan de ontbrekende bestanden uit `database/migrations/`
    op volgnummer — `002_blocks_and_theme.sql` (lees de opmerking bovenaan,
-   want bestaande paginainhoud wordt daarbij geleegd) en/of
-   `003_menu_visibility.sql`.
+   want bestaande paginainhoud wordt daarbij geleegd), `003_menu_visibility.sql`
+   en `004_calendar_slots.sql`.
 3. `cp config/config.example.php config/config.php` en vul je lokale
    databasegegevens in.
 4. Start de ingebouwde PHP-server vanaf de projectroot:
@@ -44,6 +45,10 @@ document root ingesteld worden.
 5. Open `http://localhost:8000/admin/` — omdat er nog geen beheerder bestaat,
    kom je automatisch op de installatiepagina terecht om het eerste account
    aan te maken.
+6. (Optioneel, eenmalig) `php database/seed-homepage.php` maakt de homepage
+   aan met Wendy's echte tekst en de echte praktijkfoto — enkel als er nog
+   geen homepagina bestaat. Zie "Homepage-content" hieronder voor wat daarna
+   nog manueel moet.
 
 ## Deployen op gedeelde hosting (cPanel-achtig)
 
@@ -81,8 +86,11 @@ document root ingesteld worden.
   die je toevoegt, herschikt (↑/↓) en verwijdert in het beheerpaneel —
   geen vrije HTML-editor meer, dus geen manier om per ongeluk kapotte
   opmaak of scripts in te voegen:
-  - **Tekst** — optionele titel + platte tekst (alinea's gescheiden door
-    een lege regel).
+  - **Tekst** — optionele eyebrow (klein label boven de titel, bv.
+    "Aanbod"), optionele titel, en platte tekst (alinea's gescheiden door
+    een lege regel) — titel en tekst mogen niet allebei leeg zijn, maar één
+    van de twee volstaat (handig voor een kale sectiekop boven bv. een
+    lijstblok).
   - **Foto** — kies "Bestand kiezen…" om een JPG/PNG/GIF/WEBP te uploaden
     (max. 5 MB, direct herbekeken als miniatuur), of vul zelf een
     afbeeldings-URL in. Plus alt-tekst (verplicht, toegankelijkheid) en
@@ -90,15 +98,23 @@ document root ingesteld worden.
   - **Quote** — citaat + optionele bron.
   - **Lijst** — titel, stijl (opsomming/vinkjes) en items (één per regel).
   - **Knoppen** — tot 3 knoppen, één per regel als `Tekst | link`.
+  - **Kalender** — een zelfbedieningsafsprakenkalender (zie "Kalenderblok"
+    hieronder) met een optionele titel; de beschikbare tijdsloten zelf
+    beheer je los via "Kalender" in het beheerpaneel, niet per blok.
   - Links/afbeeldings-URL's worden serverside gevalideerd (enkel `/...`,
     `http(s)://`, `mailto:` of `tel:` — geen `javascript:`-injectie
     mogelijk).
-- **4 frontend-varianten**, per pagina instelbaar (dropdown in de
-  pagina-editor): A "Helder & rustig", B "Warm & zacht", C "Natuurlijk &
-  aards", D "Strak & minimalistisch". Alle vier delen dezelfde rustige,
-  ruime opbouw — enkel kleuren, typografie en afronding wisselen; de
-  contactpagina volgt automatisch de variant van de homepagina voor een
-  consistente uitstraling.
+- **3 frontend-varianten**, per pagina instelbaar (dropdown in de
+  pagina-editor), gebaseerd op Wendy's eigen ontwerp: A "Crème, salie &
+  terracotta" (het nieuwe ontwerp), B "Koraal" en C "Salie-groen" (de twee
+  eerdere kleurstudies). Alle drie delen dezelfde rustige, ruime opbouw —
+  enkel kleuren, typografie en afronding wisselen; de contactpagina volgt
+  automatisch de variant van de homepagina voor een consistente
+  uitstraling. De lettertypes uit Wendy's ontwerp (Source Serif 4/Figtree
+  voor A, Lora/Work Sans voor B en C) zijn benaderd met stevige
+  systeem-fallbackstacks — geen Google Fonts-CDN, dezelfde privacy-afweging
+  als de rest van dit project. Zelf hosten van de echte lettertypebestanden
+  kan als vervolgstap voor pixel-exacte typografie.
 - **Subtiele animatie**: blokken faden rustig in bij scroll (één keer,
   IntersectionObserver, met een no-JS/`prefers-reduced-motion`-fallback
   zodat content altijd zichtbaar blijft), en knoppen/links geven een
@@ -117,6 +133,46 @@ document root ingesteld worden.
   verwijderd — maar alleen als geen andere pagina het nog gebruikt (er
   wordt telkens over alle pagina's gecontroleerd, niet enkel de pagina die
   je net bewerkte).
+
+## Kalenderblok (afspraken boeken)
+
+Een nieuw, zesde bloktype: een zelfbedieningskalender waarmee bezoekers
+zelf een afspraak inplannen, zonder heen-en-weer e-mailen.
+
+- **Beschikbare tijdsloten** beheer je los van paginainhoud via "Kalender"
+  in het beheerpaneel: datum + tijd toevoegen, en een overzicht van
+  aankomende sloten (beschikbaar of al geboekt, met naam/e-mail/bericht van
+  wie geboekt heeft). Een boeking annuleren zet het tijdslot weer open; een
+  nog-niet-geboekt tijdslot kan je gewoon verwijderen.
+- **Op de site** toont het kalenderblok een maandkalender; een dag met
+  beschikbare momenten is aanklikbaar, waarna de tijdstippen verschijnen en
+  je naam/e-mailadres/bericht invult om te bevestigen.
+- **Race-condition-veilig**: boeken gebeurt via één atomaire
+  `UPDATE ... WHERE status = 'available'`-query. Proberen twee bezoekers
+  tegelijk hetzelfde moment te boeken, dan wint er maar één — de andere
+  krijgt meteen te zien dat het moment net ingenomen is en de kalender
+  ververst automatisch.
+- Zelfde beveiligingspatroon als het contactformulier: CSRF-token,
+  honeypot-veld, serverside validatie van datum/tijd/e-mailadres.
+- **Nog niet ingebouwd**: e-mailbevestiging naar de bezoeker of Wendy bij
+  een nieuwe boeking (zie "Mogelijke volgende stappen").
+
+## Homepage-content
+
+`database/seed-homepage.php` (eenmalig via de command line te draaien, zie
+"Lokaal opzetten") zet Wendy's eigen tekst uit haar ontwerp meteen klaar als
+homepage — titel, de vier diensten, de echte foto van de praktijkruimte
+(`public/assets/images/praktijkruimte.jpg`), en een kalenderblok onderaan.
+Bewust **niet** meegenomen, omdat ze ook in Wendy's eigen ontwerp nog als
+placeholder stonden — vul zelf aan via het beheerpaneel zodra je ze hebt:
+
+- Een portretfoto van Wendy voor de hero (nu leeg).
+- Een echte cliëntreactie als quote-blok (het testimonial in het ontwerp
+  was zelf een placeholder, dus niet overgenomen).
+- Adres, telefoonnummer en e-mailadres — die staan nergens in Wendy's
+  ontwerp en worden dus nergens verzonnen; de voettekst van de site toont
+  voorlopig enkel de sitenaam.
+- Beschikbare tijdsloten voor het kalenderblok (anders toont dat blok niets).
 
 ## SEO & vindbaarheid voor AI-zoekfuncties
 
@@ -165,7 +221,10 @@ document root ingesteld worden.
 
 ## Mogelijke volgende stappen (niet in deze MVP)
 
-- E-mailnotificatie bij een nieuw contactformulier (bv. via PHP `mail()` of
-  een transactionele e-maildienst).
+- E-mailnotificatie bij een nieuw contactformulier of een nieuwe
+  kalenderboeking (bv. via PHP `mail()` of een transactionele e-maildienst).
 - Meerdere beheerders met rollen, wachtwoord-reset via e-mail.
 - Paginering als het aantal pagina's/berichten groot wordt.
+- Zelf gehoste webfonts voor pixel-exacte typografie (zie "Functionaliteit").
+- Een rijkere voettekst (adres/telefoon/e-mail/links) zodra die gegevens
+  er zijn — nu bewust minimaal om niets te verzinnen.

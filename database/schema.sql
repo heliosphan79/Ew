@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS pages (
     title             VARCHAR(200) NOT NULL,
     -- JSON-encoded array of content blocks (text/image/quote/list/buttons) — see includes/functions.php render_blocks().
     content           MEDIUMTEXT NOT NULL,
-    -- Which of the 4 frontend look-and-feel variants (a/b/c/d) this page renders with.
+    -- Which of the frontend look-and-feel variants (a/b/c) this page renders with.
     theme_variant     VARCHAR(4) NOT NULL DEFAULT 'a',
     meta_description  VARCHAR(300) DEFAULT NULL,
     is_homepage       TINYINT(1) NOT NULL DEFAULT 0,
@@ -37,4 +37,21 @@ CREATE TABLE IF NOT EXISTS contact_submissions (
     is_read     TINYINT(1) NOT NULL DEFAULT 0,
     created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ip_address  VARCHAR(45) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Appointment slots for the calendar block. An admin adds available
+-- date+time slots (calendar.php); a visitor books one via the public
+-- booking endpoint, which atomically flips status to 'booked' so two
+-- people can never take the same slot.
+CREATE TABLE IF NOT EXISTS calendar_slots (
+    id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    slot_date      DATE NOT NULL,
+    slot_time      TIME NOT NULL,
+    status         ENUM('available', 'booked') NOT NULL DEFAULT 'available',
+    booked_name    VARCHAR(150) DEFAULT NULL,
+    booked_email   VARCHAR(190) DEFAULT NULL,
+    booked_message TEXT DEFAULT NULL,
+    booked_at      DATETIME DEFAULT NULL,
+    created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_slot (slot_date, slot_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

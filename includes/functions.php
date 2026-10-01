@@ -79,13 +79,13 @@ const BLOCK_TYPE_LABELS = [
     'quote' => 'Quote',
     'list' => 'Lijst',
     'buttons' => 'Knoppen',
+    'calendar' => 'Kalender',
 ];
 
 const THEME_VARIANTS = [
-    'a' => 'A — Helder & rustig',
-    'b' => 'B — Warm & zacht',
-    'c' => 'C — Natuurlijk & aards',
-    'd' => 'D — Strak & minimalistisch',
+    'a' => 'A — Crème, salie & terracotta',
+    'b' => 'B — Koraal',
+    'c' => 'C — Salie-groen',
 ];
 
 function normalize_theme_variant(?string $variant): string
@@ -138,13 +138,14 @@ function sanitize_blocks(array $rawBlocks): array
 
         switch ($raw['type']) {
             case 'text':
+                $eyebrow = mb_substr(trim((string) ($raw['eyebrow'] ?? '')), 0, 80);
                 $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
                 $body = mb_substr(trim((string) ($raw['body'] ?? '')), 0, 5000);
-                if ($body === '') {
-                    $errors[] = "Tekstblok #$count: vul inhoud in.";
+                if ($body === '' && $heading === '') {
+                    $errors[] = "Tekstblok #$count: vul een titel of inhoud in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'text', 'heading' => $heading, 'body' => $body];
+                $clean[] = ['type' => 'text', 'eyebrow' => $eyebrow, 'heading' => $heading, 'body' => $body];
                 break;
 
             case 'image':
@@ -216,6 +217,13 @@ function sanitize_blocks(array $rawBlocks): array
                 $clean[] = ['type' => 'buttons', 'buttons' => $buttons];
                 break;
 
+            case 'calendar':
+                // Available slots live in calendar_slots, managed globally via
+                // admin/calendar.php — this block only carries an optional heading.
+                $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
+                $clean[] = ['type' => 'calendar', 'heading' => $heading];
+                break;
+
             default:
                 continue 2;
         }
@@ -237,6 +245,7 @@ function render_blocks(array $blocks): string
             'quote' => render_quote_block($block),
             'list' => render_list_block($block),
             'buttons' => render_buttons_block($block),
+            'calendar' => render_calendar_block($block),
             default => '',
         };
     }
@@ -245,13 +254,17 @@ function render_blocks(array $blocks): string
 
 function render_text_block(array $block): string
 {
+    $eyebrow = trim((string) ($block['eyebrow'] ?? ''));
     $heading = trim((string) ($block['heading'] ?? ''));
     $body = trim((string) ($block['body'] ?? ''));
-    if ($body === '') {
+    if ($body === '' && $heading === '') {
         return '';
     }
 
     $out = '<div class="block block-text" data-animate>';
+    if ($eyebrow !== '') {
+        $out .= '<span class="eyebrow">' . e($eyebrow) . '</span>';
+    }
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }
@@ -344,6 +357,29 @@ function render_buttons_block(array $block): string
         return '';
     }
     return '<div class="block block-buttons" data-animate>' . $inner . '</div>';
+}
+
+// Available slots are shared, global data (calendar_slots), managed in
+// admin/calendar.php — not part of the block content. This just renders
+// the mount point; public/assets/js/calendar-block.js fetches availability
+// and handles the booking flow against calendar-availability.php /
+// book-slot.php, using the CSRF token embedded below.
+function render_calendar_block(array $block): string
+{
+    static $instance = 0;
+    $instance++;
+
+    $heading = trim((string) ($block['heading'] ?? ''));
+
+    $out = '<div class="block block-calendar" data-animate>';
+    if ($heading !== '') {
+        $out .= '<h2>' . e($heading) . '</h2>';
+    }
+    $out .= '<div class="calendar-widget" id="calendar-block-' . $instance . '" data-calendar-widget data-csrf="' . e(csrf_token()) . '">';
+    $out .= '<p class="calendar-loading">Beschikbare momenten laden…</p>';
+    $out .= '</div>';
+    $out .= '</div>';
+    return $out;
 }
 
 // ---------------------------------------------------------------------

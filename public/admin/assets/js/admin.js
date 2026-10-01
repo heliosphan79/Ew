@@ -31,17 +31,19 @@
         { type: 'image', label: 'Foto' },
         { type: 'quote', label: 'Quote' },
         { type: 'list', label: 'Lijst' },
-        { type: 'buttons', label: 'Knoppen' }
+        { type: 'buttons', label: 'Knoppen' },
+        { type: 'calendar', label: 'Kalender' }
     ];
     var LABELS = BLOCK_TYPES.reduce(function (acc, t) { acc[t.type] = t.label; return acc; }, {});
 
     function newBlock(type) {
         switch (type) {
-            case 'text': return { type: 'text', heading: '', body: '' };
+            case 'text': return { type: 'text', eyebrow: '', heading: '', body: '' };
             case 'image': return { type: 'image', url: '', alt: '', caption: '' };
             case 'quote': return { type: 'quote', text: '', source: '' };
             case 'list': return { type: 'list', heading: '', style: 'bullet', itemsText: '' };
             case 'buttons': return { type: 'buttons', buttonsText: '' };
+            case 'calendar': return { type: 'calendar', heading: '' };
             default: return null;
         }
     }
@@ -95,6 +97,7 @@
         switch (block.type) {
             case 'text':
                 return (
+                    fieldRow('Eyebrow (optioneel, klein label boven de titel)', '<input type="text" data-field="eyebrow" value="' + escapeAttr(block.eyebrow) + '">') +
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
                     fieldRow('Tekst', '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>')
                 );
@@ -129,6 +132,11 @@
                 return fieldRow(
                     'Knoppen — één per regel, als "Tekst | link" (max 3)',
                     '<textarea data-field="buttonsText" rows="3" placeholder="Contact opnemen | /contact.php">' + escapeHtml(block.buttonsText) + '</textarea>'
+                );
+            case 'calendar':
+                return (
+                    fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
+                    '<p class="field-hint">Beschikbare tijdsloten beheer je apart via "Kalender" in het zijmenu.</p>'
                 );
             default:
                 return '';
