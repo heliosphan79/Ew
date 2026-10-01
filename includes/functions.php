@@ -80,6 +80,7 @@ const BLOCK_TYPE_LABELS = [
     'list' => 'Lijst',
     'buttons' => 'Knoppen',
     'calendar' => 'Kalender',
+    'events' => 'Evenementen',
 ];
 
 const THEME_VARIANTS = [
@@ -224,6 +225,13 @@ function sanitize_blocks(array $rawBlocks): array
                 $clean[] = ['type' => 'calendar', 'heading' => $heading];
                 break;
 
+            case 'events':
+                // Events themselves live in the events table, managed via
+                // admin/events.php — this block only carries an optional heading.
+                $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
+                $clean[] = ['type' => 'events', 'heading' => $heading];
+                break;
+
             default:
                 continue 2;
         }
@@ -232,7 +240,7 @@ function sanitize_blocks(array $rawBlocks): array
     return ['blocks' => $clean, 'errors' => $errors];
 }
 
-function render_blocks(array $blocks): string
+function render_blocks(array $blocks, mysqli $mysqli): string
 {
     $html = '';
     foreach ($blocks as $block) {
@@ -246,6 +254,7 @@ function render_blocks(array $blocks): string
             'list' => render_list_block($block),
             'buttons' => render_buttons_block($block),
             'calendar' => render_calendar_block($block),
+            'events' => render_events_block($block, $mysqli),
             default => '',
         };
     }
@@ -379,6 +388,110 @@ function render_calendar_block(array $block): string
     $out .= '<p class="calendar-loading">Beschikbare momenten laden…</p>';
     $out .= '</div>';
     $out .= '</div>';
+    return $out;
+}
+
+function format_event_date(string $date, ?string $time): string
+{
+    $months = [
+        'januari', 'februari', 'maart', 'april', 'mei', 'juni',
+        'juli', 'augustus', 'september', 'oktober', 'november', 'december',
+    ];
+    $ts = strtotime($date);
+    $formatted = (int) date('j', $ts) . ' ' . $months[(int) date('n', $ts) - 1] . ' ' . date('Y', $ts);
+    if (!empty($time)) {
+        $formatted .= ' om ' . substr($time, 0, 5);
+    }
+    return $formatted;
+}
+
+// Only a same-site, relative path is accepted as a post-registration
+// redirect target — never a scheme or protocol-relative ("//host/...")
+// URL, so event-register.php can't be used as an open redirect.
+function is_safe_redirect_path(string $path): bool
+{
+    return str_starts_with($path, '/') && !str_starts_with($path, '//');
+}
+
+// Events themselves live in the events table, managed via admin/events.php
+// — this renders the next few upcoming, published events with an inline
+// registration form (no JS needed: a <details> toggle + a plain POST back
+// to event-register.php, same pattern as the contact form).
+function render_events_block(array $block, mysqli $mysqli): string
+{
+    $heading = trim((string) ($block['heading'] ?? ''));
+
+    $stmt = $mysqli->prepare(
+        'SELECT e.*, (SELECT COUNT(*) FROM event_registrations r WHERE r.event_id = e.id) AS registered_count
+         FROM events e
+         WHERE e.published = 1 AND e.event_date >= CURDATE()
+         ORDER BY e.event_date ASC, e.event_time ASC
+         LIMIT 6'
+    );
+    $stmt->execute();
+    $events = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    if (empty($events)) {
+        return '';
+    }
+
+    $redirectTarget = (string) ($_SERVER['REQUEST_URI'] ?? '/');
+    if (!is_safe_redirect_path($redirectTarget)) {
+        $redirectTarget = '/';
+    }
+
+    $out = '<div class="block block-events" data-animate>';
+    if ($heading !== '') {
+        $out .= '<h2>' . e($heading) . '</h2>';
+    }
+    $out .= '<div class="events-list">';
+
+    foreach ($events as $event) {
+        $eventId = (int) $event['id'];
+        $capacity = $event['capacity'] !== null ? (int) $event['capacity'] : null;
+        $registered = (int) $event['registered_count'];
+        $spotsLeft = $capacity !== null ? max(0, $capacity - $registered) : null;
+        $isFull = $capacity !== null && $spotsLeft <= 0;
+
+        $out .= '<article class="event-card">';
+        $out .= '<span class="eyebrow">' . e(format_event_date($event['event_date'], $event['event_time'])) . '</span>';
+        $out .= '<h3>' . e($event['title']) . '</h3>';
+        if (!empty($event['location'])) {
+            $out .= '<p class="event-location">' . e($event['location']) . '</p>';
+        }
+        $out .= '<p class="event-description">' . nl2br(e($event['description'])) . '</p>';
+
+        if ($capacity !== null) {
+            $out .= $isFull
+                ? '<span class="event-badge badge-full">Volzet</span>'
+                : '<span class="event-badge badge-spots">' . $spotsLeft . ' van de ' . $capacity . ' plaatsen vrij</span>';
+        }
+
+        if (!$isFull) {
+            $out .= '<details class="event-register">';
+            $out .= '<summary>Schrijf je in</summary>';
+            $out .= '<form method="post" action="/event-register.php">';
+            $out .= csrf_field();
+            $out .= '<input type="hidden" name="event_id" value="' . $eventId . '">';
+            $out .= '<input type="hidden" name="redirect" value="' . e($redirectTarget) . '">';
+            $out .= '<div style="position:absolute;left:-9999px;" aria-hidden="true">';
+            $out .= '<label for="event-website-' . $eventId . '">Website</label>';
+            $out .= '<input type="text" id="event-website-' . $eventId . '" name="website" tabindex="-1" autocomplete="off">';
+            $out .= '</div>';
+            $out .= '<label for="event-name-' . $eventId . '">Naam</label>';
+            $out .= '<input type="text" id="event-name-' . $eventId . '" name="name" required>';
+            $out .= '<label for="event-email-' . $eventId . '">E-mailadres</label>';
+            $out .= '<input type="email" id="event-email-' . $eventId . '" name="email" required>';
+            $out .= '<button type="submit">Inschrijven</button>';
+            $out .= '</form>';
+            $out .= '</details>';
+        }
+
+        $out .= '</article>';
+    }
+
+    $out .= '</div></div>';
     return $out;
 }
 

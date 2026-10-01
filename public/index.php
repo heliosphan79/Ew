@@ -25,7 +25,7 @@ require __DIR__ . '/../includes/header.php';
 <?php if ($homepage): ?>
     <article class="page-content">
         <h1><?= e($homepage['title']) ?></h1>
-        <?= render_blocks($homepageBlocks) ?>
+        <?= render_blocks($homepageBlocks, $mysqli) ?>
     </article>
 <?php else: ?>
     <article class="page-content">

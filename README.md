@@ -2,8 +2,9 @@
 
 Eenvoudig CMS (PHP + MySQLi + vanilla JS/HTML, geen frameworks of Composer)
 om de website eigen-wijzer.be te beheren: pagina's opgebouwd uit eenvoudige
-content-blokken (tekst, foto, quote, lijst, knoppen, kalender — met eigen
-afbeeldingsupload en een zelfbedieningsafsprakenkalender), 3 kiesbare
+content-blokken (tekst, foto, quote, lijst, knoppen, kalender, evenementen —
+met eigen afbeeldingsupload, een zelfbedieningsafsprakenkalender en
+evenementen met capaciteit-beperkte inschrijving), 3 kiesbare
 frontend-varianten op basis van Wendy's ontwerp met rustige
 scroll/klik-animatie, een contactformulier waarvan de inzendingen in het
 beheerpaneel terechtkomen, en ingebouwde SEO-optimalisatie inclusief
@@ -34,8 +35,8 @@ document root ingesteld worden.
    installatie). Draai je al een oudere versie van deze database, importeer
    dan in plaats daarvan de ontbrekende bestanden uit `database/migrations/`
    op volgnummer — `002_blocks_and_theme.sql` (lees de opmerking bovenaan,
-   want bestaande paginainhoud wordt daarbij geleegd), `003_menu_visibility.sql`
-   en `004_calendar_slots.sql`.
+   want bestaande paginainhoud wordt daarbij geleegd), `003_menu_visibility.sql`,
+   `004_calendar_slots.sql` en `005_events.sql`.
 3. `cp config/config.example.php config/config.php` en vul je lokale
    databasegegevens in.
 4. Start de ingebouwde PHP-server vanaf de projectroot:
@@ -101,6 +102,10 @@ document root ingesteld worden.
   - **Kalender** — een zelfbedieningsafsprakenkalender (zie "Kalenderblok"
     hieronder) met een optionele titel; de beschikbare tijdsloten zelf
     beheer je los via "Kalender" in het beheerpaneel, niet per blok.
+  - **Evenementen** — toont automatisch de eerstkomende, gepubliceerde
+    evenementen met inschrijfformulier (zie "Evenementenblok" hieronder);
+    de evenementen zelf beheer je los via "Evenementen" in het
+    beheerpaneel, niet per blok.
   - Links/afbeeldings-URL's worden serverside gevalideerd (enkel `/...`,
     `http(s)://`, `mailto:` of `tel:` — geen `javascript:`-injectie
     mogelijk).
@@ -156,6 +161,34 @@ zelf een afspraak inplannen, zonder heen-en-weer e-mailen.
   honeypot-veld, serverside validatie van datum/tijd/e-mailadres.
 - **Nog niet ingebouwd**: e-mailbevestiging naar de bezoeker of Wendy bij
   een nieuwe boeking (zie "Mogelijke volgende stappen").
+
+## Evenementenblok (lezingen/workshops aankondigen)
+
+Een zevende bloktype, los van het kalenderblok: voor eenmalige evenementen
+(lezingen, workshops, infosessies) met optionele, capaciteit-beperkte
+inschrijving — geen individuele tijdsloten zoals bij een afspraak, gewoon
+één datum en (optioneel) een maximum aantal plaatsen.
+
+- **Evenementen beheer je los van paginainhoud** via "Evenementen" in het
+  beheerpaneel: titel, beschrijving, datum, optionele tijd/locatie, en een
+  optioneel maximum aantal plaatsen (leeg = onbeperkt). Per evenement zie
+  je wie ingeschreven is, met de mogelijkheid een inschrijving te
+  verwijderen (bv. na een telefonische afmelding) — dat maakt meteen weer
+  een plaats vrij.
+- **Op de site** toont het evenementenblok automatisch de eerstkomende
+  6 gepubliceerde evenementen, elk met een "Schrijf je in"-uitklapper
+  (`<details>`/`<summary>`, geen JavaScript nodig) met een naam/e-mailveld.
+  Is een evenement volzet, dan verschijnt een "Volzet"-label in plaats van
+  het formulier.
+- **Race-condition-veilig**: de capaciteitscheck gebeurt binnen één
+  databasetransactie met `SELECT ... FOR UPDATE` op het evenement, dus ook
+  hier kunnen twee bezoekers nooit allebei de laatste plaats bemachtigen.
+- Zelfde beveiligingspatroon als het contactformulier en het kalenderblok:
+  CSRF-token, honeypot-veld, serverside validatie — inclusief een check dat
+  de "terug naar de pagina"-redirect na het inschrijven altijd een eigen,
+  relatieve pagina is (nooit een externe URL).
+- **Nog niet ingebouwd**: e-mailbevestiging bij inschrijving (zie
+  "Mogelijke volgende stappen").
 
 ## Homepage-content
 
@@ -221,8 +254,9 @@ placeholder stonden — vul zelf aan via het beheerpaneel zodra je ze hebt:
 
 ## Mogelijke volgende stappen (niet in deze MVP)
 
-- E-mailnotificatie bij een nieuw contactformulier of een nieuwe
-  kalenderboeking (bv. via PHP `mail()` of een transactionele e-maildienst).
+- E-mailnotificatie bij een nieuw contactformulier, een nieuwe
+  kalenderboeking of een nieuwe evenementinschrijving (bv. via PHP `mail()`
+  of een transactionele e-maildienst).
 - Meerdere beheerders met rollen, wachtwoord-reset via e-mail.
 - Paginering als het aantal pagina's/berichten groot wordt.
 - Zelf gehoste webfonts voor pixel-exacte typografie (zie "Functionaliteit").

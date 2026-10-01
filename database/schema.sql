@@ -55,3 +55,30 @@ CREATE TABLE IF NOT EXISTS calendar_slots (
     created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uniq_slot (slot_date, slot_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Events (lectures, workshops, ...) for the "Evenementen" block. Registering
+-- is capacity-checked atomically in public/event-register.php (transaction +
+-- SELECT ... FOR UPDATE) so two visitors can never both take the last spot.
+CREATE TABLE IF NOT EXISTS events (
+    id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    title             VARCHAR(200) NOT NULL,
+    description       TEXT NOT NULL,
+    event_date        DATE NOT NULL,
+    event_time        TIME DEFAULT NULL,
+    location          VARCHAR(200) DEFAULT NULL,
+    -- NULL = unlimited capacity.
+    capacity          INT UNSIGNED DEFAULT NULL,
+    published         TINYINT(1) NOT NULL DEFAULT 0,
+    created_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS event_registrations (
+    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    event_id      INT UNSIGNED NOT NULL,
+    name          VARCHAR(150) NOT NULL,
+    email         VARCHAR(190) NOT NULL,
+    registered_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip_address    VARCHAR(45) DEFAULT NULL,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

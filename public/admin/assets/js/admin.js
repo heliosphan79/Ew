@@ -32,7 +32,8 @@
         { type: 'quote', label: 'Quote' },
         { type: 'list', label: 'Lijst' },
         { type: 'buttons', label: 'Knoppen' },
-        { type: 'calendar', label: 'Kalender' }
+        { type: 'calendar', label: 'Kalender' },
+        { type: 'events', label: 'Evenementen' }
     ];
     var LABELS = BLOCK_TYPES.reduce(function (acc, t) { acc[t.type] = t.label; return acc; }, {});
 
@@ -44,6 +45,7 @@
             case 'list': return { type: 'list', heading: '', style: 'bullet', itemsText: '' };
             case 'buttons': return { type: 'buttons', buttonsText: '' };
             case 'calendar': return { type: 'calendar', heading: '' };
+            case 'events': return { type: 'events', heading: '' };
             default: return null;
         }
     }
@@ -137,6 +139,11 @@
                 return (
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
                     '<p class="field-hint">Beschikbare tijdsloten beheer je apart via "Kalender" in het zijmenu.</p>'
+                );
+            case 'events':
+                return (
+                    fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
+                    '<p class="field-hint">De evenementen zelf beheer je apart via "Evenementen" in het zijmenu — dit blok toont automatisch de eerstkomende, gepubliceerde evenementen.</p>'
                 );
             default:
                 return '';

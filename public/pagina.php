@@ -40,7 +40,7 @@ require __DIR__ . '/../includes/header.php';
 <?php if ($page): ?>
     <article class="page-content">
         <h1><?= e($page['title']) ?></h1>
-        <?= render_blocks($pageBlocks) ?>
+        <?= render_blocks($pageBlocks, $mysqli) ?>
     </article>
 <?php else: ?>
     <article class="page-content">
