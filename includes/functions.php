@@ -8,6 +8,29 @@ function e(?string $value): string
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+// Renders the site name with its first hyphen styled in the accent color
+// (matching the "Eigen-Wijzer" logo lockup) — falls back to plain escaped
+// text if the configured site name has no hyphen to style.
+function render_site_wordmark(string $name): string
+{
+    $pos = strpos($name, '-');
+    if ($pos === false) {
+        return e($name);
+    }
+    return e(substr($name, 0, $pos)) . '<span class="ew-logo-accent">-</span>' . e(substr($name, $pos + 1));
+}
+
+// The small diagonal "needle" icon used for both nav-panel items and bullet
+// list items — echoes the logo's compass needle at the same -38° angle,
+// straightening to 0° on hover (see .ew-needle-diag in style.css).
+function render_needle_icon(): string
+{
+    return '<svg class="ew-needle-icon ew-needle-diag" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">'
+        . '<polygon class="ew-needle-a" points="1,10 10,6 10,14"></polygon>'
+        . '<polygon class="ew-needle-b" points="10,6 19,10 10,14"></polygon>'
+        . '</svg>';
+}
+
 function csrf_token(): string
 {
     if (empty($_SESSION['csrf_token'])) {
@@ -102,6 +125,20 @@ function normalize_theme_variant(?string $variant): string
     return array_key_exists((string) $variant, THEME_VARIANTS) ? $variant : 'a';
 }
 
+// Optional background treatment, settable on any block (and individually
+// per column of a columns-block). 'accent'/'surface' use the theme's own
+// tokens so they re-skin per variant rather than a fixed color.
+function sanitize_block_background(mixed $raw): string
+{
+    $value = is_string($raw) ? $raw : '';
+    return in_array($value, ['accent', 'surface'], true) ? $value : 'none';
+}
+
+function block_bg_class(string $background): string
+{
+    return $background === 'none' ? '' : ' block-bg-' . $background;
+}
+
 // Only allow link/image targets that can't carry an executable scheme
 // (blocks javascript:, data:, vbscript:, ...). Relative paths and the
 // common safe schemes are allowed.
@@ -115,6 +152,32 @@ function is_safe_url(string $url): bool
         return true;
     }
     return (bool) preg_match('#^(https?|mailto|tel):\S+$#i', $url);
+}
+
+// Minimal, safe inline markup for free-text fields: **vet**, *cursief*,
+// [label](url). Escapes the raw text FIRST and only then turns the markup
+// into real tags on the escaped result, so literal <, >, & typed by an
+// editor can never become live HTML — only the tags this function itself
+// inserts exist in the output. Links reuse is_safe_url(), same as image
+// and button links, so javascript:/data: etc. can't sneak in here either.
+function render_inline_markup(string $text): string
+{
+    $escaped = e($text);
+
+    $escaped = preg_replace_callback('/\[([^\[\]]+)\]\(([^()\s]+)\)/', function (array $m): string {
+        $url = html_entity_decode($m[2], ENT_QUOTES, 'UTF-8');
+        if (!is_safe_url($url)) {
+            return $m[0];
+        }
+        return '<a href="' . e($url) . '">' . $m[1] . '</a>';
+    }, $escaped) ?? $escaped;
+
+    // Bold before italic, so **x** isn't eaten by the single-asterisk
+    // italic pattern first.
+    $escaped = preg_replace('/\*\*([^*]+)\*\*/', '<strong>$1</strong>', $escaped) ?? $escaped;
+    $escaped = preg_replace('/\*([^*\n]+)\*/', '<em>$1</em>', $escaped) ?? $escaped;
+
+    return $escaped;
 }
 
 function decode_blocks(?string $json): array
@@ -154,7 +217,7 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Tekstblok #$count: vul een titel of inhoud in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'text', 'eyebrow' => $eyebrow, 'heading' => $heading, 'body' => $body];
+                $clean[] = ['type' => 'text', 'eyebrow' => $eyebrow, 'heading' => $heading, 'body' => $body, 'background' => sanitize_block_background($raw['background'] ?? '')];
                 break;
 
             case 'image':
@@ -169,7 +232,7 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Fotoblok #$count: vul een korte alt-tekst in (toegankelijkheid).";
                     continue 2;
                 }
-                $clean[] = ['type' => 'image', 'url' => $url, 'alt' => $alt, 'caption' => $caption];
+                $clean[] = ['type' => 'image', 'url' => $url, 'alt' => $alt, 'caption' => $caption, 'background' => sanitize_block_background($raw['background'] ?? '')];
                 break;
 
             case 'quote':
@@ -179,7 +242,7 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Quoteblok #$count: vul een citaat in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'quote', 'text' => $text, 'source' => $source];
+                $clean[] = ['type' => 'quote', 'text' => $text, 'source' => $source, 'background' => sanitize_block_background($raw['background'] ?? '')];
                 break;
 
             case 'list':
@@ -199,7 +262,7 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Lijstblok #$count: vul minstens één item in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'list', 'heading' => $heading, 'style' => $style, 'items' => $items];
+                $clean[] = ['type' => 'list', 'heading' => $heading, 'style' => $style, 'items' => $items, 'background' => sanitize_block_background($raw['background'] ?? '')];
                 break;
 
             case 'buttons':
@@ -223,21 +286,21 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Knoppenblok #$count: vul minstens één knop met label en link in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'buttons', 'buttons' => $buttons];
+                $clean[] = ['type' => 'buttons', 'buttons' => $buttons, 'background' => sanitize_block_background($raw['background'] ?? '')];
                 break;
 
             case 'calendar':
                 // Available slots live in calendar_slots, managed globally via
                 // admin/calendar.php — this block only carries an optional heading.
                 $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
-                $clean[] = ['type' => 'calendar', 'heading' => $heading];
+                $clean[] = ['type' => 'calendar', 'heading' => $heading, 'background' => sanitize_block_background($raw['background'] ?? '')];
                 break;
 
             case 'events':
                 // Events themselves live in the events table, managed via
                 // admin/events.php — this block only carries an optional heading.
                 $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
-                $clean[] = ['type' => 'events', 'heading' => $heading];
+                $clean[] = ['type' => 'events', 'heading' => $heading, 'background' => sanitize_block_background($raw['background'] ?? '')];
                 break;
 
             case 'map':
@@ -248,7 +311,7 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Kaartblok #$count: vul het adres van de praktijk in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'map', 'address' => $address, 'heading' => $heading, 'layout' => $layout];
+                $clean[] = ['type' => 'map', 'address' => $address, 'heading' => $heading, 'layout' => $layout, 'background' => sanitize_block_background($raw['background'] ?? '')];
                 break;
 
             case 'media_text':
@@ -278,6 +341,7 @@ function sanitize_blocks(array $rawBlocks): array
                     'heading' => $heading,
                     'body' => $body,
                     'image_position' => $imagePosition,
+                    'background' => sanitize_block_background($raw['background'] ?? ''),
                 ];
                 break;
 
@@ -285,7 +349,9 @@ function sanitize_blocks(array $rawBlocks): array
                 $columnCount = (int) ($raw['column_count'] ?? 2);
                 $columnCount = in_array($columnCount, [2, 3], true) ? $columnCount : 2;
                 $rawColumns = array_values((array) ($raw['columns'] ?? []));
+                $rawColumnBackgrounds = array_values((array) ($raw['column_backgrounds'] ?? []));
                 $columns = [];
+                $columnBackgrounds = [];
                 for ($col = 0; $col < $columnCount; $col++) {
                     $rawChildren = is_array($rawColumns[$col] ?? null) ? $rawColumns[$col] : [];
                     $children = [];
@@ -302,13 +368,20 @@ function sanitize_blocks(array $rawBlocks): array
                         }
                     }
                     $columns[] = $children;
+                    $columnBackgrounds[] = sanitize_block_background($rawColumnBackgrounds[$col] ?? '');
                 }
                 $hasContent = array_filter($columns, fn($children) => !empty($children));
                 if (empty($hasContent)) {
                     $errors[] = "Kolommenblok #$count: voeg minstens één blok toe aan een kolom.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'columns', 'column_count' => $columnCount, 'columns' => $columns];
+                $clean[] = [
+                    'type' => 'columns',
+                    'column_count' => $columnCount,
+                    'columns' => $columns,
+                    'column_backgrounds' => $columnBackgrounds,
+                    'background' => sanitize_block_background($raw['background'] ?? ''),
+                ];
                 break;
 
             default:
@@ -430,8 +503,9 @@ function render_text_block(array $block): string
     if ($body === '' && $heading === '') {
         return '';
     }
+    $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<div class="block block-text" data-animate>';
+    $out = '<div class="block block-text' . $bgClass . '" data-animate>';
     if ($eyebrow !== '') {
         $out .= '<span class="eyebrow">' . e($eyebrow) . '</span>';
     }
@@ -443,7 +517,7 @@ function render_text_block(array $block): string
         if ($paragraph === '') {
             continue;
         }
-        $out .= '<p>' . nl2br(e($paragraph)) . '</p>';
+        $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
     }
     $out .= '</div>';
     return $out;
@@ -457,8 +531,9 @@ function render_image_block(array $block): string
     }
     $alt = trim((string) ($block['alt'] ?? ''));
     $caption = trim((string) ($block['caption'] ?? ''));
+    $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<figure class="block block-image" data-animate>';
+    $out = '<figure class="block block-image' . $bgClass . '" data-animate>';
     $out .= '<img src="' . e($url) . '" alt="' . e($alt) . '" loading="lazy">';
     if ($caption !== '') {
         $out .= '<figcaption>' . e($caption) . '</figcaption>';
@@ -474,8 +549,9 @@ function render_quote_block(array $block): string
         return '';
     }
     $source = trim((string) ($block['source'] ?? ''));
+    $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<blockquote class="block block-quote" data-animate>';
+    $out = '<blockquote class="block block-quote' . $bgClass . '" data-animate>';
     $out .= '<p>' . nl2br(e($text)) . '</p>';
     if ($source !== '') {
         $out .= '<cite>' . e($source) . '</cite>';
@@ -495,14 +571,16 @@ function render_list_block(array $block): string
     }
     $heading = trim((string) ($block['heading'] ?? ''));
     $listClass = ($block['style'] ?? '') === 'check' ? 'list-check' : 'list-bullet';
+    $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<div class="block block-list" data-animate>';
+    $out = '<div class="block block-list' . $bgClass . '" data-animate>';
     if ($heading !== '') {
         $out .= '<h3>' . e($heading) . '</h3>';
     }
     $out .= '<ul class="' . $listClass . '">';
     foreach ($items as $item) {
-        $out .= '<li>' . e($item) . '</li>';
+        $icon = $listClass === 'list-bullet' ? render_needle_icon() : '';
+        $out .= '<li>' . $icon . '<span>' . render_inline_markup($item) . '</span></li>';
     }
     $out .= '</ul></div>';
     return $out;
@@ -526,7 +604,8 @@ function render_buttons_block(array $block): string
     if ($rendered === 0) {
         return '';
     }
-    return '<div class="block block-buttons" data-animate>' . $inner . '</div>';
+    $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
+    return '<div class="block block-buttons' . $bgClass . '" data-animate>' . $inner . '</div>';
 }
 
 // Plain Google Maps iframe embed (https://www.google.com/maps?q=...&output=embed)
@@ -541,8 +620,9 @@ function render_map_block(array $block): string
     $heading = trim((string) ($block['heading'] ?? ''));
     $layout = ($block['layout'] ?? '') === 'stretch' ? 'stretch' : 'box';
     $embedUrl = 'https://www.google.com/maps?q=' . urlencode($address) . '&output=embed';
+    $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<div class="block block-map map-' . $layout . '" data-animate>';
+    $out = '<div class="block block-map map-' . $layout . $bgClass . '" data-animate>';
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }
@@ -565,8 +645,9 @@ function render_media_text_block(array $block): string
     }
     $caption = trim((string) ($block['caption'] ?? ''));
     $position = ($block['image_position'] ?? '') === 'right' ? 'right' : 'left';
+    $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<div class="block block-media-text media-text-' . $position . '" data-animate>';
+    $out = '<div class="block block-media-text media-text-' . $position . $bgClass . '" data-animate>';
     $out .= '<figure class="media-text-figure">';
     $out .= '<img src="' . e($url) . '" alt="' . e($alt) . '" loading="lazy">';
     if ($caption !== '') {
@@ -582,48 +663,119 @@ function render_media_text_block(array $block): string
         if ($paragraph === '') {
             continue;
         }
-        $out .= '<p>' . nl2br(e($paragraph)) . '</p>';
+        $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
     }
     $out .= '</div></div>';
     return $out;
 }
 
-// Renders a columns-block's children with the same render_*_block()
-// functions the top-level editor uses — see COLUMN_CHILD_TYPES for the
-// allowed subset. Child blocks keep their own `.block`/data-animate, so
-// they fade in individually and get normal inter-block spacing within
-// the column.
+// Renders one child block as one or more ".col-row" cells instead of the
+// usual ".block" wrapper, so each piece becomes its own CSS grid row
+// inside its column. Columns then share row tracks via CSS subgrid (see
+// style.css), so e.g. a longer heading in one column pushes that row's
+// height for every column equally — bodies/buttons across columns start
+// at the same height regardless of how each column's own heading wraps.
+// text splits into a heading-row and a body-row (either may be absent);
+// buttons becomes its own row; image/quote/list stay a single row,
+// reusing their normal render_*_block() output as-is.
+function render_column_child_rows(array $child): string
+{
+    if (!is_array($child) || empty($child['type'])) {
+        return '';
+    }
+
+    switch ($child['type']) {
+        case 'text':
+            $eyebrow = trim((string) ($child['eyebrow'] ?? ''));
+            $heading = trim((string) ($child['heading'] ?? ''));
+            $body = trim((string) ($child['body'] ?? ''));
+            if ($heading === '' && $body === '') {
+                return '';
+            }
+            $out = '';
+            if ($eyebrow !== '' || $heading !== '') {
+                $out .= '<div class="col-row col-row-heading">';
+                if ($eyebrow !== '') {
+                    $out .= '<span class="eyebrow">' . e($eyebrow) . '</span>';
+                }
+                if ($heading !== '') {
+                    $out .= '<h3>' . e($heading) . '</h3>';
+                }
+                $out .= '</div>';
+            }
+            if ($body !== '') {
+                $out .= '<div class="col-row col-row-body">';
+                foreach (preg_split('/\n{2,}/', $body) as $paragraph) {
+                    $paragraph = trim($paragraph);
+                    if ($paragraph === '') {
+                        continue;
+                    }
+                    $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
+                }
+                $out .= '</div>';
+            }
+            return $out;
+
+        case 'buttons':
+            $buttons = (array) ($child['buttons'] ?? []);
+            $inner = '';
+            $rendered = 0;
+            foreach ($buttons as $btn) {
+                $label = trim((string) ($btn['label'] ?? ''));
+                $url = trim((string) ($btn['url'] ?? ''));
+                if ($label === '' || $url === '' || !is_safe_url($url)) {
+                    continue;
+                }
+                $variant = $rendered === 0 ? 'btn-primary' : 'btn-secondary';
+                $inner .= '<a class="btn ' . $variant . '" href="' . e($url) . '">' . e($label) . '</a>';
+                $rendered++;
+            }
+            if ($rendered === 0) {
+                return '';
+            }
+            return '<div class="col-row col-row-buttons">' . $inner . '</div>';
+
+        case 'image':
+            $html = render_image_block($child);
+            return $html !== '' ? '<div class="col-row">' . $html . '</div>' : '';
+
+        case 'quote':
+            $html = render_quote_block($child);
+            return $html !== '' ? '<div class="col-row">' . $html . '</div>' : '';
+
+        case 'list':
+            $html = render_list_block($child);
+            return $html !== '' ? '<div class="col-row">' . $html . '</div>' : '';
+
+        default:
+            return '';
+    }
+}
+
 function render_columns_block(array $block): string
 {
     $columnCount = in_array($block['column_count'] ?? 2, [2, 3], true) ? $block['column_count'] : 2;
+    $columnBackgrounds = (array) ($block['column_backgrounds'] ?? []);
     $columnsHtml = '';
     $hasContent = false;
 
-    foreach ((array) ($block['columns'] ?? []) as $children) {
+    foreach (array_values((array) ($block['columns'] ?? [])) as $i => $children) {
         $inner = '';
         foreach ((array) $children as $child) {
-            if (!is_array($child) || empty($child['type'])) {
-                continue;
-            }
-            $inner .= match ($child['type']) {
-                'text' => render_text_block($child),
-                'image' => render_image_block($child),
-                'quote' => render_quote_block($child),
-                'list' => render_list_block($child),
-                'buttons' => render_buttons_block($child),
-                default => '',
-            };
+            $inner .= render_column_child_rows($child);
         }
         if ($inner !== '') {
             $hasContent = true;
         }
-        $columnsHtml .= '<div class="column">' . $inner . '</div>';
+        $colBgClass = block_bg_class(sanitize_block_background($columnBackgrounds[$i] ?? ''));
+        $columnsHtml .= '<div class="column' . $colBgClass . '">' . $inner . '</div>';
     }
 
     if (!$hasContent) {
         return '';
     }
-    return '<div class="block block-columns columns-' . $columnCount . '">' . $columnsHtml . '</div>';
+    $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
+    return '<div class="block block-columns columns-' . $columnCount . $bgClass . '" data-animate>' . $columnsHtml . '</div>';
 }
 
 // Available slots are shared, global data (calendar_slots), managed in
@@ -637,8 +789,9 @@ function render_calendar_block(array $block): string
     $instance++;
 
     $heading = trim((string) ($block['heading'] ?? ''));
+    $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<div class="block block-calendar" data-animate>';
+    $out = '<div class="block block-calendar' . $bgClass . '" data-animate>';
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }
@@ -699,7 +852,8 @@ function render_events_block(array $block, mysqli $mysqli): string
         $redirectTarget = '/';
     }
 
-    $out = '<div class="block block-events" data-animate>';
+    $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
+    $out = '<div class="block block-events' . $bgClass . '" data-animate>';
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }

@@ -76,6 +76,14 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
    maken via de installatiepagina.
 6. Zorg dat de website via HTTPS draait (meestal gratis Let's Encrypt via
    het hostingpaneel) — logingegevens mogen nooit over onversleuteld http.
+7. **Test de nette URL's** (`jouwdomein.be/pagina/een-slug`, niet enkel de
+   homepage): als die altijd op de homepage uitkomen in plaats van de juiste
+   pagina, staat `MultiViews` vermoedelijk aan op je hosting (vaak de
+   standaard). `.htaccess` zet dit zelf al uit (`Options -Indexes
+   -MultiViews`), maar als je hosting die regel niet toepast (bv. via een
+   losse `Options`-instelling in het hostingpaneel die voorrang krijgt), zet
+   `MultiViews` dan handmatig uit via het hostingpaneel of vraag het na bij
+   support.
 
 ## Functionaliteit (MVP)
 
@@ -102,13 +110,15 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
     "Aanbod"), optionele titel, en platte tekst (alinea's gescheiden door
     een lege regel) — titel en tekst mogen niet allebei leeg zijn, maar één
     van de twee volstaat (handig voor een kale sectiekop boven bv. een
-    lijstblok).
+    lijstblok). Eenvoudige opmaak mogelijk — zie "Opmaak in tekst en
+    lijsten" hieronder.
   - **Foto** — kies "Bestand kiezen…" om een JPG/PNG/GIF/WEBP te uploaden
     (max. 5 MB, direct herbekeken als miniatuur), of vul zelf een
     afbeeldings-URL in. Plus alt-tekst (verplicht, toegankelijkheid) en
     optioneel bijschrift.
   - **Quote** — citaat + optionele bron.
-  - **Lijst** — titel, stijl (opsomming/vinkjes) en items (één per regel).
+  - **Lijst** — titel, stijl (opsomming/vinkjes) en items (één per regel,
+    met dezelfde eenvoudige opmaak als een tekstblok).
   - **Knoppen** — tot 3 knoppen, één per regel als `Tekst | link`.
   - **Kalender** — een zelfbedieningsafsprakenkalender (zie "Kalenderblok"
     hieronder) met een optionele titel; de beschikbare tijdsloten zelf
@@ -126,10 +136,28 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
     van blokken (tekst, foto, quote, lijst, knoppen — geen kalender,
     evenementen, kaart of geneste kolommen, om het behapbaar te houden).
     Elke kolom heeft zijn eigen toolbar om blokken toe te voegen; stapelt
-    verticaal op mobiel.
+    verticaal op mobiel. Vanaf 640px lijnen titels, tekst en knoppen
+    automatisch rij voor rij uit over de kolommen heen (CSS subgrid) — een
+    langere titel in één kolom duwt de tekst daaronder in **alle** kolommen
+    netjes mee naar dezelfde hoogte, zonder dat je iets hoeft in te stellen.
+  - **Achtergrond** — elk blok (en, binnen een kolommenblok, elke kolom
+    afzonderlijk) kan een "Accentkleur"- of "Zachte kaart"-achtergrond
+    krijgen in plaats van de standaard, transparante achtergrond. Beide
+    gebruiken de kleurtokens van de actieve frontend-variant, dus ze passen
+    automatisch mee met A/B/C.
   - Links/afbeeldings-URL's worden serverside gevalideerd (enkel `/...`,
     `http(s)://`, `mailto:` of `tel:` — geen `javascript:`-injectie
     mogelijk).
+- **Opmaak in tekst en lijsten**: de tekst van een tekstblok, foto+tekst-blok
+  en de items van een lijstblok ondersteunen een kleine, veilige opmaaksyntax
+  — `**vet**`, `*cursief*` en `[linktekst](url)` — via knoppen boven het
+  veld of door de syntax gewoon zelf te typen. Dit is bewust **geen**
+  vrije HTML-editor: wat je typt wordt eerst volledig geëscaped en pas
+  daarna omgezet naar `<strong>`/`<em>`/`<a>`-tags, dus letterlijke
+  `<script>`- of andere HTML-tags kunnen nooit als echte opmaak
+  terechtkomen — enkel deze drie, bewust beperkte stijlen zijn mogelijk.
+  Links volgen dezelfde `is_safe_url()`-controle als overal elders
+  (geen `javascript:`).
 - **3 frontend-varianten**, per pagina instelbaar (dropdown in de
   pagina-editor), gebaseerd op Wendy's eigen ontwerp: A "Crème, salie &
   terracotta" (het nieuwe ontwerp), B "Koraal" en C "Salie-groen" (de twee
@@ -149,6 +177,17 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
 - **Mobile-first CSS**: basisstijlen zijn geschreven voor kleine schermen,
   met `min-width`-media queries die layout (nav, knoppenrij, contentbreedte)
   geleidelijk verrijken voor tablet/desktop.
+- **Logo & navigatie** (Wendy's "Kompasnaald"-ontwerp): een SVG-logo (ring +
+  naald) met wordmerk, waarvan alle kleuren via `var(--text)`/`var(--accent)`/
+  `var(--bg)` lopen — past dus automatisch mee met de frontend-variant.
+  Speelse, bewust subtiele logo-animatie: de naald zwaait uit en komt tot
+  rust bij het laden van de pagina (eenmalig), en draait een volle toer bij
+  hover/focus. Op mobiel (<640px) wordt het menu een ronde knop die opent
+  tot een kruis-in-ring (CSS, geen library) met een uitklappaneel en
+  gestaffelde item-reveal; vanaf 640px blijft het de horizontale balk.
+  Volledig `prefers-reduced-motion`-bewust. Lijstblokken in "opsomming"-stijl
+  gebruiken dezelfde schuine naald-bullet (-38°, rechttrekt bij hover) als
+  het logo — "vinkjes"-stijl blijft ongewijzigd.
 - Contactformulier op de site met validatie, CSRF-bescherming en een
   honeypot-veld tegen spambots; inzendingen zijn zichtbaar en
   markeerbaar/verwijderbaar in het beheerpaneel.

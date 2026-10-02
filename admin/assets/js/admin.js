@@ -48,16 +48,16 @@
 
     function newBlock(type) {
         switch (type) {
-            case 'text': return { type: 'text', eyebrow: '', heading: '', body: '' };
-            case 'image': return { type: 'image', url: '', alt: '', caption: '' };
-            case 'quote': return { type: 'quote', text: '', source: '' };
-            case 'list': return { type: 'list', heading: '', style: 'bullet', itemsText: '' };
-            case 'buttons': return { type: 'buttons', buttonsText: '' };
-            case 'calendar': return { type: 'calendar', heading: '' };
-            case 'events': return { type: 'events', heading: '' };
-            case 'map': return { type: 'map', address: '', heading: '', layout: 'box' };
-            case 'media_text': return { type: 'media_text', url: '', alt: '', caption: '', heading: '', body: '', image_position: 'left' };
-            case 'columns': return { type: 'columns', column_count: 2, columns: [[], []] };
+            case 'text': return { type: 'text', eyebrow: '', heading: '', body: '', background: 'none' };
+            case 'image': return { type: 'image', url: '', alt: '', caption: '', background: 'none' };
+            case 'quote': return { type: 'quote', text: '', source: '', background: 'none' };
+            case 'list': return { type: 'list', heading: '', style: 'bullet', itemsText: '', background: 'none' };
+            case 'buttons': return { type: 'buttons', buttonsText: '', background: 'none' };
+            case 'calendar': return { type: 'calendar', heading: '', background: 'none' };
+            case 'events': return { type: 'events', heading: '', background: 'none' };
+            case 'map': return { type: 'map', address: '', heading: '', layout: 'box', background: 'none' };
+            case 'media_text': return { type: 'media_text', url: '', alt: '', caption: '', heading: '', body: '', image_position: 'left', background: 'none' };
+            case 'columns': return { type: 'columns', column_count: 2, columns: [[], []], column_backgrounds: ['none', 'none'], background: 'none' };
             default: return null;
         }
     }
@@ -68,17 +68,19 @@
     // per-block conversion, since a column can hold list/buttons blocks too.
     function toEditorBlock(b) {
         if (b.type === 'list') {
-            return { type: 'list', heading: b.heading || '', style: b.style || 'bullet', itemsText: (b.items || []).join('\n') };
+            return { type: 'list', heading: b.heading || '', style: b.style || 'bullet', itemsText: (b.items || []).join('\n'), background: b.background || 'none' };
         }
         if (b.type === 'buttons') {
             var lines = (b.buttons || []).map(function (btn) { return (btn.label || '') + ' | ' + (btn.url || ''); });
-            return { type: 'buttons', buttonsText: lines.join('\n') };
+            return { type: 'buttons', buttonsText: lines.join('\n'), background: b.background || 'none' };
         }
         if (b.type === 'columns') {
             return {
                 type: 'columns',
                 column_count: b.column_count || 2,
-                columns: (b.columns || []).map(function (children) { return (children || []).map(toEditorBlock); })
+                columns: (b.columns || []).map(function (children) { return (children || []).map(toEditorBlock); }),
+                column_backgrounds: (b.column_backgrounds || []).slice(),
+                background: b.background || 'none'
             };
         }
         return Object.assign({}, b);
@@ -87,20 +89,22 @@
     function toCanonicalBlock(b) {
         if (b.type === 'list') {
             var items = (b.itemsText || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 20);
-            return { type: 'list', heading: b.heading || '', style: b.style || 'bullet', items: items };
+            return { type: 'list', heading: b.heading || '', style: b.style || 'bullet', items: items, background: b.background || 'none' };
         }
         if (b.type === 'buttons') {
             var buttons = (b.buttonsText || '').split('\n').map(function (line) {
                 var parts = line.split('|');
                 return { label: (parts[0] || '').trim(), url: (parts.slice(1).join('|') || '').trim() };
             }).filter(function (btn) { return btn.label && btn.url; }).slice(0, 3);
-            return { type: 'buttons', buttons: buttons };
+            return { type: 'buttons', buttons: buttons, background: b.background || 'none' };
         }
         if (b.type === 'columns') {
             return {
                 type: 'columns',
                 column_count: b.column_count || 2,
-                columns: (b.columns || []).map(function (children) { return (children || []).map(toCanonicalBlock); })
+                columns: (b.columns || []).map(function (children) { return (children || []).map(toCanonicalBlock); }),
+                column_backgrounds: (b.column_backgrounds || []).slice(),
+                background: b.background || 'none'
             };
         }
         return Object.assign({}, b);
@@ -140,16 +144,44 @@
         return '<label>' + labelText + '</label>' + inputHtml;
     }
 
-    function fieldsFor(block) {
+    function backgroundFieldRow(value) {
+        return fieldRow('Achtergrond', (
+            '<select data-field="background">' +
+                '<option value="none"' + (value !== 'accent' && value !== 'surface' ? ' selected' : '') + '>Geen</option>' +
+                '<option value="accent"' + (value === 'accent' ? ' selected' : '') + '>Accentkleur</option>' +
+                '<option value="surface"' + (value === 'surface' ? ' selected' : '') + '>Zachte kaart</option>' +
+            '</select>'
+        ));
+    }
+
+    // A small toolbar that wraps the current textarea selection in simple,
+    // safe markup (**vet**, *cursief*, [label](url)) instead of storing
+    // real HTML — render_inline_markup() in functions.php turns it into
+    // tags server-side, after escaping, so nothing typed here can ever
+    // become live HTML on its own.
+    function richTextToolbar(targetField) {
+        return (
+            '<div class="richtext-toolbar">' +
+                '<button type="button" data-format="bold" data-target="' + targetField + '" title="Vet">' + '<strong>V</strong>' + '</button>' +
+                '<button type="button" data-format="italic" data-target="' + targetField + '" title="Cursief">' + '<em>C</em>' + '</button>' +
+                '<button type="button" data-format="link" data-target="' + targetField + '" title="Link">Link</button>' +
+            '</div>'
+        );
+    }
+
+    function fieldsFor(block, isNested) {
+        var out;
         switch (block.type) {
             case 'text':
-                return (
+                out = (
                     fieldRow('Eyebrow (optioneel, klein label boven de titel)', '<input type="text" data-field="eyebrow" value="' + escapeAttr(block.eyebrow) + '">') +
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
-                    fieldRow('Tekst', '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>')
+                    fieldRow('Tekst', richTextToolbar('body') + '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>') +
+                    '<p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url) — of gebruik de knoppen hierboven.</p>'
                 );
+                break;
             case 'image':
-                return (
+                out = (
                     fieldRow('Afbeelding', (
                         '<div class="image-field">' +
                             '<input type="text" data-field="url" value="' + escapeAttr(block.url) + '" placeholder="https://... of upload hieronder">' +
@@ -164,34 +196,41 @@
                     fieldRow('Alt-tekst (beschrijving voor toegankelijkheid)', '<input type="text" data-field="alt" value="' + escapeAttr(block.alt) + '">') +
                     fieldRow('Bijschrift (optioneel)', '<input type="text" data-field="caption" value="' + escapeAttr(block.caption) + '">')
                 );
+                break;
             case 'quote':
-                return (
+                out = (
                     fieldRow('Citaat', '<textarea data-field="text" rows="3">' + escapeHtml(block.text) + '</textarea>') +
                     fieldRow('Bron (optioneel)', '<input type="text" data-field="source" value="' + escapeAttr(block.source) + '">')
                 );
+                break;
             case 'list':
-                return (
+                out = (
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
                     fieldRow('Stijl', '<select data-field="style"><option value="bullet"' + (block.style === 'bullet' ? ' selected' : '') + '>Opsomming</option><option value="check"' + (block.style === 'check' ? ' selected' : '') + '>Vinkjes</option></select>') +
-                    fieldRow('Items (één per regel)', '<textarea data-field="itemsText" rows="4">' + escapeHtml(block.itemsText) + '</textarea>')
+                    fieldRow('Items (één per regel)', richTextToolbar('itemsText') + '<textarea data-field="itemsText" rows="4">' + escapeHtml(block.itemsText) + '</textarea>') +
+                    '<p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url) — of gebruik de knoppen hierboven.</p>'
                 );
+                break;
             case 'buttons':
-                return fieldRow(
+                out = fieldRow(
                     'Knoppen — één per regel, als "Tekst | link" (max 3)',
                     '<textarea data-field="buttonsText" rows="3" placeholder="Contact opnemen | /contact.php">' + escapeHtml(block.buttonsText) + '</textarea>'
                 );
+                break;
             case 'calendar':
-                return (
+                out = (
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
                     '<p class="field-hint">Beschikbare tijdsloten beheer je apart via "Kalender" in het zijmenu.</p>'
                 );
+                break;
             case 'events':
-                return (
+                out = (
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
                     '<p class="field-hint">De evenementen zelf beheer je apart via "Evenementen" in het zijmenu — dit blok toont automatisch de eerstkomende, gepubliceerde evenementen.</p>'
                 );
+                break;
             case 'map':
-                return (
+                out = (
                     fieldRow('Adres van de praktijk', '<input type="text" data-field="address" value="' + escapeAttr(block.address) + '" placeholder="Straat 1, 2000 Antwerpen">') +
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
                     fieldRow('Weergave', (
@@ -202,8 +241,9 @@
                     )) +
                     '<p class="field-hint">Gratis Google Maps-kaart op basis van het adres — geen API-key nodig.</p>'
                 );
+                break;
             case 'media_text':
-                return (
+                out = (
                     fieldRow('Afbeelding', (
                         '<div class="image-field">' +
                             '<input type="text" data-field="url" value="' + escapeAttr(block.url) + '" placeholder="https://... of upload hieronder">' +
@@ -224,11 +264,14 @@
                         '</select>'
                     )) +
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
-                    fieldRow('Tekst', '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>')
+                    fieldRow('Tekst', richTextToolbar('body') + '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>') +
+                    '<p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url) — of gebruik de knoppen hierboven.</p>'
                 );
+                break;
             default:
                 return '';
         }
+        return isNested ? out : out + backgroundFieldRow(block.background);
     }
 
     function columnsFieldsFor(block, path) {
@@ -246,10 +289,21 @@
             var toolbar = COLUMN_BLOCK_TYPES.map(function (t) {
                 return '<button type="button" data-add="' + t.type + '" data-column-path="' + path + ':' + c + '">+ ' + t.label + '</button>';
             }).join('');
+            var colBg = (block.column_backgrounds || [])[c] || 'none';
+            var bgSelect = (
+                '<select class="column-bg-select" data-column-bg="' + c + '">' +
+                    '<option value="none"' + (colBg !== 'accent' && colBg !== 'surface' ? ' selected' : '') + '>Geen achtergrond</option>' +
+                    '<option value="accent"' + (colBg === 'accent' ? ' selected' : '') + '>Accentkleur</option>' +
+                    '<option value="surface"' + (colBg === 'surface' ? ' selected' : '') + '>Zachte kaart</option>' +
+                '</select>'
+            );
 
             return (
                 '<div class="column-editor">' +
-                    '<p class="column-editor-label">Kolom ' + (c + 1) + '</p>' +
+                    '<div class="column-editor-header">' +
+                        '<p class="column-editor-label">Kolom ' + (c + 1) + '</p>' +
+                        bgSelect +
+                    '</div>' +
                     '<div class="block-editor block-editor-nested">' +
                         (childCards || '<p class="block-editor-empty">Nog geen blokken in deze kolom.</p>') +
                     '</div>' +
@@ -258,7 +312,7 @@
             );
         }).join('');
 
-        return countField + '<div class="columns-editor">' + columnsHtml + '</div>';
+        return countField + '<div class="columns-editor">' + columnsHtml + '</div>' + backgroundFieldRow(block.background);
     }
 
     function escapeHtml(value) {
@@ -287,7 +341,7 @@
                         '<button type="button" data-action="remove" class="link-button-danger" title="Verwijderen">Verwijderen</button>' +
                     '</div>' +
                 '</div>' +
-                '<div class="block-card-fields">' + (block.type === 'columns' ? columnsFieldsFor(block, path) : fieldsFor(block)) + '</div>' +
+                '<div class="block-card-fields">' + (block.type === 'columns' ? columnsFieldsFor(block, path) : fieldsFor(block, path.indexOf(':') !== -1)) + '</div>' +
             '</div>'
         );
     }
@@ -379,6 +433,18 @@
     });
 
     container.addEventListener('change', function (e) {
+        if (e.target.hasAttribute('data-column-bg')) {
+            var bgCard = e.target.closest('.block-card');
+            var bgPath = resolvePath(bgCard.getAttribute('data-path'));
+            var bgBlock = bgPath.array[bgPath.index];
+            var colIndex = parseInt(e.target.getAttribute('data-column-bg'), 10);
+            var backgrounds = bgBlock.column_backgrounds || [];
+            while (backgrounds.length <= colIndex) backgrounds.push('none');
+            backgrounds[colIndex] = e.target.value;
+            bgBlock.column_backgrounds = backgrounds;
+            return;
+        }
+
         var field = e.target.getAttribute('data-field');
         if (!field || e.target.tagName !== 'SELECT') return;
         var card = e.target.closest('.block-card');
@@ -399,6 +465,11 @@
             cols = cols.slice(0, newCount);
             block.columns = cols;
             block.column_count = newCount;
+
+            var bgs = block.column_backgrounds || [];
+            while (bgs.length < newCount) bgs.push('none');
+            block.column_backgrounds = bgs.slice(0, newCount);
+
             renderAll();
             return;
         }
@@ -406,7 +477,40 @@
         block[field] = e.target.value;
     });
 
+    // Wraps the textarea's current selection in before/after markers (e.g.
+    // ** / **), or inserts placeholder text if nothing is selected, then
+    // re-selects the wrapped text so repeated clicks/typing feel natural.
+    function wrapSelection(textarea, before, after) {
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        var value = textarea.value;
+        var selected = value.slice(start, end) || 'tekst';
+        textarea.value = value.slice(0, start) + before + selected + after + value.slice(end);
+        textarea.focus();
+        textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function insertLink(textarea) {
+        var url = window.prompt('Link naar (bv. /contact, https://..., mailto:...)');
+        if (!url) return;
+        wrapSelection(textarea, '[', '](' + url.trim() + ')');
+    }
+
     container.addEventListener('click', function (e) {
+        var formatBtn = e.target.closest('[data-format]');
+        if (formatBtn) {
+            var toolbarCard = formatBtn.closest('.block-card');
+            var targetField = formatBtn.getAttribute('data-target');
+            var textarea = toolbarCard.querySelector('textarea[data-field="' + targetField + '"]');
+            if (!textarea) return;
+            var format = formatBtn.getAttribute('data-format');
+            if (format === 'bold') wrapSelection(textarea, '**', '**');
+            else if (format === 'italic') wrapSelection(textarea, '*', '*');
+            else if (format === 'link') insertLink(textarea);
+            return;
+        }
+
         var action = e.target.getAttribute('data-action');
         if (action) {
             var card = e.target.closest('.block-card');
