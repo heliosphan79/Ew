@@ -38,7 +38,8 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
    dan in plaats daarvan de ontbrekende bestanden uit `database/migrations/`
    op volgnummer — `002_blocks_and_theme.sql` (lees de opmerking bovenaan,
    want bestaande paginainhoud wordt daarbij geleegd), `003_menu_visibility.sql`,
-   `004_calendar_slots.sql`, `005_events.sql` en `006_site_settings.sql`.
+   `004_calendar_slots.sql`, `005_events.sql`, `006_site_settings.sql` en
+   `007_contact_content.sql`.
 3. `cp config/config.example.php config/config.php` en vul je lokale
    databasegegevens in.
 4. Start de ingebouwde PHP-server vanaf de projectroot, met `router.php`
@@ -267,7 +268,7 @@ placeholder stonden — vul zelf aan via het beheerpaneel zodra je ze hebt:
   in het beheerpaneel (zie "Site-instellingen" hieronder), anders toont de
   voettekst voorlopig enkel de sitenaam.
 
-## Site-instellingen (footer)
+## Site-instellingen (footer + contactpagina)
 
 Via "Instellingen" in het beheerpaneel (`admin/settings.php`) vul je adres,
 telefoonnummer en e-mailadres in — die verschijnen dan automatisch in de
@@ -276,6 +277,14 @@ links). Een leeg veld wordt gewoon niet getoond; er wordt nergens iets
 verzonnen. Opgeslagen in de eenrijige tabel `site_settings`
 (`database/migrations/006_site_settings.sql`).
 - Beschikbare tijdsloten voor het kalenderblok (anders toont dat blok niets).
+
+Op diezelfde pagina staat ook "Inhoud contactpagina": dezelfde
+blokkenbouwer als bij een gewone pagina (tekst, foto, kaart, ...), die op
+`/contact` verschijnt bóven het vaste contactformulier. Het formulier zelf
+(velden, validatie, opslag van inzendingen) blijft vast en is niet via
+blokken aanpasbaar — enkel de inhoud ervoor is vrij in te vullen. Leeg =
+enkel het formulier, zoals voorheen. Opgeslagen in dezelfde `site_settings`-
+rij, kolom `content` (`database/migrations/007_contact_content.sql`).
 
 ## SEO & vindbaarheid voor AI-zoekfuncties
 
