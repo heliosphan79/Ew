@@ -1,11 +1,14 @@
-Options -Indexes
+Options -Indexes -MultiViews
+# -MultiViews is essentieel: met MultiViews aan (vaak de standaard op
+# gedeelde hosting) doet Apache contentonderhandeling op padnamen zonder
+# extensie zoals /pagina/mijn-slug, wat de RewriteRule hieronder in de weg
+# zit — de nette URL's komen dan op de homepage uit in plaats van de juiste
+# pagina.
 DirectoryIndex index.php
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    # Expliciet gezet als defensieve maatregel (standaardgedrag getest en
-    # correct bevonden zonder deze regel, maar sommige hostingconfiguraties
-    # leiden de basis anders af dan verwacht).
+    # Expliciete RewriteBase, best practice voor voorspelbaar gedrag.
     RewriteBase /
 
     # Pretty URL: /pagina/mijn-slug -> pagina.php?slug=mijn-slug

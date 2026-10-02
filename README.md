@@ -76,6 +76,14 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
    maken via de installatiepagina.
 6. Zorg dat de website via HTTPS draait (meestal gratis Let's Encrypt via
    het hostingpaneel) — logingegevens mogen nooit over onversleuteld http.
+7. **Test de nette URL's** (`jouwdomein.be/pagina/een-slug`, niet enkel de
+   homepage): als die altijd op de homepage uitkomen in plaats van de juiste
+   pagina, staat `MultiViews` vermoedelijk aan op je hosting (vaak de
+   standaard). `.htaccess` zet dit zelf al uit (`Options -Indexes
+   -MultiViews`), maar als je hosting die regel niet toepast (bv. via een
+   losse `Options`-instelling in het hostingpaneel die voorrang krijgt), zet
+   `MultiViews` dan handmatig uit via het hostingpaneel of vraag het na bij
+   support.
 
 ## Functionaliteit (MVP)
 
