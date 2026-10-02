@@ -634,6 +634,16 @@ main.wrap {
         min-width: 0;
     }
     .block-columns .column > .col-row { margin-bottom: 0; }
+
+    /* A column with a background (block-bg-accent/-surface) gets its padding
+       from that shared rule below, but padding only on that one column would
+       inset its content while its plain siblings stay flush — desyncing the
+       row starts they're meant to share via subgrid. So once any column in
+       the block carries a background, every column gets the same padding,
+       whether it has a visible "card" look or not. */
+    .block-columns.has-column-bg .column {
+        padding: 1.75rem;
+    }
 }
 
 /* No subgrid support: fall back to independent columns, each stacking its
