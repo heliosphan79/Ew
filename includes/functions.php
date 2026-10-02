@@ -756,8 +756,9 @@ function render_columns_block(array $block): string
 {
     $columnCount = in_array($block['column_count'] ?? 2, [2, 3], true) ? $block['column_count'] : 2;
     $columnBackgrounds = (array) ($block['column_backgrounds'] ?? []);
-    $columnsHtml = '';
+    $columns = [];
     $hasContent = false;
+    $anyColumnBg = false;
 
     foreach (array_values((array) ($block['columns'] ?? [])) as $i => $children) {
         $inner = '';
@@ -767,15 +768,29 @@ function render_columns_block(array $block): string
         if ($inner !== '') {
             $hasContent = true;
         }
-        $colBgClass = block_bg_class(sanitize_block_background($columnBackgrounds[$i] ?? ''));
-        $columnsHtml .= '<div class="column' . $colBgClass . '">' . $inner . '</div>';
+        $colBg = sanitize_block_background($columnBackgrounds[$i] ?? '');
+        if ($colBg !== 'none') {
+            $anyColumnBg = true;
+        }
+        $columns[] = ['bg' => $colBg, 'html' => $inner];
     }
 
     if (!$hasContent) {
         return '';
     }
+
+    // When at least one column carries a background, every column (even the
+    // plain ones) gets the same padding — otherwise only the "card" column's
+    // content is inset, which desyncs its row starts from its siblings under
+    // the subgrid row alignment (see CSS .has-column-bg).
+    $columnsClass = $anyColumnBg ? ' has-column-bg' : '';
+    $renderedColumns = '';
+    foreach ($columns as $col) {
+        $renderedColumns .= '<div class="column' . block_bg_class($col['bg']) . '">' . $col['html'] . '</div>';
+    }
+
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
-    return '<div class="block block-columns columns-' . $columnCount . $bgClass . '" data-animate>' . $columnsHtml . '</div>';
+    return '<div class="block block-columns columns-' . $columnCount . $columnsClass . $bgClass . '" data-animate>' . $renderedColumns . '</div>';
 }
 
 // Available slots are shared, global data (calendar_slots), managed in

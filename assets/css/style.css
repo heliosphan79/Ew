@@ -408,18 +408,18 @@ main.wrap {
 
 /* Inline markup (**vet**, *cursief*, [link](url)) inside free-text fields
    — text/list/media-text bodies and column text rows. */
-.block-text a,
-.block-list a,
-.block-media-text a,
-.col-row a {
+.block-text a:not(.btn),
+.block-list a:not(.btn),
+.block-media-text a:not(.btn),
+.col-row a:not(.btn) {
     color: var(--accent);
     text-decoration: underline;
     text-underline-offset: 0.15em;
 }
-.block-text a:hover,
-.block-list a:hover,
-.block-media-text a:hover,
-.col-row a:hover { color: var(--accent-hover); }
+.block-text a:hover:not(.btn),
+.block-list a:hover:not(.btn),
+.block-media-text a:hover:not(.btn),
+.col-row a:hover:not(.btn) { color: var(--accent-hover); }
 
 .block-image img { width: 100%; height: auto; border-radius: var(--radius); display: block; }
 .block-image figcaption {
@@ -634,6 +634,16 @@ main.wrap {
         min-width: 0;
     }
     .block-columns .column > .col-row { margin-bottom: 0; }
+
+    /* A column with a background (block-bg-accent/-surface) gets its padding
+       from that shared rule below, but padding only on that one column would
+       inset its content while its plain siblings stay flush — desyncing the
+       row starts they're meant to share via subgrid. So once any column in
+       the block carries a background, every column gets the same padding,
+       whether it has a visible "card" look or not. */
+    .block-columns.has-column-bg .column {
+        padding: 1.75rem;
+    }
 }
 
 /* No subgrid support: fall back to independent columns, each stacking its
