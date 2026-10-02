@@ -574,18 +574,87 @@ main.wrap {
     .media-text-content { flex: 1 1 0; min-width: 0; }
 }
 
-/* ---------- Columns block (2 or 3 side-by-side columns) ---------- */
+/* ---------- Columns block (2 or 3 side-by-side columns) ----------
+   Desktop uses CSS subgrid so columns share row tracks: a longer heading
+   in one column grows that row for every column equally, and whatever
+   comes after (body, buttons, ...) still starts at the same height in
+   each column — no JS, degrades to plain stacked columns without subgrid
+   support (see @supports fallback below). */
 
 .block-columns {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 2rem;
 }
-.block-columns .column > .block:last-child { margin-bottom: 0; }
+
+.block-columns .column > .col-row { margin-bottom: 0.75rem; }
+.block-columns .column > .col-row:last-child { margin-bottom: 0; }
+.block-columns .column > .col-row > .block { margin-bottom: 0; }
+
+.col-row-heading .eyebrow { margin-bottom: 0.4rem; }
+.col-row-heading h3 {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-weight: 400;
+    font-size: 1.2rem;
+    line-height: 1.3;
+}
+.col-row-body p { margin: 0 0 0.75rem; }
+.col-row-body p:last-child { margin-bottom: 0; }
+.col-row-buttons { display: flex; flex-direction: column; gap: 0.6rem; }
+
+@media (min-width: 480px) {
+    .col-row-buttons { flex-direction: row; flex-wrap: wrap; }
+}
 
 @media (min-width: 640px) {
-    .block-columns { flex-direction: row; align-items: flex-start; }
-    .block-columns .column { flex: 1 1 0; min-width: 0; }
+    .block-columns { column-gap: 2rem; row-gap: 0.75rem; grid-template-rows: repeat(8, auto); }
+    .block-columns.columns-2 { grid-template-columns: repeat(2, 1fr); }
+    .block-columns.columns-3 { grid-template-columns: repeat(3, 1fr); }
+
+    .block-columns .column {
+        display: grid;
+        grid-template-rows: subgrid;
+        grid-row: span 8;
+        min-width: 0;
+    }
+    .block-columns .column > .col-row { margin-bottom: 0; }
+}
+
+/* No subgrid support: fall back to independent columns, each stacking its
+   own rows normally (today's behavior pre-subgrid, still fully usable —
+   just without the cross-column row alignment). */
+@supports not (grid-template-rows: subgrid) {
+    @media (min-width: 640px) {
+        .block-columns .column { display: block; }
+        .block-columns .column > .col-row { margin-bottom: 0.75rem; }
+        .block-columns .column > .col-row:last-child { margin-bottom: 0; }
+    }
+}
+
+/* ---------- Optional background treatment (any block, or a single column
+   of a columns-block) — uses the theme's own tokens so it re-skins per
+   variant rather than a fixed color. Declared after the individual block
+   styles above so it wins when both set a background (e.g. a quote block
+   with "accent" chosen takes the accent look over its own default). ---------- */
+
+.block-bg-accent,
+.block-bg-surface {
+    padding: 1.75rem;
+    border-radius: var(--radius);
+}
+
+.block-bg-accent {
+    background: var(--accent);
+    color: var(--accent-contrast);
+}
+.block-bg-accent .eyebrow { color: var(--accent-contrast); opacity: 0.85; }
+.block-bg-accent a:not(.btn) { color: var(--accent-contrast); }
+
+.block-bg-surface {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow);
 }
 
 /* ---------- Calendar block (appointment booking) ---------- */

@@ -134,7 +134,15 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
     van blokken (tekst, foto, quote, lijst, knoppen — geen kalender,
     evenementen, kaart of geneste kolommen, om het behapbaar te houden).
     Elke kolom heeft zijn eigen toolbar om blokken toe te voegen; stapelt
-    verticaal op mobiel.
+    verticaal op mobiel. Vanaf 640px lijnen titels, tekst en knoppen
+    automatisch rij voor rij uit over de kolommen heen (CSS subgrid) — een
+    langere titel in één kolom duwt de tekst daaronder in **alle** kolommen
+    netjes mee naar dezelfde hoogte, zonder dat je iets hoeft in te stellen.
+  - **Achtergrond** — elk blok (en, binnen een kolommenblok, elke kolom
+    afzonderlijk) kan een "Accentkleur"- of "Zachte kaart"-achtergrond
+    krijgen in plaats van de standaard, transparante achtergrond. Beide
+    gebruiken de kleurtokens van de actieve frontend-variant, dus ze passen
+    automatisch mee met A/B/C.
   - Links/afbeeldings-URL's worden serverside gevalideerd (enkel `/...`,
     `http(s)://`, `mailto:` of `tel:` — geen `javascript:`-injectie
     mogelijk).

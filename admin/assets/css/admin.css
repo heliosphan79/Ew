@@ -165,7 +165,9 @@ body { margin: 0; background: var(--color-bg); color: var(--color-text); }
    that, and it isn't needed to edit each column's content). */
 .columns-editor { display: flex; flex-direction: column; gap: 1rem; margin-top: 0.75rem; }
 .column-editor { border: 1px dashed var(--color-border); border-radius: 8px; padding: 0.75rem; background: #fff; }
-.column-editor-label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-muted); margin: 0 0 0.5rem; }
+.column-editor-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
+.column-editor-label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-muted); margin: 0; }
+.column-bg-select { width: auto; padding: 0.3rem 0.5rem; font-size: 0.82rem; border: 1px solid var(--color-border); border-radius: 6px; background: #fff; }
 .block-editor-nested { display: flex; flex-direction: column; gap: 0.6rem; }
 .block-editor-nested .block-card { background: var(--color-panel); }
 .block-toolbar-nested { margin-top: 0.6rem; }
