@@ -154,6 +154,32 @@ function is_safe_url(string $url): bool
     return (bool) preg_match('#^(https?|mailto|tel):\S+$#i', $url);
 }
 
+// Minimal, safe inline markup for free-text fields: **vet**, *cursief*,
+// [label](url). Escapes the raw text FIRST and only then turns the markup
+// into real tags on the escaped result, so literal <, >, & typed by an
+// editor can never become live HTML — only the tags this function itself
+// inserts exist in the output. Links reuse is_safe_url(), same as image
+// and button links, so javascript:/data: etc. can't sneak in here either.
+function render_inline_markup(string $text): string
+{
+    $escaped = e($text);
+
+    $escaped = preg_replace_callback('/\[([^\[\]]+)\]\(([^()\s]+)\)/', function (array $m): string {
+        $url = html_entity_decode($m[2], ENT_QUOTES, 'UTF-8');
+        if (!is_safe_url($url)) {
+            return $m[0];
+        }
+        return '<a href="' . e($url) . '">' . $m[1] . '</a>';
+    }, $escaped) ?? $escaped;
+
+    // Bold before italic, so **x** isn't eaten by the single-asterisk
+    // italic pattern first.
+    $escaped = preg_replace('/\*\*([^*]+)\*\*/', '<strong>$1</strong>', $escaped) ?? $escaped;
+    $escaped = preg_replace('/\*([^*\n]+)\*/', '<em>$1</em>', $escaped) ?? $escaped;
+
+    return $escaped;
+}
+
 function decode_blocks(?string $json): array
 {
     if (!$json) {
@@ -491,7 +517,7 @@ function render_text_block(array $block): string
         if ($paragraph === '') {
             continue;
         }
-        $out .= '<p>' . nl2br(e($paragraph)) . '</p>';
+        $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
     }
     $out .= '</div>';
     return $out;
@@ -554,7 +580,7 @@ function render_list_block(array $block): string
     $out .= '<ul class="' . $listClass . '">';
     foreach ($items as $item) {
         $icon = $listClass === 'list-bullet' ? render_needle_icon() : '';
-        $out .= '<li>' . $icon . '<span>' . e($item) . '</span></li>';
+        $out .= '<li>' . $icon . '<span>' . render_inline_markup($item) . '</span></li>';
     }
     $out .= '</ul></div>';
     return $out;
@@ -637,7 +663,7 @@ function render_media_text_block(array $block): string
         if ($paragraph === '') {
             continue;
         }
-        $out .= '<p>' . nl2br(e($paragraph)) . '</p>';
+        $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
     }
     $out .= '</div></div>';
     return $out;
@@ -684,7 +710,7 @@ function render_column_child_rows(array $child): string
                     if ($paragraph === '') {
                         continue;
                     }
-                    $out .= '<p>' . nl2br(e($paragraph)) . '</p>';
+                    $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
                 }
                 $out .= '</div>';
             }

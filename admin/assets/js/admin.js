@@ -154,6 +154,21 @@
         ));
     }
 
+    // A small toolbar that wraps the current textarea selection in simple,
+    // safe markup (**vet**, *cursief*, [label](url)) instead of storing
+    // real HTML — render_inline_markup() in functions.php turns it into
+    // tags server-side, after escaping, so nothing typed here can ever
+    // become live HTML on its own.
+    function richTextToolbar(targetField) {
+        return (
+            '<div class="richtext-toolbar">' +
+                '<button type="button" data-format="bold" data-target="' + targetField + '" title="Vet">' + '<strong>V</strong>' + '</button>' +
+                '<button type="button" data-format="italic" data-target="' + targetField + '" title="Cursief">' + '<em>C</em>' + '</button>' +
+                '<button type="button" data-format="link" data-target="' + targetField + '" title="Link">Link</button>' +
+            '</div>'
+        );
+    }
+
     function fieldsFor(block, isNested) {
         var out;
         switch (block.type) {
@@ -161,7 +176,8 @@
                 out = (
                     fieldRow('Eyebrow (optioneel, klein label boven de titel)', '<input type="text" data-field="eyebrow" value="' + escapeAttr(block.eyebrow) + '">') +
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
-                    fieldRow('Tekst', '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>')
+                    fieldRow('Tekst', richTextToolbar('body') + '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>') +
+                    '<p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url) — of gebruik de knoppen hierboven.</p>'
                 );
                 break;
             case 'image':
@@ -191,7 +207,8 @@
                 out = (
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
                     fieldRow('Stijl', '<select data-field="style"><option value="bullet"' + (block.style === 'bullet' ? ' selected' : '') + '>Opsomming</option><option value="check"' + (block.style === 'check' ? ' selected' : '') + '>Vinkjes</option></select>') +
-                    fieldRow('Items (één per regel)', '<textarea data-field="itemsText" rows="4">' + escapeHtml(block.itemsText) + '</textarea>')
+                    fieldRow('Items (één per regel)', richTextToolbar('itemsText') + '<textarea data-field="itemsText" rows="4">' + escapeHtml(block.itemsText) + '</textarea>') +
+                    '<p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url) — of gebruik de knoppen hierboven.</p>'
                 );
                 break;
             case 'buttons':
@@ -247,7 +264,8 @@
                         '</select>'
                     )) +
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
-                    fieldRow('Tekst', '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>')
+                    fieldRow('Tekst', richTextToolbar('body') + '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>') +
+                    '<p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url) — of gebruik de knoppen hierboven.</p>'
                 );
                 break;
             default:
@@ -459,7 +477,40 @@
         block[field] = e.target.value;
     });
 
+    // Wraps the textarea's current selection in before/after markers (e.g.
+    // ** / **), or inserts placeholder text if nothing is selected, then
+    // re-selects the wrapped text so repeated clicks/typing feel natural.
+    function wrapSelection(textarea, before, after) {
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        var value = textarea.value;
+        var selected = value.slice(start, end) || 'tekst';
+        textarea.value = value.slice(0, start) + before + selected + after + value.slice(end);
+        textarea.focus();
+        textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function insertLink(textarea) {
+        var url = window.prompt('Link naar (bv. /contact, https://..., mailto:...)');
+        if (!url) return;
+        wrapSelection(textarea, '[', '](' + url.trim() + ')');
+    }
+
     container.addEventListener('click', function (e) {
+        var formatBtn = e.target.closest('[data-format]');
+        if (formatBtn) {
+            var toolbarCard = formatBtn.closest('.block-card');
+            var targetField = formatBtn.getAttribute('data-target');
+            var textarea = toolbarCard.querySelector('textarea[data-field="' + targetField + '"]');
+            if (!textarea) return;
+            var format = formatBtn.getAttribute('data-format');
+            if (format === 'bold') wrapSelection(textarea, '**', '**');
+            else if (format === 'italic') wrapSelection(textarea, '*', '*');
+            else if (format === 'link') insertLink(textarea);
+            return;
+        }
+
         var action = e.target.getAttribute('data-action');
         if (action) {
             var card = e.target.closest('.block-card');

@@ -110,13 +110,15 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
     "Aanbod"), optionele titel, en platte tekst (alinea's gescheiden door
     een lege regel) — titel en tekst mogen niet allebei leeg zijn, maar één
     van de twee volstaat (handig voor een kale sectiekop boven bv. een
-    lijstblok).
+    lijstblok). Eenvoudige opmaak mogelijk — zie "Opmaak in tekst en
+    lijsten" hieronder.
   - **Foto** — kies "Bestand kiezen…" om een JPG/PNG/GIF/WEBP te uploaden
     (max. 5 MB, direct herbekeken als miniatuur), of vul zelf een
     afbeeldings-URL in. Plus alt-tekst (verplicht, toegankelijkheid) en
     optioneel bijschrift.
   - **Quote** — citaat + optionele bron.
-  - **Lijst** — titel, stijl (opsomming/vinkjes) en items (één per regel).
+  - **Lijst** — titel, stijl (opsomming/vinkjes) en items (één per regel,
+    met dezelfde eenvoudige opmaak als een tekstblok).
   - **Knoppen** — tot 3 knoppen, één per regel als `Tekst | link`.
   - **Kalender** — een zelfbedieningsafsprakenkalender (zie "Kalenderblok"
     hieronder) met een optionele titel; de beschikbare tijdsloten zelf
@@ -146,6 +148,16 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
   - Links/afbeeldings-URL's worden serverside gevalideerd (enkel `/...`,
     `http(s)://`, `mailto:` of `tel:` — geen `javascript:`-injectie
     mogelijk).
+- **Opmaak in tekst en lijsten**: de tekst van een tekstblok, foto+tekst-blok
+  en de items van een lijstblok ondersteunen een kleine, veilige opmaaksyntax
+  — `**vet**`, `*cursief*` en `[linktekst](url)` — via knoppen boven het
+  veld of door de syntax gewoon zelf te typen. Dit is bewust **geen**
+  vrije HTML-editor: wat je typt wordt eerst volledig geëscaped en pas
+  daarna omgezet naar `<strong>`/`<em>`/`<a>`-tags, dus letterlijke
+  `<script>`- of andere HTML-tags kunnen nooit als echte opmaak
+  terechtkomen — enkel deze drie, bewust beperkte stijlen zijn mogelijk.
+  Links volgen dezelfde `is_safe_url()`-controle als overal elders
+  (geen `javascript:`).
 - **3 frontend-varianten**, per pagina instelbaar (dropdown in de
   pagina-editor), gebaseerd op Wendy's eigen ontwerp: A "Crème, salie &
   terracotta" (het nieuwe ontwerp), B "Koraal" en C "Salie-groen" (de twee
