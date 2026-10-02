@@ -93,8 +93,10 @@ CREATE TABLE IF NOT EXISTS site_settings (
     email      VARCHAR(190) DEFAULT NULL,
     -- JSON-encoded array of content blocks shown above the (fixed) contact
     -- form on contact.php — same block system/renderer as pages.content.
-    content    MEDIUMTEXT NOT NULL DEFAULT '[]',
+    -- No DEFAULT here: MySQL rejects a default value on TEXT/BLOB columns
+    -- (error 1101), so the initial '[]' is set explicitly below instead.
+    content    MEDIUMTEXT NOT NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT IGNORE INTO site_settings (id) VALUES (1);
+INSERT IGNORE INTO site_settings (id, content) VALUES (1, '[]');
