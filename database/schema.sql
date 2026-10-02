@@ -91,6 +91,9 @@ CREATE TABLE IF NOT EXISTS site_settings (
     address    VARCHAR(255) DEFAULT NULL,
     phone      VARCHAR(50)  DEFAULT NULL,
     email      VARCHAR(190) DEFAULT NULL,
+    -- JSON-encoded array of content blocks shown above the (fixed) contact
+    -- form on contact.php — same block system/renderer as pages.content.
+    content    MEDIUMTEXT NOT NULL DEFAULT '[]',
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

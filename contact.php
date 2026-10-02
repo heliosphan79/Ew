@@ -47,6 +47,9 @@ $nav = $mysqli->query(
     'SELECT slug, title FROM pages WHERE published = 1 AND is_homepage = 0 AND show_in_menu = 1 ORDER BY nav_order ASC, title ASC'
 )->fetch_all(MYSQLI_ASSOC);
 
+$contactSettings = get_site_settings($mysqli);
+$contactBlocks = decode_blocks($contactSettings['content']);
+
 // Contact isn't a CMS page itself — match the homepage's variant so the
 // site doesn't suddenly look different on this one utility page.
 $homepageVariant = $mysqli->query(
@@ -59,6 +62,7 @@ require __DIR__ . '/includes/header.php';
 
 <article class="page-content">
     <h1>Contact</h1>
+    <?= render_blocks($contactBlocks, $mysqli) ?>
 
     <?php if (isset($_GET['verzonden'])): ?>
         <p class="flash flash-success">Bedankt, je bericht is verzonden. We nemen zo snel mogelijk contact op.</p>

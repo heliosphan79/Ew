@@ -1029,11 +1029,12 @@ function get_site_settings(mysqli $mysqli): array
 {
     static $settings = null;
     if ($settings === null) {
-        $row = $mysqli->query('SELECT address, phone, email FROM site_settings WHERE id = 1')->fetch_assoc();
+        $row = $mysqli->query('SELECT address, phone, email, content FROM site_settings WHERE id = 1')->fetch_assoc();
         $settings = [
             'address' => $row['address'] ?? '',
             'phone' => $row['phone'] ?? '',
             'email' => $row['email'] ?? '',
+            'content' => $row['content'] ?? '[]',
         ];
     }
     return $settings;
