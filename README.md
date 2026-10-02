@@ -157,6 +157,17 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
 - **Mobile-first CSS**: basisstijlen zijn geschreven voor kleine schermen,
   met `min-width`-media queries die layout (nav, knoppenrij, contentbreedte)
   geleidelijk verrijken voor tablet/desktop.
+- **Logo & navigatie** (Wendy's "Kompasnaald"-ontwerp): een SVG-logo (ring +
+  naald) met wordmerk, waarvan alle kleuren via `var(--text)`/`var(--accent)`/
+  `var(--bg)` lopen — past dus automatisch mee met de frontend-variant.
+  Speelse, bewust subtiele logo-animatie: de naald zwaait uit en komt tot
+  rust bij het laden van de pagina (eenmalig), en draait een volle toer bij
+  hover/focus. Op mobiel (<640px) wordt het menu een ronde knop die opent
+  tot een kruis-in-ring (CSS, geen library) met een uitklappaneel en
+  gestaffelde item-reveal; vanaf 640px blijft het de horizontale balk.
+  Volledig `prefers-reduced-motion`-bewust. Lijstblokken in "opsomming"-stijl
+  gebruiken dezelfde schuine naald-bullet (-38°, rechttrekt bij hover) als
+  het logo — "vinkjes"-stijl blijft ongewijzigd.
 - Contactformulier op de site met validatie, CSRF-bescherming en een
   honeypot-veld tegen spambots; inzendingen zijn zichtbaar en
   markeerbaar/verwijderbaar in het beheerpaneel.

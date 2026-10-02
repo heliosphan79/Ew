@@ -8,6 +8,29 @@ function e(?string $value): string
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+// Renders the site name with its first hyphen styled in the accent color
+// (matching the "Eigen-Wijzer" logo lockup) — falls back to plain escaped
+// text if the configured site name has no hyphen to style.
+function render_site_wordmark(string $name): string
+{
+    $pos = strpos($name, '-');
+    if ($pos === false) {
+        return e($name);
+    }
+    return e(substr($name, 0, $pos)) . '<span class="ew-logo-accent">-</span>' . e(substr($name, $pos + 1));
+}
+
+// The small diagonal "needle" icon used for both nav-panel items and bullet
+// list items — echoes the logo's compass needle at the same -38° angle,
+// straightening to 0° on hover (see .ew-needle-diag in style.css).
+function render_needle_icon(): string
+{
+    return '<svg class="ew-needle-icon ew-needle-diag" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">'
+        . '<polygon class="ew-needle-a" points="1,10 10,6 10,14"></polygon>'
+        . '<polygon class="ew-needle-b" points="10,6 19,10 10,14"></polygon>'
+        . '</svg>';
+}
+
 function csrf_token(): string
 {
     if (empty($_SESSION['csrf_token'])) {
@@ -502,7 +525,8 @@ function render_list_block(array $block): string
     }
     $out .= '<ul class="' . $listClass . '">';
     foreach ($items as $item) {
-        $out .= '<li>' . e($item) . '</li>';
+        $icon = $listClass === 'list-bullet' ? render_needle_icon() : '';
+        $out .= '<li>' . $icon . '<span>' . e($item) . '</span></li>';
     }
     $out .= '</ul></div>';
     return $out;

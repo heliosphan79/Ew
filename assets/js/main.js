@@ -22,3 +22,19 @@
 
     targets.forEach(function (el) { observer.observe(el); });
 })();
+
+// Mobile hamburger menu: toggles the collapsible nav panel open/closed.
+// Pure CSS handles the button-to-ring-and-cross and panel-reveal animation
+// (see .menu-btn / .site-nav in style.css) — this just flips the state.
+(function () {
+    var btn = document.getElementById('menu-toggle');
+    var nav = document.getElementById('site-nav');
+    if (!btn || !nav) return;
+
+    btn.addEventListener('click', function () {
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+        btn.setAttribute('aria-label', open ? 'Menu openen' : 'Menu sluiten');
+        nav.classList.toggle('is-open', !open);
+    });
+})();

@@ -103,6 +103,60 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.25; }
     padding: 0 1.25rem;
 }
 
+/* ---------- Logo (compass needle) + shared "needle" direction icon ----------
+   Colors are set via var(--text)/var(--accent)/var(--bg) rather than fixed
+   hexes, so the mark re-skins automatically with each theme variant. */
+
+.ew-logo-ring { stroke: var(--text); }
+.ew-logo-needle-a { fill: var(--accent); }
+.ew-logo-needle-b { fill: var(--text); }
+.ew-logo-center { fill: var(--bg); }
+.ew-logo-needle { transform-origin: 60px 60px; transform: rotate(38deg); }
+.ew-logo-accent { color: var(--accent); }
+
+.ew-needle-icon { flex: none; }
+.ew-needle-icon .ew-needle-a { fill: var(--text); }
+.ew-needle-icon .ew-needle-b { fill: var(--accent); }
+.ew-needle-diag {
+    transform-origin: 10px 10px;
+    transform: rotate(-38deg);
+    transition: transform var(--dur) var(--ease);
+}
+
+/* Logo-intro: ring draws itself, needle swings out and settles — once, on
+   page load. */
+@keyframes ew-logo-draw { 0% { stroke-dashoffset: 315; } 55%, 100% { stroke-dashoffset: 0; } }
+@keyframes ew-logo-settle {
+    0%, 8% { transform: rotate(-150deg); }
+    40% { transform: rotate(62deg); }
+    55% { transform: rotate(26deg); }
+    67% { transform: rotate(44deg); }
+    78% { transform: rotate(35deg); }
+    88%, 100% { transform: rotate(38deg); }
+}
+
+.ew-logo-ring {
+    stroke-dasharray: 315;
+    transform-origin: 60px 60px;
+    transform: rotate(-90deg);
+    animation: ew-logo-draw 1.4s ease-out 1 both;
+}
+.ew-logo-needle { animation: ew-logo-settle 1.4s cubic-bezier(.2, .8, .2, 1) 1 both; }
+
+.site-logo:hover .ew-logo-needle,
+.site-logo:focus-visible .ew-logo-needle {
+    transform: rotate(398deg);
+    transition: transform 0.9s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ew-logo-ring,
+    .ew-logo-needle,
+    .ew-needle-diag { animation: none !important; transition: none !important; }
+    .ew-logo-ring { stroke-dashoffset: 0; }
+    .ew-logo-needle { transform: rotate(38deg); }
+}
+
 /* ---------- Header / nav (shared site chrome, mobile-first) ---------- */
 
 .site-header {
@@ -110,30 +164,83 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.25; }
     padding: 1rem 0;
 }
 
-.site-header .wrap {
+.site-header-row {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
     gap: 0.6rem;
 }
 
-.site-title {
+.site-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+}
+
+.ew-logo-word {
+    font-family: var(--font-heading);
     font-weight: 700;
     font-size: 1.1rem;
     color: var(--text);
-    text-decoration: none;
+}
+
+.menu-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.6s cubic-bezier(.5, -0.3, .3, 1.4);
+}
+.menu-btn::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    transform: scale(0);
+    opacity: 0;
+    transition: transform 0.45s ease 0.15s, opacity 0.3s ease 0.15s;
+}
+.menu-btn-ln {
+    position: absolute;
+    left: 10px;
+    width: 20px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--text);
+    transition: top 0.3s ease, transform 0.4s ease 0.15s, opacity 0.2s ease, background 0.3s ease;
+}
+.menu-btn-ln.l1 { top: 13px; }
+.menu-btn-ln.l2 { top: 19px; }
+.menu-btn-ln.l3 { top: 25px; }
+.menu-btn[aria-expanded="true"] { transform: rotate(180deg); }
+.menu-btn[aria-expanded="true"]::before { transform: scale(1); opacity: 1; }
+.menu-btn[aria-expanded="true"] .l1 { top: 19px; transform: rotate(45deg); background: var(--accent); }
+.menu-btn[aria-expanded="true"] .l2 { opacity: 0; }
+.menu-btn[aria-expanded="true"] .l3 { top: 19px; transform: rotate(-45deg); background: var(--accent); }
+.menu-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .menu-btn,
+    .menu-btn-ln,
+    .menu-btn::before { transition: none; }
 }
 
 .site-nav {
     display: flex;
     gap: 1rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
 }
 
-.site-nav::-webkit-scrollbar { display: none; }
-
 .site-nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     color: var(--text-muted);
     text-decoration: none;
     font-size: 0.92rem;
@@ -146,12 +253,56 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.25; }
 .site-nav a:hover,
 .site-nav a:focus-visible { color: var(--accent); border-color: var(--accent); }
 
-@media (min-width: 640px) {
-    .site-header .wrap {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
+.site-nav a:hover .ew-needle-diag,
+.site-nav a:focus-visible .ew-needle-diag { transform: rotate(0deg); }
+
+/* Mobile (<640px): the nav becomes a collapsible panel toggled by .menu-btn;
+   icons only make sense in this stacked layout. */
+@media (max-width: 639.98px) {
+    .menu-btn { display: block; }
+
+    .site-nav {
+        flex-basis: 100%;
+        flex-direction: column;
+        gap: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s cubic-bezier(.2, .8, .2, 1);
     }
+    .site-nav.is-open { max-height: 28rem; }
+
+    .site-nav a {
+        padding: 0.85rem 0.1rem;
+        border-bottom: 1px solid var(--border);
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: opacity 0.3s ease, transform 0.3s ease, color var(--dur) var(--ease);
+    }
+    .site-nav a:last-child { border-bottom: none; }
+    .site-nav.is-open a { opacity: 1; transform: none; }
+    .site-nav.is-open a:nth-child(1) { transition-delay: 0.08s; }
+    .site-nav.is-open a:nth-child(2) { transition-delay: 0.12s; }
+    .site-nav.is-open a:nth-child(3) { transition-delay: 0.16s; }
+    .site-nav.is-open a:nth-child(4) { transition-delay: 0.2s; }
+    .site-nav.is-open a:nth-child(5) { transition-delay: 0.24s; }
+    .site-nav.is-open a:nth-child(6) { transition-delay: 0.28s; }
+    .site-nav.is-open a:nth-child(7) { transition-delay: 0.32s; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .site-nav, .site-nav a { transition: none; }
+    }
+}
+
+@media (min-width: 640px) {
+    .menu-btn { display: none; }
+    .site-nav {
+        align-items: center;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .site-nav::-webkit-scrollbar { display: none; }
+    .site-nav .ew-needle-icon { display: none; }
 }
 
 main.wrap {
@@ -319,6 +470,13 @@ main.wrap {
     color: var(--accent);
     font-weight: 700;
 }
+
+/* Bullet style: a schuine "naald"-icoon i.p.v. een standaardbullet, dezelfde
+   -38°-hoek als het logo — rechttrekkend bij hover (zie .ew-needle-diag). */
+.list-bullet { list-style: none; padding-left: 0 !important; }
+.list-bullet li { display: flex; gap: 0.7rem; align-items: flex-start; }
+.list-bullet li .ew-needle-icon { margin-top: 0.2em; }
+.list-bullet li:hover .ew-needle-diag { transform: rotate(0deg); }
 
 .block-buttons {
     display: flex;
