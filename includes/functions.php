@@ -53,6 +53,49 @@ function csrf_verify(): void
     }
 }
 
+// Verifies a reCAPTCHA v3 token server-side. Returns true when not
+// configured at all (secret key empty) so the form still works before
+// reCAPTCHA is set up — this is on top of, not instead of, the honeypot/
+// timing/rate-limit checks in contact.php.
+function recaptcha_verify(string $secretKey, string $token, string $remoteIp, float $minScore = 0.5): bool
+{
+    if ($secretKey === '') {
+        return true;
+    }
+    if ($token === '') {
+        return false;
+    }
+
+    $ch = curl_init('https://www.google.com/recaptcha/api/siteverify');
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query([
+            'secret' => $secretKey,
+            'response' => $token,
+            'remoteip' => $remoteIp,
+        ]),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 8,
+    ]);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if (!is_string($response) || $httpCode !== 200) {
+        // Google unreachable: fail open rather than blocking every visitor
+        // because of a network hiccup on Google's end — the other spam
+        // checks still apply.
+        return true;
+    }
+
+    $data = json_decode($response, true);
+    if (!is_array($data) || empty($data['success'])) {
+        return false;
+    }
+
+    return (float) ($data['score'] ?? 0) >= $minScore;
+}
+
 function slugify(string $text): string
 {
     $slug = strtolower(trim($text));

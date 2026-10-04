@@ -38,14 +38,15 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
    dan in plaats daarvan de ontbrekende bestanden uit `database/migrations/`
    op volgnummer — `002_blocks_and_theme.sql` (lees de opmerking bovenaan,
    want bestaande paginainhoud wordt daarbij geleegd), `003_menu_visibility.sql`,
-   `004_calendar_slots.sql`, `005_events.sql`, `006_site_settings.sql` en
-   `007_contact_content.sql`.
+   `004_calendar_slots.sql`, `005_events.sql`, `006_site_settings.sql`,
+   `007_contact_content.sql` en `008_analytics_cache.sql`.
 3. `cp config/config.example.php config/config.php` en vul je lokale
    databasegegevens in.
 4. Start de ingebouwde PHP-server vanaf de projectroot, met `router.php`
-   zodat `config/`, `database/` en `includes/` ook lokaal afgeschermd zijn
-   (PHP's ingebouwde server negeert `.htaccess`, in tegenstelling tot
-   Apache op je uiteindelijke hosting):
+   zodat `config/`, `database/` en `includes/` ook lokaal afgeschermd zijn,
+   én zodat de nette URL's (`/contact`, `/pagina/...`, ...) lokaal hetzelfde
+   werken als op je uiteindelijke hosting (PHP's ingebouwde server negeert
+   `.htaccess`, in tegenstelling tot Apache):
    ```
    php -S localhost:8000 router.php
    ```
@@ -189,9 +190,15 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
   Volledig `prefers-reduced-motion`-bewust. Lijstblokken in "opsomming"-stijl
   gebruiken dezelfde schuine naald-bullet (-38°, rechttrekt bij hover) als
   het logo — "vinkjes"-stijl blijft ongewijzigd.
-- Contactformulier op de site met validatie, CSRF-bescherming en een
-  honeypot-veld tegen spambots; inzendingen zijn zichtbaar en
-  markeerbaar/verwijderbaar in het beheerpaneel.
+- Contactformulier op de site met validatie, CSRF-bescherming en
+  meerlagige spambeveiliging; inzendingen zijn zichtbaar en
+  markeerbaar/verwijderbaar in het beheerpaneel, en worden ook meteen
+  per e-mail doorgestuurd — zie "Spambeveiliging & e-mailnotificatie"
+  hieronder.
+- **Google Analytics** (optioneel): bezoekstatistieken, met een
+  toestemmingsbanner die voldoet aan de EU-cookieregels — en optioneel
+  bezoekerscijfers rechtstreeks in het Dashboard. Zie "Google Analytics"
+  hieronder.
 - Consistente output-escaping (XSS) en prepared statements overal (SQL
   injection) — zie "Beveiliging" hieronder.
 - **Opruiming van uploads**: verwijder je een fotoblok of vervang je de
@@ -286,6 +293,112 @@ blokken aanpasbaar — enkel de inhoud ervoor is vrij in te vullen. Leeg =
 enkel het formulier, zoals voorheen. Opgeslagen in dezelfde `site_settings`-
 rij, kolom `content` (`database/migrations/007_contact_content.sql`).
 
+## Google Analytics
+
+Volledig optioneel — alles hieronder blijft uitgeschakeld (geen script,
+geen toestemmingsbanner) zolang `config.php`'s `google_analytics`-sectie
+leeg is.
+
+### Bezoektracking + toestemmingsbanner
+
+1. Maak een GA4-property aan (of gebruik een bestaande) en noteer het
+   "G-XXXXXXXXXX"-meet-ID uit GA4 Admin → Datastreams → je webstream.
+2. Vul dat in als `google_analytics.measurement_id` in `config/config.php`.
+3. Klaar — elke publieke pagina toont dan onderaan een eenvoudige
+   toestemmingsbanner ("Akkoord" / "Weiger"). Het trackingscript laadt pas
+   ná een klik op "Akkoord" (bewaard in `localStorage` van de bezoeker, dus
+   de banner verschijnt daarna niet meer); bij "Weiger" of geen keuze
+   wordt er niets geladen. Zo voldoet de site aan de EU-regels rond
+   analytics-cookies, zonder een cookie-consent-dienst van een derde partij.
+
+Het beheerpaneel zelf (`/admin/...`) toont nooit deze banner en laadt nooit
+Analytics — enkel de publieke site wordt gemeten.
+
+### Bezoekerscijfers in het Dashboard (optioneel, extra opzetwerk)
+
+Bovenop de tracking hierboven kan je ook bezoekerscijfers (bezoekers en
+paginaweergaven van de laatste 7 dagen, plus de 5 meest bekeken pagina's)
+rechtstreeks op het admin-Dashboard tonen, via Google's Analytics Data API
+— zonder een Google-SDK of Composer-package, met een zelfgeschreven
+service-account-aanmelding. Opzet:
+
+1. Open [Google Cloud Console](https://console.cloud.google.com/), maak
+   een project aan (of kies een bestaand project) en schakel de **Google
+   Analytics Data API** in voor dat project.
+2. Maak een **service-account** aan in dat project, en genereer er een
+   JSON-sleutel voor (IAM & Admin → Service Accounts → je account →
+   Keys → Add key → JSON). Bewaar dat bestand veilig, het bevat een
+   privésleutel.
+3. In GA4 zelf: Admin → Property Access Management → voeg het e-mailadres
+   van het service-account (uit de JSON, veld `client_email`) toe als
+   **Viewer** op je property.
+4. Noteer ook het numerieke GA4 **property-ID** (GA4 Admin → Property
+   Settings — niet hetzelfde als het "G-"meet-ID hierboven).
+5. Vul in `config/config.php` onder `google_analytics` aan:
+   - `property_id` — het numerieke property-ID uit stap 4.
+   - `service_account_email` — het `client_email`-veld uit de JSON-sleutel.
+   - `service_account_private_key` — het `private_key`-veld uit de
+     JSON-sleutel, inclusief de `-----BEGIN/END PRIVATE KEY-----`-regels.
+     Of je de regeleindes als echte newlines of als letterlijke `\n`
+     plakt maakt niet uit, beide vormen worden herkend.
+
+Het Dashboard haalt bij weergave de cijfers op en cachet ze 30 minuten
+(tabel `analytics_cache`,
+`database/migrations/008_analytics_cache.sql`) om Google's API niet bij
+elke paneelbezoek opnieuw te belasten; "nu vernieuwen" op het Dashboard
+forceert een verse ophaling. Lukt die niet (verkeerde gegevens, Google
+tijdelijk onbereikbaar, ...), dan toont het Dashboard de laatst gekende
+cijfers met een duidelijke melding, in plaats van niets te tonen.
+
+## Spambeveiliging & e-mailnotificatie
+
+Het contactformulier combineert meerdere, onafhankelijke lagen —
+val één weg (bv. reCAPTCHA niet ingesteld), dan blijven de andere actief:
+
+- **CSRF-token** (al aanwezig) — blokkeert vervalste inzendingen van
+  andere sites.
+- **Honeypot-veld** — een onzichtbaar veld dat enkel bots invullen; wordt
+  het ingevuld, dan doet de site net alsof het bericht verzonden is
+  (de bot leert niets), maar er wordt niets opgeslagen of gemaild.
+- **Tijdscontrole** — de servertijd waarop het formulier getoond werd,
+  wordt bijgehouden in de sessie (niet in een onzichtbaar veld dat een bot
+  gewoon kan meesturen); een inzending binnen de 3 seconden wordt geweigerd.
+- **IP-ratelimiet** — max. 3 inzendingen per IP-adres per 10 minuten.
+- **Google reCAPTCHA v3** (optioneel) — een onzichtbare score-check van
+  Google op basis van bezoekersgedrag (geen puzzeltjes voor de bezoeker).
+  Vul `recaptcha.site_key` en `recaptcha.secret_key` in in `config.php` om
+  dit te activeren (registreer je domein op
+  [google.com/recaptcha/admin](https://www.google.com/recaptcha/admin));
+  laat beide leeg om deze laag over te slaan.
+
+Een geweigerde inzending krijgt altijd dezelfde algemene foutmelding,
+ongeacht welke laag precies toesloeg — zo leert een bot niet welke check
+hij moet omzeilen.
+
+### E-mailnotificatie
+
+Elke geslaagde inzending wordt (bovenop het opslaan in het beheerpaneel)
+automatisch gemaild, via een eigen, kleine SMTP-client (geen
+Composer/PHPMailer — past bij de rest van dit project) die STARTTLS,
+impliciete TLS en AUTH LOGIN ondersteunt, wat de meeste hosting- en
+webmailproviders dekt. Opzet in `config/config.php` onder `smtp`:
+
+- `host`, `port`, `encryption` (`tls` voor STARTTLS — meestal poort 587,
+  `ssl` voor impliciete TLS — meestal poort 465, of `none` voor een
+  onversleutelde lokale relay) en `username`/`password` van je
+  mailaccount.
+- `from_email`/`from_name` — het afzenderadres; veel providers eisen dat
+  dit overeenkomt met (of dicht aanleunt bij) het ingelogde mailaccount,
+  anders wordt het geweigerd of als spam gemarkeerd.
+- `to_email` — waar de notificaties naartoe gaan. Leeg = valt terug op het
+  e-mailadres onder Instellingen (zie "Site-instellingen" hierboven).
+
+Laat `host` leeg om e-mailverzending uit te schakelen — inzendingen blijven
+dan gewoon zichtbaar in het beheerpaneel, er wordt alleen niet gemaild.
+Mislukt de mail (verkeerde SMTP-gegevens, provider tijdelijk onbereikbaar,
+...), dan blijft de inzending wél gewoon opgeslagen; e-mail is best-effort
+bovenop, nooit een voorwaarde om het bericht te bewaren.
+
 ## SEO & vindbaarheid voor AI-zoekfuncties
 
 - **Schone URL's**: pagina's zijn bereikbaar via `/pagina/{slug}` en het
@@ -340,9 +453,9 @@ rij, kolom `content` (`database/migrations/007_contact_content.sql`).
 
 ## Mogelijke volgende stappen (niet in deze MVP)
 
-- E-mailnotificatie bij een nieuw contactformulier, een nieuwe
-  kalenderboeking of een nieuwe evenementinschrijving (bv. via PHP `mail()`
-  of een transactionele e-maildienst).
+- E-mailnotificatie bij een nieuwe kalenderboeking of evenementinschrijving
+  (het contactformulier mailt al — zie "Spambeveiliging &
+  e-mailnotificatie"; dezelfde `includes/mailer.php` is herbruikbaar).
 - Meerdere beheerders met rollen, wachtwoord-reset via e-mail.
 - Paginering als het aantal pagina's/berichten groot wordt.
 - Zelf gehoste webfonts voor pixel-exacte typografie (zie "Functionaliteit").

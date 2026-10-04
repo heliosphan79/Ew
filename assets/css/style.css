@@ -827,3 +827,38 @@ html.js [data-animate].is-visible {
         transition: none;
     }
 }
+
+/* ---------- Cookie-toestemmingsbanner (Google Analytics) ---------- */
+
+.cookie-consent {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.cookie-consent-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+}
+
+.cookie-consent-inner p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text);
+    flex: 1 1 260px;
+}
+
+.cookie-consent-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex: 0 0 auto;
+}
