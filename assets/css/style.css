@@ -426,6 +426,14 @@ main.wrap {
 
 .contact-form { display: flex; flex-direction: column; gap: 0.4rem; max-width: 480px; }
 
+/* With a background the form becomes a card — match the full content width
+   every other card-style block uses, instead of staying capped at the
+   narrower width that suits a plain, unstyled form. */
+.contact-form.block-bg-accent,
+.contact-form.block-bg-surface {
+    max-width: none;
+}
+
 .contact-form label { font-weight: 600; margin-top: 0.75rem; font-size: 0.9rem; }
 
 .contact-form input,
