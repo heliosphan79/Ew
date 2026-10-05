@@ -48,8 +48,8 @@ body[data-theme="b"] {
     --accent: #a85f49;
     --accent-hover: #7a4534;
     --accent-contrast: #faf4f0;
-    --btn-primary-bg: #d98f79;
-    --btn-primary-hover: #c77e68;
+    --btn-primary-bg: var(--accent);
+    --btn-primary-hover: var(--accent-hover);
     --border: #ede0d8;
     --eyebrow-color: var(--accent);
     --quote-bg: #141416;
@@ -70,8 +70,8 @@ body[data-theme="c"] {
     --accent: #55624a;
     --accent-hover: #414a38;
     --accent-contrast: #faf4f0;
-    --btn-primary-bg: #6b7a5e;
-    --btn-primary-hover: #56634a;
+    --btn-primary-bg: var(--accent);
+    --btn-primary-hover: var(--accent-hover);
     --border: #ede0d8;
     --eyebrow-color: var(--accent);
     --quote-bg: #141416;
@@ -278,9 +278,12 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.25; }
 .menu-btn-ln.l3 { top: 25px; }
 .menu-btn[aria-expanded="true"] { transform: rotate(180deg); }
 .menu-btn[aria-expanded="true"]::before { transform: scale(1); opacity: 1; }
-.menu-btn[aria-expanded="true"] .l1 { top: 19px; transform: rotate(45deg); background: var(--accent); }
+/* Longer than the hamburger bars (24px vs 20px, recentered) so the X fills
+   enough of the ring to read clearly as a close icon — at the bars' own
+   width it looked more like a crossed-out/"not allowed" circle. */
+.menu-btn[aria-expanded="true"] .l1 { top: 19px; left: 8px; width: 24px; transform: rotate(45deg); background: var(--accent); }
 .menu-btn[aria-expanded="true"] .l2 { opacity: 0; }
-.menu-btn[aria-expanded="true"] .l3 { top: 19px; transform: rotate(-45deg); background: var(--accent); }
+.menu-btn[aria-expanded="true"] .l3 { top: 19px; left: 8px; width: 24px; transform: rotate(-45deg); background: var(--accent); }
 .menu-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -506,9 +509,14 @@ main.wrap {
 .block-media-text a:hover:not(.btn),
 .col-row a:hover:not(.btn) { color: var(--accent-hover); }
 
+/* Fixed aspect-ratio + object-fit:cover (rather than the photo's own,
+   uncontrolled ratio) keeps block heights predictable regardless of what
+   gets uploaded — a tall portrait next to a wide landscape elsewhere on
+   the same page no longer produces wildly different block proportions —
+   and reserves the space up front, avoiding a layout shift while it loads. */
 .block-image { overflow: hidden; border-radius: var(--radius); }
 .block-image img {
-    width: 100%; height: auto; border-radius: var(--radius); display: block;
+    width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius); display: block;
     transition: transform 600ms var(--ease);
 }
 .block-image:hover img { transform: scale(1.04); }
@@ -679,7 +687,7 @@ main.wrap {
 }
 .media-text-figure { margin: 0; overflow: hidden; border-radius: var(--radius); }
 .media-text-figure img {
-    width: 100%; height: auto; border-radius: var(--radius); display: block;
+    width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius); display: block;
     transition: transform 600ms var(--ease);
 }
 .media-text-figure:hover img { transform: scale(1.04); }
@@ -844,13 +852,13 @@ main.wrap {
 .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
 .cal-month-label { font-family: var(--font-heading); font-size: 0.95rem; font-weight: 600; color: var(--text); }
 .cal-nav {
-    background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--text-subtle);
+    background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--text-muted);
     padding: 0.2rem 0.5rem; line-height: 1;
 }
 .cal-nav:hover { color: var(--accent); }
 
 .cal-weekdays, .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.25rem; }
-.cal-weekdays { font-size: 0.68rem; color: var(--text-subtle); text-align: center; margin-bottom: 0.4rem; }
+.cal-weekdays { font-size: 0.68rem; color: var(--text-muted); text-align: center; margin-bottom: 0.4rem; }
 
 .cal-day {
     appearance: none; background: none; border: 1px solid transparent; border-radius: var(--radius);
@@ -920,14 +928,24 @@ html.js .block-events[data-animate].is-visible .event-card:hover { transform: tr
 .badge-spots { background: var(--bg); border: 1px solid var(--border); color: var(--text-muted); }
 .badge-full { background: var(--color-error); color: #fff; }
 
+/* Styled to look like .btn-primary, not a plain text link — registering is
+   the main action of this block, so it should carry the same visual weight
+   as every other call-to-action on the site, not less. */
 .event-register { margin-top: 0.25rem; }
 .event-register summary {
-    display: inline-block; cursor: pointer; font-weight: 600; font-size: 0.9rem;
-    color: var(--accent); list-style: none;
+    display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; list-style: none;
+    font-weight: 600; font-size: 0.95rem; color: var(--accent-contrast);
+    background: var(--btn-primary-bg); border-radius: var(--radius);
+    padding: 0.8rem 1.6rem;
+    transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
+.event-register summary:hover { background: var(--btn-primary-hover); }
+.event-register summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .event-register summary::-webkit-details-marker { display: none; }
-.event-register summary::before { content: "+ "; }
-.event-register[open] summary::before { content: "– "; }
+.event-register summary::after {
+    content: "›"; font-size: 1.15rem; line-height: 1; transition: transform var(--dur) var(--ease);
+}
+.event-register[open] summary::after { transform: rotate(90deg); }
 
 .event-register form {
     display: flex; flex-direction: column; gap: 0.4rem; max-width: 380px; margin-top: 1rem;
