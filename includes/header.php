@@ -44,9 +44,11 @@
         <a class="site-logo" href="/" aria-label="<?= e($siteName) ?> — naar home">
             <svg class="ew-logo" width="36" height="36" viewBox="0 0 120 120" aria-hidden="true">
                 <circle class="ew-logo-ring" cx="60" cy="60" r="50" fill="none" stroke-width="5"></circle>
-                <g class="ew-logo-needle">
-                    <polygon class="ew-logo-needle-a" points="60,20 70,60 50,60"></polygon>
-                    <polygon class="ew-logo-needle-b" points="50,60 70,60 60,100"></polygon>
+                <g class="ew-logo-needle-scroll">
+                    <g class="ew-logo-needle">
+                        <polygon class="ew-logo-needle-a" points="60,20 70,60 50,60"></polygon>
+                        <polygon class="ew-logo-needle-b" points="50,60 70,60 60,100"></polygon>
+                    </g>
                 </g>
                 <circle class="ew-logo-center" cx="60" cy="60" r="4.5"></circle>
             </svg>

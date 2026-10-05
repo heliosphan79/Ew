@@ -23,18 +23,28 @@
     targets.forEach(function (el) { observer.observe(el); });
 })();
 
-// Sticky header "lift": adds a shadow and shrinks the padding slightly
-// once the page has scrolled past the top, so the header (pinned via
-// position: sticky in CSS) visibly responds to scrolling rather than
-// sitting there as a flat static bar. rAF-throttled to avoid doing this
-// work on every scroll event.
+// Sticky header "lift" + compass needle drift: as the page scrolls, the
+// header (pinned via position: sticky in CSS) gains a shadow and shrinks
+// slightly, and the logo's needle rotates a little further — a small
+// bonus on top of its own settle/hover spin (see --needle-scroll-rotate
+// and .ew-logo-needle-scroll in style.css), capped well short of a full
+// turn so it reads as "drifting" rather than spinning. One rAF-throttled
+// scroll listener drives both, so neither adds extra work per scroll event.
 (function () {
     var header = document.querySelector('.site-header');
+    var root = document.documentElement;
     if (!header) return;
+
+    var MAX_NEEDLE_ROTATE = 35; // degrees, over the full page scroll
 
     var ticking = false;
     function update() {
         header.classList.toggle('is-scrolled', window.scrollY > 10);
+
+        var scrollable = root.scrollHeight - window.innerHeight;
+        var progress = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
+        root.style.setProperty('--needle-scroll-rotate', (progress * MAX_NEEDLE_ROTATE) + 'deg');
+
         ticking = false;
     }
     window.addEventListener('scroll', function () {
