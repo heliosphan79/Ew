@@ -433,7 +433,9 @@ main.wrap {
     background: var(--quote-bg);
     color: var(--quote-text);
     border-radius: var(--radius);
-    padding: 2rem 1.75rem;
+    padding: 2rem 1.25rem;
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
     position: relative;
 }
 .block-quote::before {
@@ -674,6 +676,24 @@ main.wrap {
 .block-bg-surface {
     padding: 1.75rem;
     border-radius: var(--radius);
+}
+
+/* Horizontal padding matches .wrap's own side padding, cancelled out by an
+   equal negative margin — this keeps the eyebrow/title/body text flush
+   with any neighbouring block that has no background, instead of
+   indenting it, while the colored/shadowed box still reads as a distinct
+   card (vertical padding keeps that framing). Scoped to top-level .block
+   elements only: a .column inside a columns-block also carries
+   .block-bg-accent/-surface, but that context has its own padding rule
+   (see .has-column-bg .column) tuned for the subgrid row alignment — a
+   negative margin there would misalign or overlap the columns' grid
+   tracks, so this must not reach it. */
+.block.block-bg-accent,
+.block.block-bg-surface {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
 }
 
 .block-bg-accent {
