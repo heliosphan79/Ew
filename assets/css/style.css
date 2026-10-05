@@ -398,6 +398,17 @@ main.wrap {
     margin-bottom: 0.5rem;
 }
 
+.footer-contact span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.footer-contact-icon {
+    flex-shrink: 0;
+    opacity: 0.75;
+}
+
 .footer-contact a {
     color: inherit;
 }
