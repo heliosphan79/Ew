@@ -199,6 +199,7 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.25; }
 /* ---------- Header / nav (shared site chrome, mobile-first) ---------- */
 
 .site-header {
+    position: -webkit-sticky; /* older/mobile Safari ignores unprefixed "sticky" */
     position: sticky;
     top: 0;
     z-index: 100;
