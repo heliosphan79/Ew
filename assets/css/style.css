@@ -149,6 +149,23 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.25; }
     transition: transform 0.9s cubic-bezier(.34, 1.56, .64, 1);
 }
 
+/* The wordmark stayed inert while only the needle spun on hover — this
+   ties both into a single reaction instead of a half-responding logo. */
+.ew-logo-word { transition: color var(--dur) var(--ease); }
+.site-logo:hover .ew-logo-word,
+.site-logo:focus-visible .ew-logo-word { color: var(--accent); }
+
+/* Shrinks slightly in step with the sticky header's own "lift" on scroll
+   (see .site-header.is-scrolled) — same trigger, no extra JS. Anchored
+   left so it settles in place rather than drifting. */
+.site-logo { transition: transform var(--dur) var(--ease); transform-origin: left center; }
+.site-header.is-scrolled .site-logo { transform: scale(0.88); }
+
+@media (prefers-reduced-motion: reduce) {
+    .ew-logo-word,
+    .site-logo { transition: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .ew-logo-ring,
     .ew-logo-needle,
@@ -258,7 +275,7 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.25; }
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    color: var(--text-muted);
+    color: var(--text);
     text-decoration: none;
     font-size: 0.92rem;
     white-space: nowrap;
@@ -268,10 +285,14 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.25; }
 }
 
 .site-nav a:hover,
-.site-nav a:focus-visible { color: var(--accent); border-color: var(--accent); }
+.site-nav a:focus-visible,
+.site-nav a.is-active { color: var(--accent); border-color: var(--accent); }
+
+.site-nav a.is-active { font-weight: 600; }
 
 .site-nav a:hover .ew-needle-diag,
-.site-nav a:focus-visible .ew-needle-diag { transform: rotate(0deg); }
+.site-nav a:focus-visible .ew-needle-diag,
+.site-nav a.is-active .ew-needle-diag { transform: rotate(0deg); }
 
 /* Mobile (<640px): the nav becomes a collapsible panel toggled by .menu-btn;
    icons only make sense in this stacked layout. */
