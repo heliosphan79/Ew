@@ -40,7 +40,6 @@
     <?php endif; ?>
     <?php if (!empty($recaptchaSiteKey ?? '')): ?>
     <meta name="recaptcha-site-key" content="<?= e($recaptchaSiteKey) ?>">
-    <script src="https://www.google.com/recaptcha/api.js?render=<?= e(rawurlencode($recaptchaSiteKey)) ?>" async defer></script>
     <?php endif; ?>
 </head>
 <body data-theme="<?= e(normalize_theme_variant($themeVariant ?? null)) ?>">

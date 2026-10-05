@@ -230,6 +230,17 @@ function block_bg_class(string $background): string
     return $background === 'none' ? '' : ' block-bg-' . $background;
 }
 
+// Bewaartermijn voor contactberichten/evenement-inschrijvingen — een vaste
+// keuzelijst in plaats van een vrij getal, zodat een admin nooit per
+// ongeluk een extreem korte termijn ingeeft. null = voor altijd bewaren.
+const SUBMISSION_RETENTION_OPTIONS = [90, 180, 365, 730];
+
+function sanitize_retention_days(mixed $raw): ?int
+{
+    $value = is_numeric($raw) ? (int) $raw : null;
+    return in_array($value, SUBMISSION_RETENTION_OPTIONS, true) ? $value : null;
+}
+
 // Horizontal alignment for the Buttons block (left/center/right) — used
 // both standalone and as a column child, see buttons_align_class().
 function sanitize_block_align(mixed $raw): string
@@ -1063,6 +1074,81 @@ function render_events_block(array $block, mysqli $mysqli): string
 }
 
 // ---------------------------------------------------------------------
+// Upload processing: downsizes and re-compresses an uploaded photo before
+// it's written to uploads/, so a straight-from-the-phone multi-MB original
+// doesn't get served to every visitor at full resolution. GIF is left
+// untouched — GD would flatten an animated GIF to its first frame, which
+// is worse than not resizing it. Caps the longest side at $maxDimension
+// and never upscales a smaller image. Returns false (caller then falls
+// back to storing the original) if GD is unavailable or the file can't be
+// decoded, so a host without GD still gets a working, just-unresized
+// upload rather than a hard failure.
+// ---------------------------------------------------------------------
+
+function resize_uploaded_image(string $sourcePath, string $destinationPath, string $mime, int $maxDimension = 1600, int $jpegQuality = 82): bool
+{
+    if (!extension_loaded('gd')) {
+        return false;
+    }
+
+    $image = match ($mime) {
+        'image/jpeg' => @imagecreatefromjpeg($sourcePath),
+        'image/png' => @imagecreatefrompng($sourcePath),
+        'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($sourcePath) : false,
+        default => false,
+    };
+    if ($image === false) {
+        return false;
+    }
+
+    // Mobile photos are frequently stored "sideways" with an EXIF
+    // orientation tag telling the viewer how to rotate them on display —
+    // GD ignores that tag entirely, so without correcting for it here, a
+    // portrait photo would come out rotated once re-encoded.
+    if ($mime === 'image/jpeg' && function_exists('exif_read_data')) {
+        $exif = @exif_read_data($sourcePath);
+        $orientation = $exif['Orientation'] ?? 1;
+        $image = match ($orientation) {
+            3 => imagerotate($image, 180, 0),
+            6 => imagerotate($image, -90, 0),
+            8 => imagerotate($image, 90, 0),
+            default => $image,
+        };
+    }
+
+    $width = imagesx($image);
+    $height = imagesy($image);
+    $longestSide = max($width, $height);
+
+    if ($longestSide > $maxDimension) {
+        $scale = $maxDimension / $longestSide;
+        $targetWidth = (int) round($width * $scale);
+        $targetHeight = (int) round($height * $scale);
+    } else {
+        $targetWidth = $width;
+        $targetHeight = $height;
+    }
+
+    $resized = imagecreatetruecolor($targetWidth, $targetHeight);
+    if ($mime === 'image/png' || $mime === 'image/webp') {
+        imagealphablending($resized, false);
+        imagesavealpha($resized, true);
+    }
+    imagecopyresampled($resized, $image, 0, 0, 0, 0, $targetWidth, $targetHeight, $width, $height);
+    imagedestroy($image);
+
+    $saved = match ($mime) {
+        'image/jpeg' => imagejpeg($resized, $destinationPath, $jpegQuality),
+        'image/png' => imagepng($resized, $destinationPath, 6),
+        'image/webp' => function_exists('imagewebp') ? imagewebp($resized, $destinationPath, $jpegQuality) : false,
+        default => false,
+    };
+    imagedestroy($resized);
+
+    return $saved;
+}
+
+// ---------------------------------------------------------------------
 // Upload cleanup: images live in uploads/ and are only ever
 // referenced by URL from inside a page's blocks JSON — there is no
 // foreign key. So "is this file still needed" is answered by re-scanning
@@ -1200,7 +1286,7 @@ function get_site_settings(mysqli $mysqli): array
 {
     static $settings = null;
     if ($settings === null) {
-        $row = $mysqli->query('SELECT address, phone, email, content, contact_meta_title, contact_meta_description, ai_summary, contact_form_background FROM site_settings WHERE id = 1')->fetch_assoc();
+        $row = $mysqli->query('SELECT address, phone, email, content, contact_meta_title, contact_meta_description, ai_summary, contact_form_background, submission_retention_days FROM site_settings WHERE id = 1')->fetch_assoc();
         $settings = [
             'address' => $row['address'] ?? '',
             'phone' => $row['phone'] ?? '',
@@ -1210,9 +1296,37 @@ function get_site_settings(mysqli $mysqli): array
             'contact_meta_description' => $row['contact_meta_description'] ?? '',
             'ai_summary' => $row['ai_summary'] ?? '',
             'contact_form_background' => $row['contact_form_background'] ?? 'none',
+            'submission_retention_days' => $row['submission_retention_days'] !== null ? (int) $row['submission_retention_days'] : null,
         ];
     }
     return $settings;
+}
+
+// Deletes contact submissions and event registrations older than the
+// configured retention window — personal data (name/email/message/IP)
+// that otherwise accumulates indefinitely with no way to expire it. NULL
+// (the default) keeps everything, unchanged from before this existed.
+// No cron on this project's shared/manual-deploy hosting, so this runs
+// opportunistically: called once from admin/dashboard.php, the page an
+// admin lands on at the start of every session, the same "lazy cleanup on
+// access" pattern already used for orphaned uploads.
+function cleanup_expired_submissions(mysqli $mysqli): void
+{
+    $settings = get_site_settings($mysqli);
+    $days = $settings['submission_retention_days'];
+    if ($days === null) {
+        return;
+    }
+
+    $stmt = $mysqli->prepare('DELETE FROM contact_submissions WHERE created_at < (NOW() - INTERVAL ? DAY)');
+    $stmt->bind_param('i', $days);
+    $stmt->execute();
+    $stmt->close();
+
+    $stmt = $mysqli->prepare('DELETE FROM event_registrations WHERE registered_at < (NOW() - INTERVAL ? DAY)');
+    $stmt->bind_param('i', $days);
+    $stmt->execute();
+    $stmt->close();
 }
 
 // Switches to ProfessionalService (a LocalBusiness subtype — fits a

@@ -130,6 +130,16 @@
 // the server-side check. form.submit() below is the native DOM method,
 // which (unlike a click or Enter) does not re-fire the 'submit' event —
 // that's what keeps this from looping back into itself.
+//
+// The script itself loads lazily, on the visitor's first interaction with
+// the form, rather than unconditionally on every page load — unlike
+// Analytics, it was never gated behind cookie consent (it's there for
+// anti-spam, not tracking, so withholding it entirely on "weiger" would
+// defeat its purpose), but there is still no reason to fetch a
+// Google-hosted, cookie-setting script for a visitor who never touches
+// the form. A genuine visitor takes several seconds to fill in
+// name/email/message — the timing check below already assumes that — so
+// this has ample time to load before they submit.
 (function () {
     var form = document.querySelector('.contact-form');
     var siteKeyMeta = document.querySelector('meta[name="recaptcha-site-key"]');
@@ -140,6 +150,16 @@
     tokenField.type = 'hidden';
     tokenField.name = 'recaptcha_token';
     form.appendChild(tokenField);
+
+    var scriptRequested = false;
+    form.addEventListener('focusin', function () {
+        if (scriptRequested) return;
+        scriptRequested = true;
+        var script = document.createElement('script');
+        script.src = 'https://www.google.com/recaptcha/api.js?render=' + encodeURIComponent(siteKey);
+        script.async = true;
+        document.head.appendChild(script);
+    });
 
     form.addEventListener('submit', function (e) {
         if (typeof window.grecaptcha === 'undefined') return;

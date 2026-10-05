@@ -82,6 +82,7 @@ $pageTitle = 'Inloggen';
 
         <button type="submit">Inloggen</button>
     </form>
+    <p><a href="forgot-password.php">Wachtwoord vergeten?</a></p>
 </div>
 </div>
 </body>

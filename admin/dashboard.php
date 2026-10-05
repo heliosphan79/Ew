@@ -4,6 +4,8 @@ require __DIR__ . '/../includes/bootstrap.php';
 require __DIR__ . '/../includes/ga_client.php';
 require_login();
 
+cleanup_expired_submissions($mysqli);
+
 $pageCount = $mysqli->query('SELECT COUNT(*) AS total FROM pages')->fetch_assoc()['total'];
 $publishedCount = $mysqli->query('SELECT COUNT(*) AS total FROM pages WHERE published = 1')->fetch_assoc()['total'];
 $unreadCount = $mysqli->query('SELECT COUNT(*) AS total FROM contact_submissions WHERE is_read = 0')->fetch_assoc()['total'];

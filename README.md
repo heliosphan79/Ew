@@ -118,7 +118,11 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
   - **Foto** — kies "Bestand kiezen…" om een JPG/PNG/GIF/WEBP te uploaden
     (max. 5 MB, direct herbekeken als miniatuur), of vul zelf een
     afbeeldings-URL in. Plus alt-tekst (verplicht, toegankelijkheid) en
-    optioneel bijschrift.
+    optioneel bijschrift. JPG/PNG/WEBP worden bij upload automatisch
+    verkleind tot max. 1600px op de langste zijde en herschaald voor een
+    kleinere bestandsgrootte (EXIF-rotatie van telefoonfoto's wordt daarbij
+    gerespecteerd) — GIF blijft ongemoeid, om een eventuele animatie niet
+    te breken.
   - **Quote** — citaat + optionele bron.
   - **Lijst** — titel, stijl (opsomming/vinkjes) en items (één per regel,
     met dezelfde eenvoudige opmaak als een tekstblok).
@@ -307,6 +311,13 @@ formulier zelf kan wel een achtergrond krijgen ("Geen"/"Accentkleur"/
 contactformulier" op diezelfde pagina
 (`database/migrations/011_contact_form_background.sql`).
 
+Ook op die pagina: **bewaartermijn contactberichten & inschrijvingen**
+("Voor altijd"/90/180/365/730 dagen) — contactberichten en evenement-
+inschrijvingen ouder dan de gekozen termijn worden automatisch verwijderd
+(naam, e-mailadres, bericht, IP-adres). Gebeurt bij het openen van het
+Dashboard, niet onmiddellijk bij het wijzigen van de instelling
+(`database/migrations/012_submission_retention.sql`).
+
 Verder staan er twee eigen SEO/AI-velden op die pagina:
 - **Titel/meta-omschrijving contactpagina**: `/contact` had tot nu toe een
   vaste, hardcoded titel en omschrijving. Leeg = die vaste tekst blijft
@@ -494,6 +505,12 @@ bovenop, nooit een voorwaarde om het bericht te bewaren.
 - `admin/install.php` sluit zichzelf automatisch af zodra er één
   account bestaat — dat is de enige manier waarop nieuwe accounts kunnen
   ontstaan; er is bewust geen registratiepagina.
+- **Wachtwoord vergeten**: "Wachtwoord vergeten?" op de inlogpagina stuurt
+  een tijdelijke (1 uur geldige) herstellink naar het e-mailadres onder
+  Instellingen — vereist dus zowel dat e-mailadres als een werkende SMTP-
+  configuratie in `config/config.php`. Zonder die twee kan het wachtwoord
+  enkel rechtstreeks in de database hersteld worden
+  (`database/migrations/013_password_reset.sql`).
 - Afbeeldingsuploads (`admin/upload-image.php`) zijn alleen
   bereikbaar als ingelogde beheerder, controleren het werkelijke
   bestandstype (niet enkel de extensie) via `finfo` + `getimagesize()`,
