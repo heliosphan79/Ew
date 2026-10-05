@@ -160,8 +160,25 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.25; }
 /* ---------- Header / nav (shared site chrome, mobile-first) ---------- */
 
 .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
     border-bottom: 1px solid var(--border);
     padding: 1rem 0;
+    transition: padding var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+/* Added by main.js once the page scrolls past the top — a light "lift"
+   (shrinks slightly, gains a shadow) so the sticky chrome reads as
+   responding to scroll rather than just sitting there. Pure CSS fallback
+   if JS is off: header stays sticky, just without this extra motion. */
+.site-header.is-scrolled {
+    padding: 0.6rem 0;
+    box-shadow: var(--shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .site-header { transition: none; }
 }
 
 .site-header-row {
