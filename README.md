@@ -39,7 +39,8 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
    op volgnummer — `002_blocks_and_theme.sql` (lees de opmerking bovenaan,
    want bestaande paginainhoud wordt daarbij geleegd), `003_menu_visibility.sql`,
    `004_calendar_slots.sql`, `005_events.sql`, `006_site_settings.sql`,
-   `007_contact_content.sql` en `008_analytics_cache.sql`.
+   `007_contact_content.sql`, `008_analytics_cache.sql`,
+   `009_contact_seo_fields.sql` en `010_ai_summary.sql`.
 3. `cp config/config.example.php config/config.php` en vul je lokale
    databasegegevens in.
 4. Start de ingebouwde PHP-server vanaf de projectroot, met `router.php`
@@ -301,6 +302,17 @@ blokken aanpasbaar — enkel de inhoud ervoor is vrij in te vullen. Leeg =
 enkel het formulier, zoals voorheen. Opgeslagen in dezelfde `site_settings`-
 rij, kolom `content` (`database/migrations/007_contact_content.sql`).
 
+Verder staan er twee eigen SEO/AI-velden op die pagina:
+- **Titel/meta-omschrijving contactpagina**: `/contact` had tot nu toe een
+  vaste, hardcoded titel en omschrijving. Leeg = die vaste tekst blijft
+  gebruikt (`database/migrations/009_contact_seo_fields.sql`).
+- **AI-samenvatting van de praktijk**: een eigen, uitgebreidere tekst over
+  de praktijk (los van de korte meta-omschrijving), die verschijnt als
+  "Over de praktijk"-sectie in `llms.txt` — zie
+  [SEO & vindbaarheid voor AI-zoekfuncties](#seo--vindbaarheid-voor-ai-zoekfuncties)
+  hieronder. Leeg = die sectie verschijnt simpelweg niet
+  (`database/migrations/010_ai_summary.sql`).
+
 ## Google Analytics
 
 Volledig optioneel — alles hieronder blijft uitgeschakeld (geen script,
@@ -416,25 +428,51 @@ bovenop, nooit een voorwaarde om het bericht te bewaren.
   contactformulier via `/contact` (geen `.php`/`?slug=` meer in de
   adresbalk) — beter voor zowel klassieke zoekmachines als AI-crawlers.
 - **Canonical URL + Open Graph + Twitter cards** op elke pagina, automatisch
-  ingevuld vanuit titel, meta-omschrijving en (indien aanwezig) de eerste
-  foto van de pagina — zodat een gedeelde link op social media/WhatsApp
-  er verzorgd uitziet.
-- **Structured data (JSON-LD)**: elke pagina krijgt `Organization`- en
-  `WebPage`-schema.org-markup. Bewust minimaal — enkel site-naam en URL,
-  nooit verzonnen bedrijfsgegevens (adres, telefoon, ...) die je nergens
-  hebt ingevuld.
+  ingevuld vanuit titel, meta-omschrijving en de eerste foto van de pagina
+  (ook als die in een kolommen- of foto+tekst-blok staat). Heeft een pagina
+  geen eigen foto, dan valt `og:image` terug op een vaste, echte foto van de
+  praktijkruimte (`assets/images/praktijkruimte.jpg`) in plaats van helemaal
+  geen afbeelding te tonen — zodat een gedeelde link altijd verzorgd oogt.
+- **Meta-omschrijving: waarschuwing, geen blokkade**: bij het bewerken van
+  een pagina (en van de contactpagina-velden in Instellingen) toont het veld
+  live het aantal tekens, met een waarschuwing als het leeg is of langer dan
+  ~160 tekens (het punt waarop zoekmachines vaak afkappen). De pagina blijft
+  gewoon opslaanbaar — het is een hint, geen harde eis.
+- **Structured data (JSON-LD)**:
+  - `Organization`- en `WebPage`-schema.org-markup op elke pagina.
+  - Zodra adres of telefoonnummer is ingevuld bij "Instellingen", wordt
+    `Organization` automatisch `ProfessionalService` (een LocalBusiness-
+    subtype, passend voor een therapie-/coachingpraktijk) met die gegevens
+    erbij. Leeg = gewoon `Organization`, zoals voorheen — nooit verzonnen
+    bedrijfsgegevens.
+  - Elk aankomend, gepubliceerd evenement met een locatie krijgt eigen
+    `Event`-schema.org-markup (naam, beschrijving, datum/tijd, locatie) op
+    de pagina waar het evenementenblok staat. Zonder locatie (nog niet
+    ingevuld) verschijnt er geen `Event`-markup voor dat evenement — Google
+    vereist een locatie, en die wordt nooit verzonnen.
+- Elk fotoblok (los, foto+tekst, of in een kolom) vereist een alt-tekst,
+  zowel in de admin-UI als hard afgedwongen bij het opslaan — nooit een
+  foto zonder beschrijving.
 - **`sitemap.xml`** (dynamisch, `sitemap.php`) — lijst van alle
   gepubliceerde pagina's voor zoekmachines.
 - **`robots.txt`** (dynamisch, `robots.php`) — sluit enkel
-  `/admin/` uit; staat expliciet open voor de bekende AI-crawlers
-  (GPTBot, ChatGPT-User, Google-Extended, ClaudeBot, PerplexityBot, ...)
-  zodat de site ook via AI-zoekfuncties gevonden en geciteerd kan worden.
+  `/admin/` uit; staat expliciet open voor de bekende AI-crawlers (GPTBot,
+  ChatGPT-User, OAI-SearchBot, Google-Extended, CCBot, anthropic-ai,
+  ClaudeBot, PerplexityBot, Applebot-Extended, Meta-ExternalAgent) zodat de
+  site ook via AI-zoekfuncties gevonden en geciteerd kan worden.
 - **`llms.txt`** (dynamisch, `llms.php`) — een opkomende, informele
-  standaard: een korte, platte-tekstsamenvatting van de site speciaal voor
-  AI-systemen, naast de klassieke `sitemap.xml` voor zoekmachines.
-- Elk fotoblok vereist een alt-tekst (toegankelijkheid **en** SEO), en de
-  site is licht en snel (geen zware JS-frameworks, geen externe lettertypes)
-  — laadsnelheid en mobielvriendelijkheid zijn zelf ook rankingfactoren.
+  standaard: een platte-tekstsamenvatting van de site speciaal voor
+  AI-systemen, naast de klassieke `sitemap.xml` voor zoekmachines. Bestaat
+  uit secties:
+  - **Over de praktijk** (optioneel) — de eigen AI-samenvatting uit
+    Instellingen, enkel getoond als die is ingevuld.
+  - **Aanbod** — alle gepubliceerde pagina's (incl. Home en Contact) met
+    hun meta-omschrijving.
+  - **Evenementen** (optioneel) — aankomende, gepubliceerde evenementen met
+    datum, locatie en beschrijving; blijft weg zodra er geen zijn.
+- De site is licht en snel (geen zware JS-frameworks, geen externe
+  lettertypes) — laadsnelheid en mobielvriendelijkheid zijn zelf ook
+  rankingfactoren.
 
 ## Beveiliging — belangrijk voor je gaat live
 

@@ -75,15 +75,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $_SESSION['contact_form_rendered_at'] = time();
 
-$pageTitle = 'Contact';
-$metaDescription = 'Neem contact op met ' . $siteName . '.';
+$contactSettings = get_site_settings($mysqli);
+$contactBlocks = decode_blocks($contactSettings['content']);
+
+$pageTitle = $contactSettings['contact_meta_title'] !== '' ? $contactSettings['contact_meta_title'] : 'Contact';
+$metaDescription = $contactSettings['contact_meta_description'] !== '' ? $contactSettings['contact_meta_description'] : 'Neem contact op met ' . $siteName . '.';
 $canonicalUrl = absolute_url($siteUrl, '/contact');
+$ogImage = og_image_url($siteUrl, first_image_url($contactBlocks));
 $nav = $mysqli->query(
     'SELECT slug, title FROM pages WHERE published = 1 AND is_homepage = 0 AND show_in_menu = 1 ORDER BY nav_order ASC, title ASC'
 )->fetch_all(MYSQLI_ASSOC);
-
-$contactSettings = get_site_settings($mysqli);
-$contactBlocks = decode_blocks($contactSettings['content']);
 
 // Contact isn't a CMS page itself — match the homepage's variant so the
 // site doesn't suddenly look different on this one utility page.

@@ -31,8 +31,7 @@ $pageTitle = $page['title'] ?? 'Pagina niet gevonden';
 $metaDescription = $page['meta_description'] ?? '';
 $themeVariant = $page['theme_variant'] ?? 'a';
 $canonicalUrl = $page ? absolute_url($siteUrl, '/pagina/' . $page['slug']) : null;
-$imageUrl = first_image_url($pageBlocks);
-$ogImage = $imageUrl ? media_absolute_url($siteUrl, $imageUrl) : null;
+$ogImage = $page ? og_image_url($siteUrl, first_image_url($pageBlocks)) : null;
 
 require __DIR__ . '/includes/header.php';
 ?>

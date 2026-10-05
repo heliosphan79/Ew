@@ -982,6 +982,11 @@ function render_events_block(array $block, mysqli $mysqli): string
             $out .= '</details>';
         }
 
+        $eventJsonLd = event_schema($event);
+        if ($eventJsonLd !== null) {
+            $out .= '<script type="application/ld+json">' . json_encode($eventJsonLd, JSON_UNESCAPED_SLASHES) . '</script>';
+        }
+
         $out .= '</article>';
     }
 
@@ -1077,17 +1082,48 @@ function media_absolute_url(string $siteUrl, string $url): string
     return absolute_url($siteUrl, $url);
 }
 
+// Also looks inside a columns-block's nested children — a page whose only
+// photo sits in a column shouldn't fall back to the site-wide default image.
 function first_image_url(array $blocks): ?string
 {
     foreach ($blocks as $block) {
-        if (is_array($block) && ($block['type'] ?? '') === 'image') {
+        if (!is_array($block)) {
+            continue;
+        }
+        $type = $block['type'] ?? '';
+
+        if ($type === 'image' || $type === 'media_text') {
             $url = trim((string) ($block['url'] ?? ''));
             if ($url !== '') {
                 return $url;
             }
         }
+
+        if ($type === 'columns') {
+            foreach ((array) ($block['columns'] ?? []) as $children) {
+                foreach ((array) $children as $child) {
+                    if (is_array($child) && ($child['type'] ?? '') === 'image') {
+                        $url = trim((string) ($child['url'] ?? ''));
+                        if ($url !== '') {
+                            return $url;
+                        }
+                    }
+                }
+            }
+        }
     }
     return null;
+}
+
+// Site-wide fallback og:image: a page without its own photo still gets a
+// real one (the practice room, already used elsewhere on the site) rather
+// than no preview image at all — never a fabricated/generic placeholder.
+const DEFAULT_OG_IMAGE = '/assets/images/praktijkruimte.jpg';
+
+function og_image_url(string $siteUrl, ?string $pageImageUrl): string
+{
+    $url = $pageImageUrl !== null && $pageImageUrl !== '' ? $pageImageUrl : DEFAULT_OG_IMAGE;
+    return media_absolute_url($siteUrl, $url);
 }
 
 // Contactgegevens (adres/telefoon/e-mail) voor de footer, beheerd via
@@ -1096,25 +1132,51 @@ function get_site_settings(mysqli $mysqli): array
 {
     static $settings = null;
     if ($settings === null) {
-        $row = $mysqli->query('SELECT address, phone, email, content FROM site_settings WHERE id = 1')->fetch_assoc();
+        $row = $mysqli->query('SELECT address, phone, email, content, contact_meta_title, contact_meta_description, ai_summary FROM site_settings WHERE id = 1')->fetch_assoc();
         $settings = [
             'address' => $row['address'] ?? '',
             'phone' => $row['phone'] ?? '',
             'email' => $row['email'] ?? '',
             'content' => $row['content'] ?? '[]',
+            'contact_meta_title' => $row['contact_meta_title'] ?? '',
+            'contact_meta_description' => $row['contact_meta_description'] ?? '',
+            'ai_summary' => $row['ai_summary'] ?? '',
         ];
     }
     return $settings;
 }
 
-function organization_schema(string $siteName, string $siteUrl): array
+// Switches to ProfessionalService (a LocalBusiness subtype — fits a
+// therapy/coaching practice) once there's real address/phone data to back
+// it up, same "never verzin data" principle as the footer: only claim to
+// be a located, reachable business when Instellingen actually says so.
+// address stays a plain string (schema.org allows this, not just a
+// PostalAddress object) since it's a single free-text field, not
+// street/city/postcode split out separately.
+function organization_schema(string $siteName, string $siteUrl, array $siteSettings = []): array
 {
-    return [
+    $address = trim((string) ($siteSettings['address'] ?? ''));
+    $phone = trim((string) ($siteSettings['phone'] ?? ''));
+    $email = trim((string) ($siteSettings['email'] ?? ''));
+
+    $schema = [
         '@context' => 'https://schema.org',
-        '@type' => 'Organization',
+        '@type' => ($address !== '' || $phone !== '') ? 'ProfessionalService' : 'Organization',
         'name' => $siteName,
         'url' => $siteUrl,
     ];
+
+    if ($address !== '') {
+        $schema['address'] = $address;
+    }
+    if ($phone !== '') {
+        $schema['telephone'] = $phone;
+    }
+    if ($email !== '') {
+        $schema['email'] = $email;
+    }
+
+    return $schema;
 }
 
 function webpage_schema(string $name, ?string $description, ?string $url): array
@@ -1127,4 +1189,32 @@ function webpage_schema(string $name, ?string $description, ?string $url): array
         $schema['url'] = $url;
     }
     return $schema;
+}
+
+// schema.org/Event requires a location, so an event without one (not yet
+// filled in by the site owner) gets no JSON-LD rather than a fabricated address.
+function event_schema(array $event): ?array
+{
+    $location = trim((string) ($event['location'] ?? ''));
+    if ($location === '') {
+        return null;
+    }
+
+    $date = (string) ($event['event_date'] ?? '');
+    $time = trim((string) ($event['event_time'] ?? ''));
+    $startDate = $time !== '' ? $date . 'T' . substr($time, 0, 5) . ':00' : $date;
+
+    return [
+        '@context' => 'https://schema.org',
+        '@type' => 'Event',
+        'name' => (string) ($event['title'] ?? ''),
+        'description' => (string) ($event['description'] ?? ''),
+        'startDate' => $startDate,
+        'eventStatus' => 'https://schema.org/EventScheduled',
+        'eventAttendanceMode' => 'https://schema.org/OfflineEventAttendanceMode',
+        'location' => [
+            '@type' => 'Place',
+            'name' => $location,
+        ],
+    ];
 }

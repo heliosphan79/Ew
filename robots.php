@@ -15,14 +15,16 @@ echo "\n";
 // be discoverable and citable through AI-powered search, not just
 // traditional search engines.
 $aiCrawlers = [
-    'GPTBot',            // OpenAI (training)
-    'ChatGPT-User',      // OpenAI (live browsing/search)
-    'Google-Extended',   // Google (AI features, separate from Googlebot)
-    'CCBot',             // Common Crawl (feeds many AI models)
+    'GPTBot',             // OpenAI (training)
+    'ChatGPT-User',       // OpenAI (live browsing/search)
+    'OAI-SearchBot',      // OpenAI (ChatGPT search)
+    'Google-Extended',    // Google (AI features, separate from Googlebot)
+    'CCBot',              // Common Crawl (feeds many AI models)
     'anthropic-ai',
-    'ClaudeBot',         // Anthropic
-    'PerplexityBot',     // Perplexity AI search
-    'Applebot-Extended', // Apple (AI features)
+    'ClaudeBot',          // Anthropic
+    'PerplexityBot',      // Perplexity AI search
+    'Applebot-Extended',  // Apple (AI features)
+    'Meta-ExternalAgent', // Meta (AI training/search)
 ];
 
 foreach ($aiCrawlers as $agent) {
