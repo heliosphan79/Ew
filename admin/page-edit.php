@@ -164,7 +164,8 @@ require __DIR__ . '/includes/header.php';
     <input type="text" id="slug" name="slug" value="<?= e($form['slug']) ?>" placeholder="wordt automatisch afgeleid van de titel indien leeg">
 
     <label for="meta_description">Meta-omschrijving (SEO)</label>
-    <input type="text" id="meta_description" name="meta_description" value="<?= e($form['meta_description']) ?>" maxlength="300">
+    <input type="text" id="meta_description" name="meta_description" value="<?= e($form['meta_description']) ?>" maxlength="300" data-meta-description-input>
+    <p class="field-hint" data-meta-description-hint></p>
 
     <label for="theme_variant">Frontend-variant</label>
     <select id="theme_variant" name="theme_variant">

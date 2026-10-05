@@ -19,6 +19,31 @@
     });
 })();
 
+(function initMetaDescriptionHints() {
+    var fields = document.querySelectorAll('[data-meta-description-input]');
+    fields.forEach(function (field) {
+        var hint = field.nextElementSibling;
+        if (!hint || !hint.hasAttribute('data-meta-description-hint')) return;
+
+        function update() {
+            var len = field.value.length;
+            if (len === 0) {
+                hint.textContent = 'Geen meta-omschrijving ingevuld — dit wordt aanbevolen voor SEO.';
+                hint.classList.add('field-hint-warn');
+            } else if (len > 160) {
+                hint.textContent = len + ' tekens — zoekmachines kappen de omschrijving vaak af na ongeveer 160 tekens.';
+                hint.classList.add('field-hint-warn');
+            } else {
+                hint.textContent = len + ' tekens (ideaal: 50–160).';
+                hint.classList.remove('field-hint-warn');
+            }
+        }
+
+        field.addEventListener('input', update);
+        update();
+    });
+})();
+
 (function initBlockEditor() {
     var container = document.getElementById('block-editor');
     var hiddenInput = document.getElementById('blocks_json');
@@ -194,7 +219,7 @@
                         '<p class="image-upload-status" data-role="upload-status"></p>' +
                         '<img class="image-preview" data-role="preview"' + (block.url ? ' src="' + escapeAttr(block.url) + '"' : ' hidden') + '>'
                     )) +
-                    fieldRow('Alt-tekst (beschrijving voor toegankelijkheid)', '<input type="text" data-field="alt" value="' + escapeAttr(block.alt) + '">') +
+                    fieldRow('Alt-tekst (beschrijving voor toegankelijkheid)', '<input type="text" data-field="alt" value="' + escapeAttr(block.alt) + '" required>') +
                     fieldRow('Bijschrift (optioneel)', '<input type="text" data-field="caption" value="' + escapeAttr(block.caption) + '">')
                 );
                 break;
@@ -256,7 +281,7 @@
                         '<p class="image-upload-status" data-role="upload-status"></p>' +
                         '<img class="image-preview" data-role="preview"' + (block.url ? ' src="' + escapeAttr(block.url) + '"' : ' hidden') + '>'
                     )) +
-                    fieldRow('Alt-tekst (beschrijving voor toegankelijkheid)', '<input type="text" data-field="alt" value="' + escapeAttr(block.alt) + '">') +
+                    fieldRow('Alt-tekst (beschrijving voor toegankelijkheid)', '<input type="text" data-field="alt" value="' + escapeAttr(block.alt) + '" required>') +
                     fieldRow('Bijschrift (optioneel)', '<input type="text" data-field="caption" value="' + escapeAttr(block.caption) + '">') +
                     fieldRow('Positie van de foto', (
                         '<select data-field="image_position">' +

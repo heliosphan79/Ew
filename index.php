@@ -16,8 +16,7 @@ $pageTitle = $homepage['title'] ?? $siteName;
 $metaDescription = $homepage['meta_description'] ?? '';
 $themeVariant = $homepage['theme_variant'] ?? 'a';
 $canonicalUrl = absolute_url($siteUrl, '/');
-$imageUrl = first_image_url($homepageBlocks);
-$ogImage = $imageUrl ? media_absolute_url($siteUrl, $imageUrl) : null;
+$ogImage = og_image_url($siteUrl, first_image_url($homepageBlocks));
 
 require __DIR__ . '/includes/header.php';
 ?>

@@ -96,6 +96,14 @@ CREATE TABLE IF NOT EXISTS site_settings (
     -- No DEFAULT here: MySQL rejects a default value on TEXT/BLOB columns
     -- (error 1101), so the initial '[]' is set explicitly below instead.
     content    MEDIUMTEXT NOT NULL,
+    -- Eigen SEO-titel/omschrijving voor contact.php, dat geen rij in
+    -- `pages` is. Leeg = terugval op de hardcoded tekst in contact.php.
+    contact_meta_title       VARCHAR(200) DEFAULT NULL,
+    contact_meta_description VARCHAR(300) DEFAULT NULL,
+    -- Uitgebreidere AI-samenvatting van de praktijk, apart van
+    -- meta_description, gebruikt in de "Over de praktijk"-sectie van
+    -- llms.txt. Leeg = die sectie wordt niet getoond.
+    ai_summary VARCHAR(2000) DEFAULT NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

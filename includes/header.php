@@ -25,7 +25,7 @@
     <?php endif; ?>
     <meta name="twitter:card" content="<?= !empty($ogImage) ? 'summary_large_image' : 'summary' ?>">
 
-    <script type="application/ld+json"><?= json_encode(organization_schema($siteName, $siteUrl), JSON_UNESCAPED_SLASHES) ?></script>
+    <script type="application/ld+json"><?= json_encode(organization_schema($siteName, $siteUrl, get_site_settings($mysqli)), JSON_UNESCAPED_SLASHES) ?></script>
     <script type="application/ld+json"><?= json_encode(webpage_schema($pageTitle ?? $siteName, $metaDescription ?? null, $canonicalUrl ?? null), JSON_UNESCAPED_SLASHES) ?></script>
 
     <link rel="stylesheet" href="/assets/css/style.css">
