@@ -40,13 +40,17 @@ require __DIR__ . '/includes/header.php';
                         <form method="post" action="submissions.php">
                             <?= csrf_field() ?>
                             <input type="hidden" name="mark_read_id" value="<?= (int) $submission['id'] ?>">
-                            <button type="submit" class="link-button">Markeer als gelezen</button>
+                            <button type="submit" class="icon-btn icon-btn-accent" title="Markeer als gelezen">
+                                <?= admin_icon('check') ?><span class="visually-hidden">Markeer als gelezen</span>
+                            </button>
                         </form>
                     <?php endif; ?>
                     <form method="post" action="submission-delete.php" onsubmit="return confirm('Dit bericht definitief verwijderen?');">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= (int) $submission['id'] ?>">
-                        <button type="submit" class="link-button link-button-danger">Verwijderen</button>
+                        <button type="submit" class="icon-btn icon-btn-danger" title="Verwijderen">
+                            <?= admin_icon('trash') ?><span class="visually-hidden">Verwijderen</span>
+                        </button>
                     </form>
                 </div>
             </div>

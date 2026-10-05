@@ -52,6 +52,18 @@ $pageTitle = 'Eerste installatie';
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body class="admin-auth-body">
+<div>
+    <div class="admin-auth-brand">
+        <svg class="ew-logo" width="30" height="30" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ew-logo-ring" cx="60" cy="60" r="50" fill="none" stroke-width="6"></circle>
+            <g class="ew-logo-needle">
+                <polygon class="ew-logo-needle-a" points="60,20 70,60 50,60"></polygon>
+                <polygon class="ew-logo-needle-b" points="50,60 70,60 60,100"></polygon>
+            </g>
+            <circle class="ew-logo-center" cx="60" cy="60" r="4.5"></circle>
+        </svg>
+        <span><?= e($siteName) ?> beheer</span>
+    </div>
 <div class="admin-auth-box">
     <h1>Eerste installatie</h1>
     <p>Er bestaat nog geen beheerdersaccount. Maak hieronder het eerste account aan.</p>
@@ -77,6 +89,7 @@ $pageTitle = 'Eerste installatie';
 
         <button type="submit">Account aanmaken</button>
     </form>
+</div>
 </div>
 </body>
 </html>

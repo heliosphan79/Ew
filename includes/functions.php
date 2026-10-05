@@ -31,6 +31,36 @@ function render_needle_icon(): string
         . '</svg>';
 }
 
+// Generic outline UI icons for the admin panel (nav, buttons, table row
+// actions) — a small, hand-drawn set (not a font/library dependency),
+// deliberately distinct from the public site's branded needle icon above.
+// $name must be a hardcoded literal at every call site, never user input.
+const ADMIN_ICON_PATHS = [
+    'dashboard' => '<rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect>',
+    'pages' => '<path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><path d="M15 2v5h5"></path><path d="M8 13h8M8 17h8M8 9h4"></path>',
+    'inbox' => '<rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path>',
+    'calendar' => '<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 9h18M8 3v4M16 3v4"></path>',
+    'users' => '<circle cx="9" cy="8" r="3.25"></circle><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path><path d="M16.5 4.5a3.25 3.25 0 0 1 0 6.3M21 20c0-2.8-1.9-5.1-4.5-5.8"></path>',
+    'settings' => '<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path>',
+    'logout' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path>',
+    'edit' => '<path d="M4 20h4L19.5 8.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16v4z"></path><path d="M13.5 5.5l3 3"></path>',
+    'trash' => '<path d="M4 7h16"></path><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"></path><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"></path><path d="M10 11v6M14 11v6"></path>',
+    'eye' => '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle>',
+    'plus' => '<path d="M12 5v14M5 12h14"></path>',
+    'check' => '<path d="M5 13l4 4L19 7"></path>',
+    'undo' => '<path d="M3 12a9 9 0 1 0 2.6-6.4"></path><path d="M3 4v5h5"></path>',
+    'chart' => '<path d="M4 20V10M12 20V4M20 20v-7"></path>',
+    'chevron-right' => '<path d="M9 6l6 6-6 6"></path>',
+];
+
+function admin_icon(string $name, string $class = ''): string
+{
+    $path = ADMIN_ICON_PATHS[$name] ?? '';
+    $classAttr = 'admin-icon' . ($class !== '' ? ' ' . $class : '');
+    return '<svg class="' . $classAttr . '" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+        . 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $path . '</svg>';
+}
+
 function csrf_token(): string
 {
     if (empty($_SESSION['csrf_token'])) {

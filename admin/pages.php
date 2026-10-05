@@ -13,7 +13,7 @@ require __DIR__ . '/includes/header.php';
 
 <div class="admin-header-row">
     <h1>Pagina's</h1>
-    <a class="button" href="page-edit.php">+ Nieuwe pagina</a>
+    <a class="button" href="page-edit.php"><?= admin_icon('plus') ?> Nieuwe pagina</a>
 </div>
 
 <?php if (empty($pages)): ?>
@@ -55,11 +55,15 @@ require __DIR__ . '/includes/header.php';
                 <td><?= ($page['is_homepage'] || $page['show_in_menu']) ? 'Ja' : '<span class="badge badge-draft">Enkel via link</span>' ?></td>
                 <td><?= e(date('d/m/Y H:i', strtotime($page['updated_at']))) ?></td>
                 <td class="admin-table-actions">
-                    <a href="page-edit.php?id=<?= (int) $page['id'] ?>">Bewerken</a>
+                    <a class="icon-btn icon-btn-accent" href="page-edit.php?id=<?= (int) $page['id'] ?>" title="Bewerken">
+                        <?= admin_icon('edit') ?><span class="visually-hidden">Bewerken</span>
+                    </a>
                     <form method="post" action="page-delete.php" onsubmit="return confirm('Deze pagina definitief verwijderen?');">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= (int) $page['id'] ?>">
-                        <button type="submit" class="link-button">Verwijderen</button>
+                        <button type="submit" class="icon-btn icon-btn-danger" title="Verwijderen">
+                            <?= admin_icon('trash') ?><span class="visually-hidden">Verwijderen</span>
+                        </button>
                     </form>
                 </td>
             </tr>

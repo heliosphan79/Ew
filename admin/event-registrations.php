@@ -38,7 +38,7 @@ $pageTitle = 'Inschrijvingen — ' . $event['title'];
 require __DIR__ . '/includes/header.php';
 ?>
 
-<p><a href="events.php">&larr; Terug naar evenementen</a></p>
+<p><a href="events.php"><?= admin_icon('chevron-right', 'admin-icon-back') ?> Terug naar evenementen</a></p>
 <h1>Inschrijvingen — <?= e($event['title']) ?></h1>
 <p class="field-hint">
     <?= e(date('d/m/Y', strtotime($event['event_date']))) ?>
@@ -63,7 +63,9 @@ require __DIR__ . '/includes/header.php';
                     <form method="post" action="event-registrations.php?event_id=<?= (int) $eventId ?>" onsubmit="return confirm('Deze inschrijving verwijderen?');">
                         <?= csrf_field() ?>
                         <input type="hidden" name="registration_id" value="<?= (int) $registration['id'] ?>">
-                        <button type="submit" class="link-button link-button-danger">Verwijderen</button>
+                        <button type="submit" class="icon-btn icon-btn-danger" title="Verwijderen">
+                            <?= admin_icon('trash') ?><span class="visually-hidden">Verwijderen</span>
+                        </button>
                     </form>
                 </td>
             </tr>

@@ -84,7 +84,7 @@ require __DIR__ . '/includes/header.php';
     <input type="date" id="slot_date" name="slot_date" required>
     <label for="slot_time">Tijd</label>
     <input type="time" id="slot_time" name="slot_time" required>
-    <button type="submit">Tijdslot toevoegen</button>
+    <button type="submit"><?= admin_icon('plus') ?> Tijdslot toevoegen</button>
 </form>
 
 <h2 style="margin-top:2.5rem;">Aankomende tijdsloten</h2>
@@ -127,14 +127,18 @@ require __DIR__ . '/includes/header.php';
                             <?= csrf_field() ?>
                             <input type="hidden" name="action" value="cancel">
                             <input type="hidden" name="id" value="<?= (int) $slot['id'] ?>">
-                            <button type="submit" class="link-button">Annuleer boeking</button>
+                            <button type="submit" class="icon-btn icon-btn-accent" title="Annuleer boeking">
+                                <?= admin_icon('undo') ?><span class="visually-hidden">Annuleer boeking</span>
+                            </button>
                         </form>
                     <?php else: ?>
                         <form method="post" action="calendar.php" onsubmit="return confirm('Dit tijdslot verwijderen?');">
                             <?= csrf_field() ?>
                             <input type="hidden" name="action" value="delete">
                             <input type="hidden" name="id" value="<?= (int) $slot['id'] ?>">
-                            <button type="submit" class="link-button link-button-danger">Verwijderen</button>
+                            <button type="submit" class="icon-btn icon-btn-danger" title="Verwijderen">
+                                <?= admin_icon('trash') ?><span class="visually-hidden">Verwijderen</span>
+                            </button>
                         </form>
                     <?php endif; ?>
                 </td>
