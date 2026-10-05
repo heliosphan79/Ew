@@ -23,6 +23,29 @@
     targets.forEach(function (el) { observer.observe(el); });
 })();
 
+// Sticky header "lift": adds a shadow and shrinks the padding slightly
+// once the page has scrolled past the top, so the header (pinned via
+// position: sticky in CSS) visibly responds to scrolling rather than
+// sitting there as a flat static bar. rAF-throttled to avoid doing this
+// work on every scroll event.
+(function () {
+    var header = document.querySelector('.site-header');
+    if (!header) return;
+
+    var ticking = false;
+    function update() {
+        header.classList.toggle('is-scrolled', window.scrollY > 10);
+        ticking = false;
+    }
+    window.addEventListener('scroll', function () {
+        if (!ticking) {
+            window.requestAnimationFrame(update);
+            ticking = true;
+        }
+    }, { passive: true });
+    update(); // page can load already scrolled (anchor link, back/forward)
+})();
+
 // Mobile hamburger menu: toggles the collapsible nav panel open/closed.
 // Pure CSS handles the button-to-ring-and-cross and panel-reveal animation
 // (see .menu-btn / .site-nav in style.css) — this just flips the state.
