@@ -79,7 +79,7 @@ a { color: var(--color-accent); }
 }
 .admin-logout button:hover { background: rgba(255,255,255,0.08); color: #fff; }
 
-.admin-main { flex: 1; padding: 2rem 2.5rem; max-width: 1080px; }
+.admin-main { flex: 1; padding: 2rem 2.5rem; max-width: 1280px; }
 
 .admin-header-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
 .admin-header-row h1 { margin: 0; }
@@ -173,6 +173,30 @@ a { color: var(--color-accent); }
 .page-form-row { display: flex; gap: 1.5rem; align-items: center; margin-top: 1.25rem; flex-wrap: wrap; }
 .field-hint { color: var(--color-muted); font-size: 0.85rem; margin: 0.4rem 0 0; }
 .field-hint.field-hint-warn { color: var(--color-error); }
+
+/* Wide two-column layout for forms with a (potentially long) block editor:
+   content on the left where there's room to work, metadata + save button
+   in a sticky sidebar on the right so saving never requires scrolling back
+   up past the whole block list. Falls back to a single stacked column
+   below the breakpoint. */
+.page-form-wide { max-width: 1180px; background: none; border: none; box-shadow: none; padding: 0; }
+.page-form-wide > label:first-of-type { margin-top: 0; }
+.page-form-columns { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 2rem; align-items: start; margin-top: 1.25rem; }
+.page-form-main { min-width: 0; }
+.page-form-main > label:first-child { margin-top: 0; }
+.page-form-sidebar {
+    background: var(--color-panel); border: 1px solid var(--color-border); border-radius: 10px;
+    box-shadow: var(--shadow-sm); padding: 1.25rem 1.5rem;
+    position: sticky; top: 1.5rem;
+}
+.page-form-sidebar > label:first-child { margin-top: 0; }
+.page-form-actions { display: flex; gap: 0.6rem; margin-top: 1.5rem; }
+.page-form-actions .button-secondary { margin-left: 0; }
+.page-form-actions button[type=submit] { margin-top: 0; }
+@media (max-width: 960px) {
+    .page-form-columns { grid-template-columns: 1fr; }
+    .page-form-sidebar { position: static; }
+}
 
 .block-editor { display: flex; flex-direction: column; gap: 0.9rem; margin-top: 0.25rem; }
 .block-editor-empty { color: var(--color-muted); font-size: 0.9rem; margin: 0.5rem 0; }

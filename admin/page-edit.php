@@ -154,55 +154,63 @@ require __DIR__ . '/includes/header.php';
     </ul>
 <?php endif; ?>
 
-<form method="post" action="page-edit.php<?= $id ? '?id=' . (int) $id : '' ?>" class="page-form">
+<form method="post" action="page-edit.php<?= $id ? '?id=' . (int) $id : '' ?>" class="page-form page-form-wide">
     <?= csrf_field() ?>
 
     <label for="title">Titel</label>
     <input type="text" id="title" name="title" value="<?= e($form['title']) ?>" required>
 
-    <label for="slug">Slug (URL)</label>
-    <input type="text" id="slug" name="slug" value="<?= e($form['slug']) ?>" placeholder="wordt automatisch afgeleid van de titel indien leeg">
+    <div class="page-form-columns">
+        <div class="page-form-main">
+            <label>Inhoud</label>
+            <div id="block-editor" class="block-editor"></div>
+            <div id="block-toolbar" class="block-toolbar"></div>
+            <script type="application/json" id="initial-blocks"><?= json_encode($blocksForEditor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
+            <input type="hidden" id="blocks_json" name="blocks_json">
+        </div>
 
-    <label for="meta_description">Meta-omschrijving (SEO)</label>
-    <input type="text" id="meta_description" name="meta_description" value="<?= e($form['meta_description']) ?>" maxlength="300" data-meta-description-input>
-    <p class="field-hint" data-meta-description-hint></p>
+        <div class="page-form-sidebar">
+            <label for="slug">Slug (URL)</label>
+            <input type="text" id="slug" name="slug" value="<?= e($form['slug']) ?>" placeholder="wordt automatisch afgeleid van de titel indien leeg">
 
-    <label for="theme_variant">Frontend-variant</label>
-    <select id="theme_variant" name="theme_variant">
-        <?php foreach (THEME_VARIANTS as $key => $label): ?>
-            <option value="<?= e($key) ?>" <?= $form['theme_variant'] === $key ? 'selected' : '' ?>><?= e($label) ?></option>
-        <?php endforeach; ?>
-    </select>
+            <label for="meta_description">Meta-omschrijving (SEO)</label>
+            <input type="text" id="meta_description" name="meta_description" value="<?= e($form['meta_description']) ?>" maxlength="300" data-meta-description-input>
+            <p class="field-hint" data-meta-description-hint></p>
 
-    <label>Inhoud</label>
-    <div id="block-editor" class="block-editor"></div>
-    <div id="block-toolbar" class="block-toolbar"></div>
-    <script type="application/json" id="initial-blocks"><?= json_encode($blocksForEditor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
-    <input type="hidden" id="blocks_json" name="blocks_json">
+            <label for="theme_variant">Frontend-variant</label>
+            <select id="theme_variant" name="theme_variant">
+                <?php foreach (THEME_VARIANTS as $key => $label): ?>
+                    <option value="<?= e($key) ?>" <?= $form['theme_variant'] === $key ? 'selected' : '' ?>><?= e($label) ?></option>
+                <?php endforeach; ?>
+            </select>
 
-    <div class="page-form-row">
-        <label class="checkbox-label">
-            <input type="checkbox" name="published" <?= $form['published'] ? 'checked' : '' ?>>
-            Gepubliceerd
-        </label>
-        <label class="checkbox-label">
-            <input type="checkbox" name="is_homepage" <?= $form['is_homepage'] ? 'checked' : '' ?>>
-            Als homepagina instellen
-        </label>
-        <label class="checkbox-label">
-            <input type="checkbox" name="show_in_menu" <?= $form['show_in_menu'] ? 'checked' : '' ?>>
-            Tonen in hoofdmenu
-        </label>
+            <div class="page-form-row">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="published" <?= $form['published'] ? 'checked' : '' ?>>
+                    Gepubliceerd
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="is_homepage" <?= $form['is_homepage'] ? 'checked' : '' ?>>
+                    Als homepagina instellen
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="show_in_menu" <?= $form['show_in_menu'] ? 'checked' : '' ?>>
+                    Tonen in hoofdmenu
+                </label>
+            </div>
+            <p class="field-hint">
+                Staat "Tonen in hoofdmenu" uit, dan blijft de pagina bereikbaar via
+                haar eigen link (bv. vanuit een knoppenblok) maar krijgt ze geen
+                plaats in de navigatie. De volgorde in het menu stel je in door
+                pagina's te verslepen bij <a href="pages.php">Pagina's</a>.
+            </p>
+
+            <div class="page-form-actions">
+                <button type="submit">Opslaan</button>
+                <a href="pages.php" class="button-secondary">Annuleren</a>
+            </div>
+        </div>
     </div>
-    <p class="field-hint">
-        Staat "Tonen in hoofdmenu" uit, dan blijft de pagina bereikbaar via
-        haar eigen link (bv. vanuit een knoppenblok) maar krijgt ze geen
-        plaats in de navigatie. De volgorde in het menu stel je in door
-        pagina's te verslepen bij <a href="pages.php">Pagina's</a>.
-    </p>
-
-    <button type="submit">Opslaan</button>
-    <a href="pages.php" class="button-secondary">Annuleren</a>
 </form>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>

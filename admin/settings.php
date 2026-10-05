@@ -83,47 +83,55 @@ require __DIR__ . '/includes/header.php';
     </ul>
 <?php endif; ?>
 
-<form method="post" class="page-form">
+<form method="post" class="page-form page-form-wide">
     <?= csrf_field() ?>
 
-    <label for="address">Adres (optioneel)</label>
-    <input type="text" id="address" name="address" value="<?= e($form['address']) ?>">
+    <div class="page-form-columns">
+        <div class="page-form-main">
+            <label>Inhoud contactpagina</label>
+            <p class="field-hint">
+                Deze blokken verschijnen op de contactpagina, boven het vaste
+                contactformulier (dat blijft ongewijzigd). Handig voor een korte
+                intro, een kaart met de praktijklocatie, openingsuren, ... Leeg =
+                enkel het formulier, zoals vandaag.
+            </p>
+            <div id="block-editor" class="block-editor"></div>
+            <div id="block-toolbar" class="block-toolbar"></div>
+            <script type="application/json" id="initial-blocks"><?= json_encode($blocksForEditor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
+            <input type="hidden" id="blocks_json" name="blocks_json">
+        </div>
 
-    <label for="phone">Telefoonnummer (optioneel)</label>
-    <input type="text" id="phone" name="phone" value="<?= e($form['phone']) ?>">
+        <div class="page-form-sidebar">
+            <label for="address">Adres (optioneel)</label>
+            <input type="text" id="address" name="address" value="<?= e($form['address']) ?>">
 
-    <label for="email">E-mailadres (optioneel)</label>
-    <input type="email" id="email" name="email" value="<?= e($form['email']) ?>">
+            <label for="phone">Telefoonnummer (optioneel)</label>
+            <input type="text" id="phone" name="phone" value="<?= e($form['phone']) ?>">
 
-    <label for="contact_meta_title">Titel contactpagina (SEO, optioneel)</label>
-    <input type="text" id="contact_meta_title" name="contact_meta_title" value="<?= e($form['contact_meta_title']) ?>" maxlength="200" placeholder="Contact">
-    <p class="field-hint">Leeg = standaardtitel "Contact" blijft gebruikt.</p>
+            <label for="email">E-mailadres (optioneel)</label>
+            <input type="email" id="email" name="email" value="<?= e($form['email']) ?>">
 
-    <label for="contact_meta_description">Meta-omschrijving contactpagina (SEO, optioneel)</label>
-    <input type="text" id="contact_meta_description" name="contact_meta_description" value="<?= e($form['contact_meta_description']) ?>" maxlength="300" data-meta-description-input>
-    <p class="field-hint" data-meta-description-hint></p>
+            <label for="contact_meta_title">Titel contactpagina (SEO, optioneel)</label>
+            <input type="text" id="contact_meta_title" name="contact_meta_title" value="<?= e($form['contact_meta_title']) ?>" maxlength="200" placeholder="Contact">
+            <p class="field-hint">Leeg = standaardtitel "Contact" blijft gebruikt.</p>
 
-    <label for="ai_summary">AI-samenvatting van de praktijk (optioneel)</label>
-    <textarea id="ai_summary" name="ai_summary" rows="5" maxlength="2000"><?= e($form['ai_summary']) ?></textarea>
-    <p class="field-hint">
-        Een uitgebreidere, eigen samenvatting van de praktijk voor AI-zoeksystemen
-        (llms.txt) — los van de korte meta-omschrijving hierboven. Mag een paar
-        zinnen tot een korte paragraaf zijn. Leeg = deze sectie verschijnt niet in llms.txt.
-    </p>
+            <label for="contact_meta_description">Meta-omschrijving contactpagina (SEO, optioneel)</label>
+            <input type="text" id="contact_meta_description" name="contact_meta_description" value="<?= e($form['contact_meta_description']) ?>" maxlength="300" data-meta-description-input>
+            <p class="field-hint" data-meta-description-hint></p>
 
-    <label>Inhoud contactpagina</label>
-    <p class="field-hint">
-        Deze blokken verschijnen op de contactpagina, boven het vaste
-        contactformulier (dat blijft ongewijzigd). Handig voor een korte
-        intro, een kaart met de praktijklocatie, openingsuren, ... Leeg =
-        enkel het formulier, zoals vandaag.
-    </p>
-    <div id="block-editor" class="block-editor"></div>
-    <div id="block-toolbar" class="block-toolbar"></div>
-    <script type="application/json" id="initial-blocks"><?= json_encode($blocksForEditor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
-    <input type="hidden" id="blocks_json" name="blocks_json">
+            <label for="ai_summary">AI-samenvatting van de praktijk (optioneel)</label>
+            <textarea id="ai_summary" name="ai_summary" rows="5" maxlength="2000"><?= e($form['ai_summary']) ?></textarea>
+            <p class="field-hint">
+                Een uitgebreidere, eigen samenvatting van de praktijk voor AI-zoeksystemen
+                (llms.txt) — los van de korte meta-omschrijving hierboven. Mag een paar
+                zinnen tot een korte paragraaf zijn. Leeg = deze sectie verschijnt niet in llms.txt.
+            </p>
 
-    <button type="submit">Opslaan</button>
+            <div class="page-form-actions">
+                <button type="submit">Opslaan</button>
+            </div>
+        </div>
+    </div>
 </form>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>
