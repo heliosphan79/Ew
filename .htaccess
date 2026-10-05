@@ -30,3 +30,29 @@ DirectoryIndex index.php
 <FilesMatch "\.(sql|md)$">
     Require all denied
 </FilesMatch>
+
+# Security headers: safe, low-risk baseline (no CSP — the site loads
+# Google Analytics/reCAPTCHA scripts whose exact set of origins can change,
+# and a wrong CSP silently breaks those rather than failing loudly).
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Browser caching for static assets — CSS/JS/images are plain files served
+# as-is (no cache-busting query string), so a long max-age just means
+# re-deploying a changed file needs a hard refresh to see it, same as
+# before this existed. PHP pages are deliberately left uncached (admin
+# content, contact form, etc. must always be fresh).
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 month"
+</IfModule>
