@@ -57,12 +57,19 @@
             <span class="menu-btn-ln l2"></span>
             <span class="menu-btn-ln l3"></span>
         </button>
+        <?php
+        $currentPath = rtrim((string) strtok((string) ($_SERVER['REQUEST_URI'] ?? ''), '?'), '/');
+        if ($currentPath === '') {
+            $currentPath = '/';
+        }
+        $navLinkAttrs = fn(string $path): string => $path === $currentPath ? ' class="is-active" aria-current="page"' : '';
+        ?>
         <nav class="site-nav" id="site-nav" aria-label="Hoofdmenu">
-            <a href="/"><?= render_needle_icon() ?>Home</a>
+            <a href="/"<?= $navLinkAttrs('/') ?>><?= render_needle_icon() ?>Home</a>
             <?php foreach ($nav ?? [] as $item): ?>
-                <a href="/pagina/<?= e($item['slug']) ?>"><?= render_needle_icon() ?><?= e($item['title']) ?></a>
+                <a href="/pagina/<?= e($item['slug']) ?>"<?= $navLinkAttrs('/pagina/' . $item['slug']) ?>><?= render_needle_icon() ?><?= e($item['title']) ?></a>
             <?php endforeach; ?>
-            <a href="/contact"><?= render_needle_icon() ?>Contact</a>
+            <a href="/contact"<?= $navLinkAttrs('/contact') ?>><?= render_needle_icon() ?>Contact</a>
         </nav>
     </div>
 </header>
