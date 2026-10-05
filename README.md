@@ -152,12 +152,20 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
     mogelijk).
 - **Opmaak in tekst en lijsten**: de tekst van een tekstblok, foto+tekst-blok
   en de items van een lijstblok ondersteunen een kleine, veilige opmaaksyntax
-  — `**vet**`, `*cursief*` en `[linktekst](url)` — via knoppen boven het
-  veld of door de syntax gewoon zelf te typen. Dit is bewust **geen**
+  — `**vet**`, `*cursief*`, `[linktekst](url)` — via knoppen boven het
+  veld of door de syntax gewoon zelf te typen. In een tekst- of
+  foto+tekst-blok (en in de tekst van een kolom) kan je bovendien, via
+  datzelfde principe, een opsomming toevoegen: elke regel die begint met
+  `- ` wordt een bullet-lijst (dezelfde schuine naald-bullet als het
+  lijstblok) — typ de regels, selecteer ze, en klik op de knop "•", of
+  typ `- ` gewoon zelf vooraan elke regel. Een alinea waarin slechts een
+  deel van de regels met `- ` begint, blijft gewone tekst (inclusief het
+  streepje) — zo verandert bestaande inhoud met een letterlijk
+  liggend streepje nooit onbedoeld van uiterlijk. Dit is bewust **geen**
   vrije HTML-editor: wat je typt wordt eerst volledig geëscaped en pas
-  daarna omgezet naar `<strong>`/`<em>`/`<a>`-tags, dus letterlijke
-  `<script>`- of andere HTML-tags kunnen nooit als echte opmaak
-  terechtkomen — enkel deze drie, bewust beperkte stijlen zijn mogelijk.
+  daarna omgezet naar `<strong>`/`<em>`/`<a>`/`<ul><li>`-tags, dus
+  letterlijke `<script>`- of andere HTML-tags kunnen nooit als echte
+  opmaak terechtkomen — enkel deze bewust beperkte stijlen zijn mogelijk.
   Links volgen dezelfde `is_safe_url()`-controle als overal elders
   (geen `javascript:`).
 - **3 frontend-varianten**, per pagina instelbaar (dropdown in de

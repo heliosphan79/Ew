@@ -472,11 +472,10 @@ main.wrap {
 
 .block-list h3 { font-size: 1.1rem; margin-bottom: 0.75rem; }
 .block-list ul { margin: 0; padding-left: 1.25rem; }
-.block-list li { margin-bottom: 0.5rem; }
-.block-list li:last-child { margin-bottom: 0; }
 
 .list-check { list-style: none; padding-left: 0 !important; }
-.list-check li { position: relative; padding-left: 1.75rem; }
+.list-check li { position: relative; padding-left: 1.75rem; margin-bottom: 0.5rem; }
+.list-check li:last-child { margin-bottom: 0; }
 .list-check li::before {
     content: "\2713";
     position: absolute;
@@ -489,9 +488,17 @@ main.wrap {
 /* Bullet style: a schuine "naald"-icoon i.p.v. een standaardbullet, dezelfde
    -38°-hoek als het logo — rechttrekkend bij hover (zie .ew-needle-diag). */
 .list-bullet { list-style: none; padding-left: 0 !important; }
-.list-bullet li { display: flex; gap: 0.7rem; align-items: flex-start; }
+.list-bullet li { display: flex; gap: 0.7rem; align-items: flex-start; margin-bottom: 0.5rem; }
+.list-bullet li:last-child { margin-bottom: 0; }
 .list-bullet li .ew-needle-icon { margin-top: 0.2em; }
 .list-bullet li:hover .ew-needle-diag { transform: rotate(0deg); }
+
+/* Bullets typed inline inside a free-text field (- item, zie
+   render_inline_markup()) — zelfde .list-bullet-stijl, maar met
+   alinea-ritme (margin) i.p.v. de kale ul van het losstaande Lijst-blok,
+   want deze staat tussenin gewone <p>-alinea's, niet alleen in een .block. */
+.text-list { margin: 0 0 1rem; }
+.text-list:last-child { margin-bottom: 0; }
 
 .block-buttons {
     display: flex;

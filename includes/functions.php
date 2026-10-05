@@ -223,6 +223,50 @@ function render_inline_markup(string $text): string
     return $escaped;
 }
 
+// Shared by every free-text body field (text/media_text blocks, a column's
+// text child): splits on blank lines into paragraphs, and — same typed-
+// syntax principle as **vet**/*cursief* — turns a paragraph where every
+// line starts with "- " into a bulleted list (styled like the dedicated
+// List block's naald-bullets) instead of a <p>. Mixed paragraphs (only
+// some lines prefixed) are left as plain text, "- " included, so existing
+// content with a literal leading hyphen never changes appearance.
+function render_text_paragraphs(string $body): string
+{
+    $out = '';
+    foreach (preg_split('/\n{2,}/', $body) as $paragraph) {
+        $paragraph = trim($paragraph);
+        if ($paragraph === '') {
+            continue;
+        }
+
+        $lines = preg_split('/\n/', $paragraph);
+        $items = [];
+        $isList = true;
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            if (!str_starts_with($line, '- ')) {
+                $isList = false;
+                break;
+            }
+            $items[] = trim(substr($line, 2));
+        }
+
+        if ($isList && !empty($items)) {
+            $out .= '<ul class="list-bullet text-list">';
+            foreach ($items as $item) {
+                $out .= '<li>' . render_needle_icon() . '<span>' . render_inline_markup($item) . '</span></li>';
+            }
+            $out .= '</ul>';
+        } else {
+            $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
+        }
+    }
+    return $out;
+}
+
 function decode_blocks(?string $json): array
 {
     if (!$json) {
@@ -555,13 +599,7 @@ function render_text_block(array $block): string
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }
-    foreach (preg_split('/\n{2,}/', $body) as $paragraph) {
-        $paragraph = trim($paragraph);
-        if ($paragraph === '') {
-            continue;
-        }
-        $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
-    }
+    $out .= render_text_paragraphs($body);
     $out .= '</div>';
     return $out;
 }
@@ -701,13 +739,7 @@ function render_media_text_block(array $block): string
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }
-    foreach (preg_split('/\n{2,}/', $body) as $paragraph) {
-        $paragraph = trim($paragraph);
-        if ($paragraph === '') {
-            continue;
-        }
-        $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
-    }
+    $out .= render_text_paragraphs($body);
     $out .= '</div></div>';
     return $out;
 }
@@ -747,15 +779,7 @@ function render_column_child_rows(array $child): string
                 $out .= '</div>';
             }
             if ($body !== '') {
-                $out .= '<div class="col-row col-row-body">';
-                foreach (preg_split('/\n{2,}/', $body) as $paragraph) {
-                    $paragraph = trim($paragraph);
-                    if ($paragraph === '') {
-                        continue;
-                    }
-                    $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
-                }
-                $out .= '</div>';
+                $out .= '<div class="col-row col-row-body">' . render_text_paragraphs($body) . '</div>';
             }
             return $out;
 

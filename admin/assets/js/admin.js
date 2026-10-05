@@ -159,12 +159,13 @@
     // real HTML — render_inline_markup() in functions.php turns it into
     // tags server-side, after escaping, so nothing typed here can ever
     // become live HTML on its own.
-    function richTextToolbar(targetField) {
+    function richTextToolbar(targetField, includeList) {
         return (
             '<div class="richtext-toolbar">' +
                 '<button type="button" data-format="bold" data-target="' + targetField + '" title="Vet">' + '<strong>V</strong>' + '</button>' +
                 '<button type="button" data-format="italic" data-target="' + targetField + '" title="Cursief">' + '<em>C</em>' + '</button>' +
                 '<button type="button" data-format="link" data-target="' + targetField + '" title="Link">Link</button>' +
+                (includeList ? '<button type="button" data-format="list" data-target="' + targetField + '" title="Opsomming">&bull;</button>' : '') +
             '</div>'
         );
     }
@@ -176,8 +177,8 @@
                 out = (
                     fieldRow('Eyebrow (optioneel, klein label boven de titel)', '<input type="text" data-field="eyebrow" value="' + escapeAttr(block.eyebrow) + '">') +
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
-                    fieldRow('Tekst', richTextToolbar('body') + '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>') +
-                    '<p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url) — of gebruik de knoppen hierboven.</p>'
+                    fieldRow('Tekst', richTextToolbar('body', true) + '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>') +
+                    '<p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url), of een regel die begint met "- " voor een opsomming — of gebruik de knoppen hierboven.</p>'
                 );
                 break;
             case 'image':
@@ -264,8 +265,8 @@
                         '</select>'
                     )) +
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
-                    fieldRow('Tekst', richTextToolbar('body') + '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>') +
-                    '<p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url) — of gebruik de knoppen hierboven.</p>'
+                    fieldRow('Tekst', richTextToolbar('body', true) + '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>') +
+                    '<p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url), of een regel die begint met "- " voor een opsomming — of gebruik de knoppen hierboven.</p>'
                 );
                 break;
             default:
@@ -497,6 +498,39 @@
         wrapSelection(textarea, '[', '](' + url.trim() + ')');
     }
 
+    // Prefixes every non-blank line touching the current selection (or just
+    // the current line, if nothing is selected) with "- ", the same bullet
+    // syntax render_text_paragraphs() in functions.php turns into a list —
+    // same principle as the bold/italic buttons, just line-based instead of
+    // wrapping a span of text.
+    function insertBulletLines(textarea) {
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        var value = textarea.value;
+
+        var lineStart = value.lastIndexOf('\n', start - 1) + 1;
+        var lineEnd = value.indexOf('\n', end);
+        if (lineEnd === -1) lineEnd = value.length;
+
+        var lines = value.slice(lineStart, lineEnd).split('\n');
+        var newLines = lines.map(function (line) {
+            if (line.indexOf('- ') === 0) return line;
+            if (line.trim() === '') return lines.length === 1 ? '- ' : line;
+            return '- ' + line;
+        });
+        var newSegment = newLines.join('\n');
+
+        textarea.value = value.slice(0, lineStart) + newSegment + value.slice(lineEnd);
+        textarea.focus();
+        // Collapsed cursor at the end, not a selection: unlike
+        // wrapSelection()'s placeholder text (meant to be overtyped),
+        // selecting the "- " prefix here would mean typing immediately
+        // after replaces the bullet marker itself.
+        var caret = lineStart + newSegment.length;
+        textarea.setSelectionRange(caret, caret);
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
     container.addEventListener('click', function (e) {
         var formatBtn = e.target.closest('[data-format]');
         if (formatBtn) {
@@ -508,6 +542,7 @@
             if (format === 'bold') wrapSelection(textarea, '**', '**');
             else if (format === 'italic') wrapSelection(textarea, '*', '*');
             else if (format === 'link') insertLink(textarea);
+            else if (format === 'list') insertBulletLines(textarea);
             return;
         }
 
