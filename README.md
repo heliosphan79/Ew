@@ -301,7 +301,11 @@ blokkenbouwer als bij een gewone pagina (tekst, foto, kaart, ...), die op
 (velden, validatie, opslag van inzendingen) blijft vast en is niet via
 blokken aanpasbaar — enkel de inhoud ervoor is vrij in te vullen. Leeg =
 enkel het formulier, zoals voorheen. Opgeslagen in dezelfde `site_settings`-
-rij, kolom `content` (`database/migrations/007_contact_content.sql`).
+rij, kolom `content` (`database/migrations/007_contact_content.sql`). Het
+formulier zelf kan wel een achtergrond krijgen ("Geen"/"Accentkleur"/
+"Zachte kaart", dezelfde opties als op een content-blok) via "Achtergrond
+contactformulier" op diezelfde pagina
+(`database/migrations/011_contact_form_background.sql`).
 
 Verder staan er twee eigen SEO/AI-velden op die pagina:
 - **Titel/meta-omschrijving contactpagina**: `/contact` had tot nu toe een

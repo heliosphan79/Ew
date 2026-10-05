@@ -104,6 +104,9 @@ CREATE TABLE IF NOT EXISTS site_settings (
     -- meta_description, gebruikt in de "Over de praktijk"-sectie van
     -- llms.txt. Leeg = die sectie wordt niet getoond.
     ai_summary VARCHAR(2000) DEFAULT NULL,
+    -- Optionele achtergrond ('none'/'accent'/'surface') voor het vaste
+    -- contactformulier zelf, zelfde opties als op een gewone content-blok.
+    contact_form_background VARCHAR(10) NOT NULL DEFAULT 'none',
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

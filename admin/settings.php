@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['contact_meta_title'] = trim((string) ($_POST['contact_meta_title'] ?? ''));
     $form['contact_meta_description'] = trim((string) ($_POST['contact_meta_description'] ?? ''));
     $form['ai_summary'] = trim((string) ($_POST['ai_summary'] ?? ''));
+    $form['contact_form_background'] = sanitize_block_background($_POST['contact_form_background'] ?? '');
 
     $rawBlocks = json_decode((string) ($_POST['blocks_json'] ?? '[]'), true);
     $blocksForEditor = is_array($rawBlocks) ? $rawBlocks : [];
@@ -50,14 +51,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $contactMetaTitle = $form['contact_meta_title'] !== '' ? $form['contact_meta_title'] : null;
         $contactMetaDescription = $form['contact_meta_description'] !== '' ? $form['contact_meta_description'] : null;
         $aiSummary = $form['ai_summary'] !== '' ? $form['ai_summary'] : null;
+        $contactFormBackground = $form['contact_form_background'];
         $contentJson = json_encode($sanitized['blocks'], JSON_UNESCAPED_UNICODE);
         $removedUploadUrls = array_diff(
             extract_upload_urls(decode_blocks($settings['content'])),
             extract_upload_urls($sanitized['blocks'])
         );
 
-        $stmt = $mysqli->prepare('UPDATE site_settings SET address = ?, phone = ?, email = ?, content = ?, contact_meta_title = ?, contact_meta_description = ?, ai_summary = ? WHERE id = 1');
-        $stmt->bind_param('sssssss', $address, $phone, $email, $contentJson, $contactMetaTitle, $contactMetaDescription, $aiSummary);
+        $stmt = $mysqli->prepare('UPDATE site_settings SET address = ?, phone = ?, email = ?, content = ?, contact_meta_title = ?, contact_meta_description = ?, ai_summary = ?, contact_form_background = ? WHERE id = 1');
+        $stmt->bind_param('ssssssss', $address, $phone, $email, $contentJson, $contactMetaTitle, $contactMetaDescription, $aiSummary, $contactFormBackground);
         $stmt->execute();
         $stmt->close();
 
@@ -118,6 +120,13 @@ require __DIR__ . '/includes/header.php';
             <label for="contact_meta_description">Meta-omschrijving contactpagina (SEO, optioneel)</label>
             <input type="text" id="contact_meta_description" name="contact_meta_description" value="<?= e($form['contact_meta_description']) ?>" maxlength="300" data-meta-description-input>
             <p class="field-hint" data-meta-description-hint></p>
+
+            <label for="contact_form_background">Achtergrond contactformulier</label>
+            <select id="contact_form_background" name="contact_form_background">
+                <option value="none"<?= $form['contact_form_background'] !== 'accent' && $form['contact_form_background'] !== 'surface' ? ' selected' : '' ?>>Geen</option>
+                <option value="accent"<?= $form['contact_form_background'] === 'accent' ? ' selected' : '' ?>>Accentkleur</option>
+                <option value="surface"<?= $form['contact_form_background'] === 'surface' ? ' selected' : '' ?>>Zachte kaart</option>
+            </select>
 
             <label for="ai_summary">AI-samenvatting van de praktijk (optioneel)</label>
             <textarea id="ai_summary" name="ai_summary" rows="5" maxlength="2000"><?= e($form['ai_summary']) ?></textarea>
