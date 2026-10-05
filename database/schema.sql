@@ -107,6 +107,9 @@ CREATE TABLE IF NOT EXISTS site_settings (
     -- Optionele achtergrond ('none'/'accent'/'surface') voor het vaste
     -- contactformulier zelf, zelfde opties als op een gewone content-blok.
     contact_form_background VARCHAR(10) NOT NULL DEFAULT 'none',
+    -- Bewaartermijn (in dagen) voor contactberichten en evenement-
+    -- inschrijvingen. NULL = voor altijd bewaren (de standaard).
+    submission_retention_days SMALLINT UNSIGNED DEFAULT NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

@@ -230,6 +230,17 @@ function block_bg_class(string $background): string
     return $background === 'none' ? '' : ' block-bg-' . $background;
 }
 
+// Bewaartermijn voor contactberichten/evenement-inschrijvingen — een vaste
+// keuzelijst in plaats van een vrij getal, zodat een admin nooit per
+// ongeluk een extreem korte termijn ingeeft. null = voor altijd bewaren.
+const SUBMISSION_RETENTION_OPTIONS = [90, 180, 365, 730];
+
+function sanitize_retention_days(mixed $raw): ?int
+{
+    $value = is_numeric($raw) ? (int) $raw : null;
+    return in_array($value, SUBMISSION_RETENTION_OPTIONS, true) ? $value : null;
+}
+
 // Horizontal alignment for the Buttons block (left/center/right) — used
 // both standalone and as a column child, see buttons_align_class().
 function sanitize_block_align(mixed $raw): string
@@ -1275,7 +1286,7 @@ function get_site_settings(mysqli $mysqli): array
 {
     static $settings = null;
     if ($settings === null) {
-        $row = $mysqli->query('SELECT address, phone, email, content, contact_meta_title, contact_meta_description, ai_summary, contact_form_background FROM site_settings WHERE id = 1')->fetch_assoc();
+        $row = $mysqli->query('SELECT address, phone, email, content, contact_meta_title, contact_meta_description, ai_summary, contact_form_background, submission_retention_days FROM site_settings WHERE id = 1')->fetch_assoc();
         $settings = [
             'address' => $row['address'] ?? '',
             'phone' => $row['phone'] ?? '',
@@ -1285,9 +1296,37 @@ function get_site_settings(mysqli $mysqli): array
             'contact_meta_description' => $row['contact_meta_description'] ?? '',
             'ai_summary' => $row['ai_summary'] ?? '',
             'contact_form_background' => $row['contact_form_background'] ?? 'none',
+            'submission_retention_days' => $row['submission_retention_days'] !== null ? (int) $row['submission_retention_days'] : null,
         ];
     }
     return $settings;
+}
+
+// Deletes contact submissions and event registrations older than the
+// configured retention window — personal data (name/email/message/IP)
+// that otherwise accumulates indefinitely with no way to expire it. NULL
+// (the default) keeps everything, unchanged from before this existed.
+// No cron on this project's shared/manual-deploy hosting, so this runs
+// opportunistically: called once from admin/dashboard.php, the page an
+// admin lands on at the start of every session, the same "lazy cleanup on
+// access" pattern already used for orphaned uploads.
+function cleanup_expired_submissions(mysqli $mysqli): void
+{
+    $settings = get_site_settings($mysqli);
+    $days = $settings['submission_retention_days'];
+    if ($days === null) {
+        return;
+    }
+
+    $stmt = $mysqli->prepare('DELETE FROM contact_submissions WHERE created_at < (NOW() - INTERVAL ? DAY)');
+    $stmt->bind_param('i', $days);
+    $stmt->execute();
+    $stmt->close();
+
+    $stmt = $mysqli->prepare('DELETE FROM event_registrations WHERE registered_at < (NOW() - INTERVAL ? DAY)');
+    $stmt->bind_param('i', $days);
+    $stmt->execute();
+    $stmt->close();
 }
 
 // Switches to ProfessionalService (a LocalBusiness subtype — fits a

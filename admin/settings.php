@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['contact_meta_description'] = trim((string) ($_POST['contact_meta_description'] ?? ''));
     $form['ai_summary'] = trim((string) ($_POST['ai_summary'] ?? ''));
     $form['contact_form_background'] = sanitize_block_background($_POST['contact_form_background'] ?? '');
+    $form['submission_retention_days'] = sanitize_retention_days($_POST['submission_retention_days'] ?? '');
 
     $rawBlocks = json_decode((string) ($_POST['blocks_json'] ?? '[]'), true);
     $blocksForEditor = is_array($rawBlocks) ? $rawBlocks : [];
@@ -52,14 +53,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $contactMetaDescription = $form['contact_meta_description'] !== '' ? $form['contact_meta_description'] : null;
         $aiSummary = $form['ai_summary'] !== '' ? $form['ai_summary'] : null;
         $contactFormBackground = $form['contact_form_background'];
+        $retentionDays = $form['submission_retention_days'];
         $contentJson = json_encode($sanitized['blocks'], JSON_UNESCAPED_UNICODE);
         $removedUploadUrls = array_diff(
             extract_upload_urls(decode_blocks($settings['content'])),
             extract_upload_urls($sanitized['blocks'])
         );
 
-        $stmt = $mysqli->prepare('UPDATE site_settings SET address = ?, phone = ?, email = ?, content = ?, contact_meta_title = ?, contact_meta_description = ?, ai_summary = ?, contact_form_background = ? WHERE id = 1');
-        $stmt->bind_param('ssssssss', $address, $phone, $email, $contentJson, $contactMetaTitle, $contactMetaDescription, $aiSummary, $contactFormBackground);
+        $stmt = $mysqli->prepare('UPDATE site_settings SET address = ?, phone = ?, email = ?, content = ?, contact_meta_title = ?, contact_meta_description = ?, ai_summary = ?, contact_form_background = ?, submission_retention_days = ? WHERE id = 1');
+        $stmt->bind_param('ssssssssi', $address, $phone, $email, $contentJson, $contactMetaTitle, $contactMetaDescription, $aiSummary, $contactFormBackground, $retentionDays);
         $stmt->execute();
         $stmt->close();
 
@@ -127,6 +129,20 @@ require __DIR__ . '/includes/header.php';
                 <option value="accent"<?= $form['contact_form_background'] === 'accent' ? ' selected' : '' ?>>Accentkleur</option>
                 <option value="surface"<?= $form['contact_form_background'] === 'surface' ? ' selected' : '' ?>>Zachte kaart</option>
             </select>
+
+            <label for="submission_retention_days">Bewaartermijn contactberichten &amp; inschrijvingen</label>
+            <select id="submission_retention_days" name="submission_retention_days">
+                <option value=""<?= $form['submission_retention_days'] === null ? ' selected' : '' ?>>Voor altijd</option>
+                <option value="90"<?= $form['submission_retention_days'] === 90 ? ' selected' : '' ?>>90 dagen</option>
+                <option value="180"<?= $form['submission_retention_days'] === 180 ? ' selected' : '' ?>>180 dagen</option>
+                <option value="365"<?= $form['submission_retention_days'] === 365 ? ' selected' : '' ?>>1 jaar</option>
+                <option value="730"<?= $form['submission_retention_days'] === 730 ? ' selected' : '' ?>>2 jaar</option>
+            </select>
+            <p class="field-hint">
+                Contactberichten en evenement-inschrijvingen ouder dan deze termijn
+                worden automatisch verwijderd (naam, e-mailadres, bericht, IP-adres).
+                Wordt opgeruimd bij het openen van het Dashboard, niet onmiddellijk.
+            </p>
 
             <label for="ai_summary">AI-samenvatting van de praktijk (optioneel)</label>
             <textarea id="ai_summary" name="ai_summary" rows="5" maxlength="2000"><?= e($form['ai_summary']) ?></textarea>
