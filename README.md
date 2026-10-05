@@ -118,7 +118,11 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
   - **Foto** — kies "Bestand kiezen…" om een JPG/PNG/GIF/WEBP te uploaden
     (max. 5 MB, direct herbekeken als miniatuur), of vul zelf een
     afbeeldings-URL in. Plus alt-tekst (verplicht, toegankelijkheid) en
-    optioneel bijschrift.
+    optioneel bijschrift. JPG/PNG/WEBP worden bij upload automatisch
+    verkleind tot max. 1600px op de langste zijde en herschaald voor een
+    kleinere bestandsgrootte (EXIF-rotatie van telefoonfoto's wordt daarbij
+    gerespecteerd) — GIF blijft ongemoeid, om een eventuele animatie niet
+    te breken.
   - **Quote** — citaat + optionele bron.
   - **Lijst** — titel, stijl (opsomming/vinkjes) en items (één per regel,
     met dezelfde eenvoudige opmaak als een tekstblok).

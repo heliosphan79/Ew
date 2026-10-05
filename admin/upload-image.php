@@ -65,7 +65,12 @@ if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
     upload_fail('De uploadmap is niet beschikbaar. Neem contact op met de beheerder.', 500);
 }
 
-if (!move_uploaded_file($file['tmp_name'], $destination)) {
+// Downsize/compress photos before they land in uploads/ — skipped for GIF
+// (would flatten animation) and silently falls back to the original file
+// if GD can't process it (not installed, corrupt beyond what getimagesize
+// already caught, etc.), so this never turns into a hard upload failure.
+$resized = $mime !== 'image/gif' && resize_uploaded_image($file['tmp_name'], $destination, $mime);
+if (!$resized && !move_uploaded_file($file['tmp_name'], $destination)) {
     upload_fail('Opslaan van de afbeelding is mislukt.', 500);
 }
 
