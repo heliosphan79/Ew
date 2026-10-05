@@ -25,17 +25,18 @@
 
 // Sticky header "lift" + compass needle drift: as the page scrolls, the
 // header (pinned via position: sticky in CSS) gains a shadow and shrinks
-// slightly, and the logo's needle rotates a little further — a small
-// bonus on top of its own settle/hover spin (see --needle-scroll-rotate
-// and .ew-logo-needle-scroll in style.css), capped well short of a full
-// turn so it reads as "drifting" rather than spinning. One rAF-throttled
-// scroll listener drives both, so neither adds extra work per scroll event.
+// slightly, and the logo's needle rotates further — a bonus on top of its
+// own settle/hover spin (see --needle-scroll-rotate and
+// .ew-logo-needle-scroll in style.css). The needle rests at 38deg, so a
+// ~142deg bonus lands it at ~180deg (pointing down) by the time the page
+// is fully scrolled. One rAF-throttled scroll listener drives both, so
+// neither adds extra work per scroll event.
 (function () {
     var header = document.querySelector('.site-header');
     var root = document.documentElement;
     if (!header) return;
 
-    var MAX_NEEDLE_ROTATE = 35; // degrees, over the full page scroll
+    var MAX_NEEDLE_ROTATE = 142; // degrees, over the full page scroll
 
     var ticking = false;
     function update() {
