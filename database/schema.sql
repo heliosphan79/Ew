@@ -6,6 +6,11 @@ CREATE TABLE IF NOT EXISTS admin_users (
     id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     username      VARCHAR(50) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    -- Zelfbedieningsherstel van het wachtwoord: een SHA-256 hash van het
+    -- token (nooit het token zelf) plus vervaldatum. Zie
+    -- admin/forgot-password.php en admin/reset-password.php.
+    password_reset_token_hash VARCHAR(64) DEFAULT NULL,
+    password_reset_expires    DATETIME DEFAULT NULL,
     created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

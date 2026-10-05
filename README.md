@@ -505,6 +505,12 @@ bovenop, nooit een voorwaarde om het bericht te bewaren.
 - `admin/install.php` sluit zichzelf automatisch af zodra er één
   account bestaat — dat is de enige manier waarop nieuwe accounts kunnen
   ontstaan; er is bewust geen registratiepagina.
+- **Wachtwoord vergeten**: "Wachtwoord vergeten?" op de inlogpagina stuurt
+  een tijdelijke (1 uur geldige) herstellink naar het e-mailadres onder
+  Instellingen — vereist dus zowel dat e-mailadres als een werkende SMTP-
+  configuratie in `config/config.php`. Zonder die twee kan het wachtwoord
+  enkel rechtstreeks in de database hersteld worden
+  (`database/migrations/013_password_reset.sql`).
 - Afbeeldingsuploads (`admin/upload-image.php`) zijn alleen
   bereikbaar als ingelogde beheerder, controleren het werkelijke
   bestandstype (niet enkel de extensie) via `finfo` + `getimagesize()`,
