@@ -22,16 +22,25 @@ require __DIR__ . '/includes/header.php';
 
 <div class="stat-grid">
     <div class="stat-card">
-        <span class="stat-number"><?= (int) $pageCount ?></span>
-        <span class="stat-label">Pagina's totaal</span>
+        <span class="stat-card-icon"><?= admin_icon('pages') ?></span>
+        <span>
+            <span class="stat-number"><?= (int) $pageCount ?></span>
+            <span class="stat-label">Pagina's totaal</span>
+        </span>
     </div>
     <div class="stat-card">
-        <span class="stat-number"><?= (int) $publishedCount ?></span>
-        <span class="stat-label">Gepubliceerd</span>
+        <span class="stat-card-icon"><?= admin_icon('check') ?></span>
+        <span>
+            <span class="stat-number"><?= (int) $publishedCount ?></span>
+            <span class="stat-label">Gepubliceerd</span>
+        </span>
     </div>
     <div class="stat-card">
-        <span class="stat-number"><?= (int) $unreadCount ?></span>
-        <span class="stat-label">Ongelezen berichten</span>
+        <span class="stat-card-icon"><?= admin_icon('inbox') ?></span>
+        <span>
+            <span class="stat-number"><?= (int) $unreadCount ?></span>
+            <span class="stat-label">Ongelezen berichten</span>
+        </span>
     </div>
 </div>
 
@@ -67,12 +76,18 @@ require __DIR__ . '/includes/header.php';
     <?php endif; ?>
     <div class="stat-grid">
         <div class="stat-card">
-            <span class="stat-number"><?= (int) $analytics['data']['active_users_7d'] ?></span>
-            <span class="stat-label">Bezoekers (laatste 7 dagen)</span>
+            <span class="stat-card-icon"><?= admin_icon('users') ?></span>
+            <span>
+                <span class="stat-number"><?= (int) $analytics['data']['active_users_7d'] ?></span>
+                <span class="stat-label">Bezoekers (laatste 7 dagen)</span>
+            </span>
         </div>
         <div class="stat-card">
-            <span class="stat-number"><?= (int) $analytics['data']['page_views_7d'] ?></span>
-            <span class="stat-label">Paginaweergaven (laatste 7 dagen)</span>
+            <span class="stat-card-icon"><?= admin_icon('chart') ?></span>
+            <span>
+                <span class="stat-number"><?= (int) $analytics['data']['page_views_7d'] ?></span>
+                <span class="stat-label">Paginaweergaven (laatste 7 dagen)</span>
+            </span>
         </div>
     </div>
     <?php if (!empty($analytics['data']['top_pages'])): ?>
@@ -120,7 +135,7 @@ require __DIR__ . '/includes/header.php';
         </tbody>
     </table>
     </div>
-    <p><a href="submissions.php">Alle berichten bekijken →</a></p>
+    <p><a href="submissions.php">Alle berichten bekijken <?= admin_icon('chevron-right') ?></a></p>
 <?php endif; ?>
 
 <?php require __DIR__ . '/includes/footer.php'; ?>

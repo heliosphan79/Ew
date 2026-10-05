@@ -15,7 +15,7 @@ require __DIR__ . '/includes/header.php';
 
 <div class="admin-header-row">
     <h1>Evenementen</h1>
-    <a class="button" href="event-edit.php">+ Nieuw evenement</a>
+    <a class="button" href="event-edit.php"><?= admin_icon('plus') ?> Nieuw evenement</a>
 </div>
 
 <?php if (empty($events)): ?>
@@ -51,12 +51,18 @@ require __DIR__ . '/includes/header.php';
                     <?= (int) $event['registered_count'] ?><?= $event['capacity'] !== null ? ' / ' . (int) $event['capacity'] : '' ?>
                 </td>
                 <td class="admin-table-actions">
-                    <a href="event-edit.php?id=<?= (int) $event['id'] ?>">Bewerken</a>
-                    <a href="event-registrations.php?event_id=<?= (int) $event['id'] ?>">Inschrijvingen</a>
+                    <a class="icon-btn icon-btn-accent" href="event-edit.php?id=<?= (int) $event['id'] ?>" title="Bewerken">
+                        <?= admin_icon('edit') ?><span class="visually-hidden">Bewerken</span>
+                    </a>
+                    <a class="icon-btn icon-btn-accent" href="event-registrations.php?event_id=<?= (int) $event['id'] ?>" title="Inschrijvingen">
+                        <?= admin_icon('eye') ?><span class="visually-hidden">Inschrijvingen</span>
+                    </a>
                     <form method="post" action="event-delete.php" onsubmit="return confirm('Dit evenement en alle inschrijvingen definitief verwijderen?');">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= (int) $event['id'] ?>">
-                        <button type="submit" class="link-button link-button-danger">Verwijderen</button>
+                        <button type="submit" class="icon-btn icon-btn-danger" title="Verwijderen">
+                            <?= admin_icon('trash') ?><span class="visually-hidden">Verwijderen</span>
+                        </button>
                     </form>
                 </td>
             </tr>

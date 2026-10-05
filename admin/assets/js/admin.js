@@ -364,7 +364,13 @@
                     '<div class="block-card-controls">' +
                         '<button type="button" data-action="up"' + (isFirst ? ' disabled' : '') + ' title="Naar boven">↑</button>' +
                         '<button type="button" data-action="down"' + (isLast ? ' disabled' : '') + ' title="Naar beneden">↓</button>' +
-                        '<button type="button" data-action="remove" class="link-button-danger" title="Verwijderen">Verwijderen</button>' +
+                        '<button type="button" data-action="remove" class="link-button-danger" title="Verwijderen">' +
+                            '<svg class="admin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                                '<path d="M4 7h16"></path><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"></path>' +
+                                '<path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"></path><path d="M10 11v6M14 11v6"></path>' +
+                            '</svg>' +
+                            '<span class="visually-hidden">Verwijderen</span>' +
+                        '</button>' +
                     '</div>' +
                 '</div>' +
                 '<div class="block-card-fields">' + (block.type === 'columns' ? columnsFieldsFor(block, path) : fieldsFor(block, path.indexOf(':') !== -1)) + '</div>' +
@@ -571,9 +577,10 @@
             return;
         }
 
-        var action = e.target.getAttribute('data-action');
+        var actionBtn = e.target.closest('[data-action]');
+        var action = actionBtn ? actionBtn.getAttribute('data-action') : null;
         if (action) {
-            var card = e.target.closest('.block-card');
+            var card = actionBtn.closest('.block-card');
             var path = resolvePath(card.getAttribute('data-path'));
 
             if (action === 'remove') {

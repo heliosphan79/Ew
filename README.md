@@ -510,3 +510,6 @@ bovenop, nooit een voorwaarde om het bericht te bewaren.
 - Zelf gehoste webfonts voor pixel-exacte typografie (zie "Functionaliteit").
 - Een rijkere voettekst (adres/telefoon/e-mail/links) zodra die gegevens
   er zijn — nu bewust minimaal om niets te verzinnen.
+- Het beheerpaneel is niet responsive voor mobiel (vaste zijbalk, geen
+  inklapbaar hamburgermenu zoals de publieke site) — in de praktijk wordt
+  het vrijwel altijd op desktop gebruikt, dus bewust nog niet gebouwd.
