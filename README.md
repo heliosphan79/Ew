@@ -356,7 +356,10 @@ Het Dashboard haalt bij weergave de cijfers op en cachet ze 30 minuten
 elke paneelbezoek opnieuw te belasten; "nu vernieuwen" op het Dashboard
 forceert een verse ophaling. Lukt die niet (verkeerde gegevens, Google
 tijdelijk onbereikbaar, ...), dan toont het Dashboard de laatst gekende
-cijfers met een duidelijke melding, in plaats van niets te tonen.
+cijfers met een duidelijke melding, in plaats van niets te tonen — inclusief
+een "Reden:"-regel met Google's eigen foutmelding (bv. "Invalid grant:
+account not found"), zodat je meteen weet wat er mis is zonder in het
+PHP-foutenlogboek te moeten kijken.
 
 ## Spambeveiliging & e-mailnotificatie
 

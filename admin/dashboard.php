@@ -51,12 +51,18 @@ require __DIR__ . '/includes/header.php';
         de gegevens onder <code>google_analytics</code> in
         <code>config/config.php</code> (property-ID, service-account e-mail
         en de toegang van dat account tot je GA4-property).
+        <?php if (!empty($analytics['error_detail'])): ?>
+            <br><strong>Reden:</strong> <?= e($analytics['error_detail']) ?>
+        <?php endif; ?>
     </p>
 <?php else: ?>
     <?php if ($analytics['status'] === 'stale'): ?>
         <p class="field-hint">
             Kon niet vernieuwen bij Google — dit zijn de laatst gekende
             cijfers (<?= e(date('d/m/Y H:i', strtotime($analytics['fetched_at']))) ?>).
+            <?php if (!empty($analytics['error_detail'])): ?>
+                <br><strong>Reden:</strong> <?= e($analytics['error_detail']) ?>
+            <?php endif; ?>
         </p>
     <?php endif; ?>
     <div class="stat-grid">

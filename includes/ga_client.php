@@ -61,11 +61,17 @@ function ga_build_jwt(string $serviceAccountEmail, string $privateKeyPem): ?stri
     return $signingInput . '.' . ga_base64url_encode($signature);
 }
 
-function ga_get_access_token(array $config): ?string
+// $error is filled with a short, human-readable reason on failure (shown
+// on the admin Dashboard and written to error_log) — this step fails for
+// very different reasons (malformed key vs. Google rejecting the request)
+// that look identical as a plain null, so it's worth telling apart.
+function ga_get_access_token(array $config, ?string &$error = null): ?string
 {
     $ga = $config['google_analytics'];
     $jwt = ga_build_jwt((string) $ga['service_account_email'], (string) $ga['service_account_private_key']);
     if ($jwt === null) {
+        $error = 'Kon de aanmeld-JWT niet signeren — controleer of service_account_private_key de volledige, onbeschadigde sleutel bevat.';
+        error_log('GA: ' . $error);
         return null;
     }
 
@@ -80,26 +86,41 @@ function ga_get_access_token(array $config): ?string
         CURLOPT_TIMEOUT => 10,
     ]);
     $response = curl_exec($ch);
+    $curlError = curl_error($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if (!is_string($response) || $httpCode !== 200) {
+    if (!is_string($response)) {
+        $error = 'Kon geen verbinding maken met Google (oauth2.googleapis.com): ' . $curlError;
+        error_log('GA: ' . $error);
+        return null;
+    }
+    if ($httpCode !== 200) {
+        $error = 'Google wees de aanmelding af (HTTP ' . $httpCode . '): ' . substr($response, 0, 300);
+        error_log('GA: ' . $error);
         return null;
     }
     $data = json_decode($response, true);
-    return is_array($data) && isset($data['access_token']) ? (string) $data['access_token'] : null;
+    if (!is_array($data) || !isset($data['access_token'])) {
+        $error = 'Onverwacht antwoord van Google bij het aanmelden.';
+        error_log('GA: ' . $error . ' Response: ' . substr($response, 0, 300));
+        return null;
+    }
+    return (string) $data['access_token'];
 }
 
 // One batchRunReports call combining the 7-day totals and the top-5 pages,
-// instead of two separate requests.
-function ga_fetch_report_live(array $config): ?array
+// instead of two separate requests. $error is filled with a short,
+// human-readable reason on failure — see ga_get_access_token().
+function ga_fetch_report_live(array $config, ?string &$error = null): ?array
 {
     $propertyId = (string) ($config['google_analytics']['property_id'] ?? '');
     if ($propertyId === '') {
+        $error = 'Geen property_id ingesteld.';
         return null;
     }
 
-    $token = ga_get_access_token($config);
+    $token = ga_get_access_token($config, $error);
     if ($token === null) {
         return null;
     }
@@ -131,14 +152,24 @@ function ga_fetch_report_live(array $config): ?array
         CURLOPT_TIMEOUT => 10,
     ]);
     $response = curl_exec($ch);
+    $curlError = curl_error($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if (!is_string($response) || $httpCode !== 200) {
+    if (!is_string($response)) {
+        $error = 'Kon geen verbinding maken met Google (analyticsdata.googleapis.com): ' . $curlError;
+        error_log('GA: ' . $error);
+        return null;
+    }
+    if ($httpCode !== 200) {
+        $error = 'Google wees de aanvraag af (HTTP ' . $httpCode . '): ' . substr($response, 0, 300);
+        error_log('GA: ' . $error);
         return null;
     }
     $data = json_decode($response, true);
     if (!is_array($data) || !isset($data['reports'][0], $data['reports'][1])) {
+        $error = 'Onverwacht antwoord van Google bij het ophalen van het rapport.';
+        error_log('GA: ' . $error . ' Response: ' . substr($response, 0, 300));
         return null;
     }
 
@@ -163,8 +194,8 @@ function ga_fetch_report_live(array $config): ?array
 // Returns one of:
 //   ['status' => 'not_configured']
 //   ['status' => 'ok', 'data' => [...], 'fetched_at' => 'Y-m-d H:i:s']
-//   ['status' => 'stale', 'data' => [...], 'fetched_at' => 'Y-m-d H:i:s']  — API call failed, showing a recent cached report instead
-//   ['status' => 'error']  — API call failed and no cached report to fall back on
+//   ['status' => 'stale', 'data' => [...], 'fetched_at' => 'Y-m-d H:i:s', 'error_detail' => string]  — API call failed, showing a recent cached report instead
+//   ['status' => 'error', 'error_detail' => string]  — API call failed and no cached report to fall back on
 function ga_fetch_report(array $config, mysqli $mysqli, bool $forceRefresh = false): array
 {
     if (!ga_data_api_configured($config)) {
@@ -183,15 +214,15 @@ function ga_fetch_report(array $config, mysqli $mysqli, bool $forceRefresh = fal
         }
     }
 
-    $report = ga_fetch_report_live($config);
+    $report = ga_fetch_report_live($config, $liveError);
     if ($report === null) {
         if ($cached) {
             $decoded = json_decode($cached['payload'], true);
             if (is_array($decoded)) {
-                return ['status' => 'stale', 'data' => $decoded, 'fetched_at' => $cached['fetched_at']];
+                return ['status' => 'stale', 'data' => $decoded, 'fetched_at' => $cached['fetched_at'], 'error_detail' => $liveError];
             }
         }
-        return ['status' => 'error'];
+        return ['status' => 'error', 'error_detail' => $liveError];
     }
 
     $payload = (string) json_encode($report, JSON_UNESCAPED_UNICODE);
