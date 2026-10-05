@@ -77,6 +77,8 @@ $_SESSION['contact_form_rendered_at'] = time();
 
 $contactSettings = get_site_settings($mysqli);
 $contactBlocks = decode_blocks($contactSettings['content']);
+$contactFormBgClass = block_bg_class(sanitize_block_background($contactSettings['contact_form_background'] ?? ''));
+$contactFormClass = 'contact-form' . ($contactFormBgClass !== '' ? ' block' . $contactFormBgClass : '');
 
 $pageTitle = $contactSettings['contact_meta_title'] !== '' ? $contactSettings['contact_meta_title'] : 'Contact';
 $metaDescription = $contactSettings['contact_meta_description'] !== '' ? $contactSettings['contact_meta_description'] : 'Neem contact op met ' . $siteName . '.';
@@ -112,7 +114,7 @@ require __DIR__ . '/includes/header.php';
             </ul>
         <?php endif; ?>
 
-        <form method="post" action="/contact" class="contact-form">
+        <form method="post" action="/contact" class="<?= e($contactFormClass) ?>">
             <?= csrf_field() ?>
             <div class="form-field" style="position:absolute;left:-9999px;" aria-hidden="true">
                 <label for="website">Website</label>

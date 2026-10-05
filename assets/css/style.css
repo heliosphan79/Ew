@@ -455,6 +455,11 @@ main.wrap {
 .contact-form button:hover { opacity: 0.9; }
 .contact-form button:active { transform: scale(0.97); }
 
+/* On an accent background the button would otherwise be the exact same
+   color as its own card (both use --accent) and disappear into it — flip
+   to a light button so it still reads as a distinct, clickable element. */
+.contact-form.block-bg-accent button { background: var(--bg); color: var(--accent); }
+
 /* ==========================================================================
    Content blocks — shared structure across all 3 variants; only the
    custom-property tokens (and a few per-variant touches below) differ.

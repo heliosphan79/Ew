@@ -1182,7 +1182,7 @@ function get_site_settings(mysqli $mysqli): array
 {
     static $settings = null;
     if ($settings === null) {
-        $row = $mysqli->query('SELECT address, phone, email, content, contact_meta_title, contact_meta_description, ai_summary FROM site_settings WHERE id = 1')->fetch_assoc();
+        $row = $mysqli->query('SELECT address, phone, email, content, contact_meta_title, contact_meta_description, ai_summary, contact_form_background FROM site_settings WHERE id = 1')->fetch_assoc();
         $settings = [
             'address' => $row['address'] ?? '',
             'phone' => $row['phone'] ?? '',
@@ -1191,6 +1191,7 @@ function get_site_settings(mysqli $mysqli): array
             'contact_meta_title' => $row['contact_meta_title'] ?? '',
             'contact_meta_description' => $row['contact_meta_description'] ?? '',
             'ai_summary' => $row['ai_summary'] ?? '',
+            'contact_form_background' => $row['contact_form_background'] ?? 'none',
         ];
     }
     return $settings;
