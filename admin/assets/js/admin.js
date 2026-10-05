@@ -77,7 +77,7 @@
             case 'image': return { type: 'image', url: '', alt: '', caption: '', background: 'none' };
             case 'quote': return { type: 'quote', text: '', source: '', background: 'none' };
             case 'list': return { type: 'list', heading: '', style: 'bullet', itemsText: '', background: 'none' };
-            case 'buttons': return { type: 'buttons', buttonsText: '', background: 'none' };
+            case 'buttons': return { type: 'buttons', buttonsText: '', align: 'left', background: 'none' };
             case 'calendar': return { type: 'calendar', heading: '', background: 'none' };
             case 'events': return { type: 'events', heading: '', background: 'none' };
             case 'map': return { type: 'map', address: '', heading: '', layout: 'box', background: 'none' };
@@ -97,7 +97,7 @@
         }
         if (b.type === 'buttons') {
             var lines = (b.buttons || []).map(function (btn) { return (btn.label || '') + ' | ' + (btn.url || ''); });
-            return { type: 'buttons', buttonsText: lines.join('\n'), background: b.background || 'none' };
+            return { type: 'buttons', buttonsText: lines.join('\n'), align: b.align || 'left', background: b.background || 'none' };
         }
         if (b.type === 'columns') {
             return {
@@ -121,7 +121,7 @@
                 var parts = line.split('|');
                 return { label: (parts[0] || '').trim(), url: (parts.slice(1).join('|') || '').trim() };
             }).filter(function (btn) { return btn.label && btn.url; }).slice(0, 3);
-            return { type: 'buttons', buttons: buttons, background: b.background || 'none' };
+            return { type: 'buttons', buttons: buttons, align: b.align || 'left', background: b.background || 'none' };
         }
         if (b.type === 'columns') {
             return {
@@ -238,9 +238,18 @@
                 );
                 break;
             case 'buttons':
-                out = fieldRow(
-                    'Knoppen — één per regel, als "Tekst | link" (max 3)',
-                    '<textarea data-field="buttonsText" rows="3" placeholder="Contact opnemen | /contact.php">' + escapeHtml(block.buttonsText) + '</textarea>'
+                out = (
+                    fieldRow(
+                        'Knoppen — één per regel, als "Tekst | link" (max 3)',
+                        '<textarea data-field="buttonsText" rows="3" placeholder="Contact opnemen | /contact.php">' + escapeHtml(block.buttonsText) + '</textarea>'
+                    ) +
+                    fieldRow('Uitlijning', (
+                        '<select data-field="align">' +
+                            '<option value="left"' + (block.align !== 'center' && block.align !== 'right' ? ' selected' : '') + '>Links</option>' +
+                            '<option value="center"' + (block.align === 'center' ? ' selected' : '') + '>Gecentreerd</option>' +
+                            '<option value="right"' + (block.align === 'right' ? ' selected' : '') + '>Rechts</option>' +
+                        '</select>'
+                    ))
                 );
                 break;
             case 'calendar':

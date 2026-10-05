@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($pageTitle ?? 'Beheer') ?> — <?= e($siteName) ?> beheer</title>
+    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="/assets/images/favicon.ico">
+    <link rel="icon" href="/assets/images/favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">
+
     <link rel="stylesheet" href="assets/css/admin.css">
 </head>
 <body>

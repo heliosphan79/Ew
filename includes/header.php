@@ -28,6 +28,11 @@
     <script type="application/ld+json"><?= json_encode(organization_schema($siteName, $siteUrl, get_site_settings($mysqli)), JSON_UNESCAPED_SLASHES) ?></script>
     <script type="application/ld+json"><?= json_encode(webpage_schema($pageTitle ?? $siteName, $metaDescription ?? null, $canonicalUrl ?? null), JSON_UNESCAPED_SLASHES) ?></script>
 
+    <link rel="icon" href="/assets/images/favicon.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="/assets/images/favicon.ico">
+    <link rel="icon" href="/assets/images/favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">
+
     <link rel="stylesheet" href="/assets/css/style.css">
     <script>document.documentElement.classList.add('js');</script>
     <?php if (!empty($config['google_analytics']['measurement_id'])): ?>
