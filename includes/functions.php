@@ -212,6 +212,19 @@ function block_bg_class(string $background): string
     return $background === 'none' ? '' : ' block-bg-' . $background;
 }
 
+// Horizontal alignment for the Buttons block (left/center/right) — used
+// both standalone and as a column child, see buttons_align_class().
+function sanitize_block_align(mixed $raw): string
+{
+    $value = is_string($raw) ? $raw : '';
+    return in_array($value, ['center', 'right'], true) ? $value : 'left';
+}
+
+function buttons_align_class(string $align): string
+{
+    return $align === 'left' ? '' : ' buttons-align-' . $align;
+}
+
 // Only allow link/image targets that can't carry an executable scheme
 // (blocks javascript:, data:, vbscript:, ...). Relative paths and the
 // common safe schemes are allowed.
@@ -403,7 +416,12 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Knoppenblok #$count: vul minstens één knop met label en link in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'buttons', 'buttons' => $buttons, 'background' => sanitize_block_background($raw['background'] ?? '')];
+                $clean[] = [
+                    'type' => 'buttons',
+                    'buttons' => $buttons,
+                    'align' => sanitize_block_align($raw['align'] ?? ''),
+                    'background' => sanitize_block_background($raw['background'] ?? ''),
+                ];
                 break;
 
             case 'calendar':
@@ -581,7 +599,7 @@ function sanitize_column_child(string $type, array $raw): ?array
             if (empty($buttons)) {
                 return null;
             }
-            return ['type' => 'buttons', 'buttons' => $buttons];
+            return ['type' => 'buttons', 'buttons' => $buttons, 'align' => sanitize_block_align($raw['align'] ?? '')];
 
         default:
             return null;
@@ -716,7 +734,8 @@ function render_buttons_block(array $block): string
         return '';
     }
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
-    return '<div class="block block-buttons' . $bgClass . '" data-animate>' . $inner . '</div>';
+    $alignClass = buttons_align_class(sanitize_block_align($block['align'] ?? ''));
+    return '<div class="block block-buttons' . $bgClass . $alignClass . '" data-animate>' . $inner . '</div>';
 }
 
 // Plain Google Maps iframe embed (https://www.google.com/maps?q=...&output=embed)
@@ -830,7 +849,8 @@ function render_column_child_rows(array $child): string
             if ($rendered === 0) {
                 return '';
             }
-            return '<div class="col-row col-row-buttons">' . $inner . '</div>';
+            $alignClass = buttons_align_class(sanitize_block_align($child['align'] ?? ''));
+            return '<div class="col-row col-row-buttons' . $alignClass . '">' . $inner . '</div>';
 
         case 'image':
             $html = render_image_block($child);

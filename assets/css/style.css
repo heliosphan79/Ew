@@ -578,6 +578,17 @@ main.wrap {
     .block-buttons { flex-direction: row; flex-wrap: wrap; }
 }
 
+/* Alignment for a Buttons block, standalone (.block-buttons) or nested in
+   a column (.col-row-buttons) — align-items controls the stacked-column
+   mobile layout, justify-content the side-by-side row layout from 480px
+   up, so both need setting for either axis to actually apply. */
+.buttons-align-center { align-items: center; }
+.buttons-align-right { align-items: flex-end; }
+@media (min-width: 480px) {
+    .buttons-align-center { justify-content: center; }
+    .buttons-align-right { justify-content: flex-end; }
+}
+
 .btn {
     display: inline-flex;
     align-items: center;

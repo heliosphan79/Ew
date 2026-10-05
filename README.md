@@ -122,7 +122,8 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
   - **Quote** — citaat + optionele bron.
   - **Lijst** — titel, stijl (opsomming/vinkjes) en items (één per regel,
     met dezelfde eenvoudige opmaak als een tekstblok).
-  - **Knoppen** — tot 3 knoppen, één per regel als `Tekst | link`.
+  - **Knoppen** — tot 3 knoppen, één per regel als `Tekst | link`, met
+    uitlijning links/gecentreerd/rechts.
   - **Kalender** — een zelfbedieningsafsprakenkalender (zie "Kalenderblok"
     hieronder) met een optionele titel; de beschikbare tijdsloten zelf
     beheer je los via "Kalender" in het beheerpaneel, niet per blok.
