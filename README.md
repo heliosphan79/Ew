@@ -311,6 +311,13 @@ formulier zelf kan wel een achtergrond krijgen ("Geen"/"Accentkleur"/
 contactformulier" op diezelfde pagina
 (`database/migrations/011_contact_form_background.sql`).
 
+Ook op die pagina: **bewaartermijn contactberichten & inschrijvingen**
+("Voor altijd"/90/180/365/730 dagen) — contactberichten en evenement-
+inschrijvingen ouder dan de gekozen termijn worden automatisch verwijderd
+(naam, e-mailadres, bericht, IP-adres). Gebeurt bij het openen van het
+Dashboard, niet onmiddellijk bij het wijzigen van de instelling
+(`database/migrations/012_submission_retention.sql`).
+
 Verder staan er twee eigen SEO/AI-velden op die pagina:
 - **Titel/meta-omschrijving contactpagina**: `/contact` had tot nu toe een
   vaste, hardcoded titel en omschrijving. Leeg = die vaste tekst blijft
