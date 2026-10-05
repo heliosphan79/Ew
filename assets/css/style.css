@@ -421,7 +421,12 @@ main.wrap {
 .block-media-text a:hover:not(.btn),
 .col-row a:hover:not(.btn) { color: var(--accent-hover); }
 
-.block-image img { width: 100%; height: auto; border-radius: var(--radius); display: block; }
+.block-image { overflow: hidden; border-radius: var(--radius); }
+.block-image img {
+    width: 100%; height: auto; border-radius: var(--radius); display: block;
+    transition: transform 600ms var(--ease);
+}
+.block-image:hover img { transform: scale(1.04); }
 .block-image figcaption {
     margin-top: 0.6rem;
     font-size: 0.85rem;
@@ -576,8 +581,12 @@ main.wrap {
     flex-direction: column;
     gap: 1.5rem;
 }
-.media-text-figure { margin: 0; }
-.media-text-figure img { width: 100%; height: auto; border-radius: var(--radius); display: block; }
+.media-text-figure { margin: 0; overflow: hidden; border-radius: var(--radius); }
+.media-text-figure img {
+    width: 100%; height: auto; border-radius: var(--radius); display: block;
+    transition: transform 600ms var(--ease);
+}
+.media-text-figure:hover img { transform: scale(1.04); }
 .media-text-figure figcaption {
     margin-top: 0.6rem;
     font-size: 0.85rem;
@@ -795,7 +804,14 @@ main.wrap {
 .event-card {
     background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 1.5rem;
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
+.event-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+/* Once the staggered reveal below has settled the card at translateY(0),
+   that rule's higher specificity would otherwise win over the plain
+   :hover above and silence the lift — this repeats it at matching
+   specificity so hovering still works after the reveal has run. */
+html.js .block-events[data-animate].is-visible .event-card:hover { transform: translateY(-3px); }
 .event-card h3 { font-family: var(--font-heading); font-size: 1.2rem; margin: 0.35rem 0 0.5rem; }
 .event-location { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem; }
 .event-description { margin: 0 0 1rem; }
@@ -847,8 +863,46 @@ html.js [data-animate].is-visible {
     transform: translateY(0);
 }
 
+/* Staggered reveal: once a block becomes visible, its repeating children
+   (columns, list items, event cards) settle in one after another instead
+   of all at once — still a single trigger per block (see main.js), just
+   offset per child. Delay is capped at the 6th item so a long list doesn't
+   leave trailing items invisible long after the block scrolled into view. */
+html.js .block-columns[data-animate] .column,
+html.js .block-list[data-animate] li,
+html.js .block-events[data-animate] .event-card {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 500ms var(--ease), transform 500ms var(--ease);
+}
+html.js .block-columns[data-animate].is-visible .column,
+html.js .block-list[data-animate].is-visible li,
+html.js .block-events[data-animate].is-visible .event-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+html.js .block-columns[data-animate].is-visible .column:nth-child(2),
+html.js .block-list[data-animate].is-visible li:nth-child(2),
+html.js .block-events[data-animate].is-visible .event-card:nth-child(2) { transition-delay: 80ms; }
+html.js .block-columns[data-animate].is-visible .column:nth-child(3),
+html.js .block-list[data-animate].is-visible li:nth-child(3),
+html.js .block-events[data-animate].is-visible .event-card:nth-child(3) { transition-delay: 160ms; }
+html.js .block-list[data-animate].is-visible li:nth-child(4),
+html.js .block-events[data-animate].is-visible .event-card:nth-child(4) { transition-delay: 240ms; }
+html.js .block-list[data-animate].is-visible li:nth-child(5),
+html.js .block-events[data-animate].is-visible .event-card:nth-child(5) { transition-delay: 320ms; }
+html.js .block-list[data-animate].is-visible li:nth-child(n+6),
+html.js .block-events[data-animate].is-visible .event-card:nth-child(n+6) { transition-delay: 400ms; }
+
 @media (prefers-reduced-motion: reduce) {
     html.js [data-animate] {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+    html.js .block-columns[data-animate] .column,
+    html.js .block-list[data-animate] li,
+    html.js .block-events[data-animate] .event-card {
         opacity: 1;
         transform: none;
         transition: none;
