@@ -1,9 +1,11 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/includes/bootstrap.php';
+require __DIR__ . '/includes/mailer.php';
 
 $errors = [];
 $old = ['name' => '', 'email' => '', 'message' => ''];
+$recaptchaSiteKey = (string) ($config['recaptcha']['site_key'] ?? '');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
@@ -11,6 +13,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Honeypot field: real visitors never fill this in, bots usually do.
     if (!empty($_POST['website'])) {
         redirect('/contact?verzonden=1');
+    }
+
+    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+
+    // Timing check: the render timestamp is stored server-side in the
+    // session (not a forgeable hidden field) when the form was last shown.
+    // A real visitor needs at least a few seconds to read and fill it in;
+    // a submission faster than that is almost always a bot.
+    $renderedAt = (int) ($_SESSION['contact_form_rendered_at'] ?? 0);
+    $submittedTooFast = $renderedAt > 0 && (time() - $renderedAt) < 3;
+
+    // Rate limit: max 3 submissions per IP per 10 minutes, using the
+    // ip_address/created_at already stored on every submission.
+    $rateLimited = false;
+    if ($ip !== '') {
+        $stmt = $mysqli->prepare(
+            'SELECT COUNT(*) AS total FROM contact_submissions WHERE ip_address = ? AND created_at > (NOW() - INTERVAL 10 MINUTE)'
+        );
+        $stmt->bind_param('s', $ip);
+        $stmt->execute();
+        $rateLimited = (int) $stmt->get_result()->fetch_assoc()['total'] >= 3;
+        $stmt->close();
     }
 
     $old['name'] = trim((string) ($_POST['name'] ?? ''));
@@ -26,19 +50,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($old['message'] === '') {
         $errors[] = 'Vul een bericht in.';
     }
+    if ($rateLimited) {
+        $errors[] = 'Je hebt de laatste tijd al meerdere berichten verstuurd. Probeer het binnen enkele minuten opnieuw.';
+    }
+    if ($submittedTooFast || !recaptcha_verify($config['recaptcha']['secret_key'] ?? '', (string) ($_POST['recaptcha_token'] ?? ''), $ip)) {
+        // Deliberately the same generic message as the other validation
+        // errors — a bot shouldn't learn which specific check caught it.
+        $errors[] = 'Je bericht kon niet verstuurd worden. Probeer het opnieuw.';
+    }
 
     if (empty($errors)) {
         $stmt = $mysqli->prepare(
             'INSERT INTO contact_submissions (name, email, message, ip_address) VALUES (?, ?, ?, ?)'
         );
-        $ip = $_SERVER['REMOTE_ADDR'] ?? null;
         $stmt->bind_param('ssss', $old['name'], $old['email'], $old['message'], $ip);
         $stmt->execute();
         $stmt->close();
 
+        send_contact_notification($config, $mysqli, $old);
+
         redirect('/contact?verzonden=1');
     }
 }
+
+$_SESSION['contact_form_rendered_at'] = time();
 
 $pageTitle = 'Contact';
 $metaDescription = 'Neem contact op met ' . $siteName . '.';

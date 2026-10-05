@@ -30,6 +30,13 @@
 
     <link rel="stylesheet" href="/assets/css/style.css">
     <script>document.documentElement.classList.add('js');</script>
+    <?php if (!empty($config['google_analytics']['measurement_id'])): ?>
+    <meta name="ga-measurement-id" content="<?= e($config['google_analytics']['measurement_id']) ?>">
+    <?php endif; ?>
+    <?php if (!empty($recaptchaSiteKey ?? '')): ?>
+    <meta name="recaptcha-site-key" content="<?= e($recaptchaSiteKey) ?>">
+    <script src="https://www.google.com/recaptcha/api.js?render=<?= e(rawurlencode($recaptchaSiteKey)) ?>" async defer></script>
+    <?php endif; ?>
 </head>
 <body data-theme="<?= e(normalize_theme_variant($themeVariant ?? null)) ?>">
 <header class="site-header">

@@ -12,6 +12,17 @@
         <p>&copy; <?= date('Y') ?> <?= e($siteName) ?></p>
     </div>
 </footer>
+<?php if (!empty($config['google_analytics']['measurement_id'])): ?>
+<div id="cookie-consent" class="cookie-consent" hidden>
+    <div class="wrap cookie-consent-inner">
+        <p>Deze site gebruikt Google Analytics om bezoek te meten. Ga je akkoord met het plaatsen van analytics-cookies?</p>
+        <div class="cookie-consent-actions">
+            <button type="button" id="cookie-decline" class="btn btn-secondary">Weiger</button>
+            <button type="button" id="cookie-accept" class="btn btn-primary">Akkoord</button>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 <script src="/assets/js/main.js"></script>
 <script src="/assets/js/calendar-block.js"></script>
 </body>

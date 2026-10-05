@@ -100,3 +100,12 @@ CREATE TABLE IF NOT EXISTS site_settings (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT IGNORE INTO site_settings (id, content) VALUES (1, '[]');
+
+-- Eenrijige cache (id = 1) voor het laatst opgehaalde Google Analytics
+-- Data API-rapport, getoond op het admin-Dashboard. Zie
+-- includes/ga_client.php. Geen rij nodig bij installatie.
+CREATE TABLE IF NOT EXISTS analytics_cache (
+    id         TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
+    payload    MEDIUMTEXT NOT NULL,
+    fetched_at DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -15,4 +15,31 @@ foreach ($blocked as $prefix) {
     }
 }
 
+// Spiegelt de RewriteRule's uit .htaccess (die de ingebouwde server
+// negeert) zodat de nette URL's ook lokaal werken — anders valt elk
+// onbekend pad terug op index.php (PHP's eigen standaardgedrag zonder
+// router), en lijkt bv. het contactformulier te werken terwijl het in
+// werkelijkheid nooit contact.php bereikt.
+if (preg_match('#^/pagina/([a-z0-9-]+)/?$#', $path, $m)) {
+    $_GET['slug'] = $m[1];
+    require __DIR__ . '/pagina.php';
+    return true;
+}
+if (preg_match('#^/contact/?$#', $path)) {
+    require __DIR__ . '/contact.php';
+    return true;
+}
+if ($path === '/sitemap.xml') {
+    require __DIR__ . '/sitemap.php';
+    return true;
+}
+if ($path === '/robots.txt') {
+    require __DIR__ . '/robots.php';
+    return true;
+}
+if ($path === '/llms.txt') {
+    require __DIR__ . '/llms.php';
+    return true;
+}
+
 return false; // laat de ingebouwde server het verzoek normaal afhandelen

@@ -53,6 +53,49 @@ function csrf_verify(): void
     }
 }
 
+// Verifies a reCAPTCHA v3 token server-side. Returns true when not
+// configured at all (secret key empty) so the form still works before
+// reCAPTCHA is set up — this is on top of, not instead of, the honeypot/
+// timing/rate-limit checks in contact.php.
+function recaptcha_verify(string $secretKey, string $token, string $remoteIp, float $minScore = 0.5): bool
+{
+    if ($secretKey === '') {
+        return true;
+    }
+    if ($token === '') {
+        return false;
+    }
+
+    $ch = curl_init('https://www.google.com/recaptcha/api/siteverify');
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => http_build_query([
+            'secret' => $secretKey,
+            'response' => $token,
+            'remoteip' => $remoteIp,
+        ]),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 8,
+    ]);
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if (!is_string($response) || $httpCode !== 200) {
+        // Google unreachable: fail open rather than blocking every visitor
+        // because of a network hiccup on Google's end — the other spam
+        // checks still apply.
+        return true;
+    }
+
+    $data = json_decode($response, true);
+    if (!is_array($data) || empty($data['success'])) {
+        return false;
+    }
+
+    return (float) ($data['score'] ?? 0) >= $minScore;
+}
+
 function slugify(string $text): string
 {
     $slug = strtolower(trim($text));
@@ -178,6 +221,50 @@ function render_inline_markup(string $text): string
     $escaped = preg_replace('/\*([^*\n]+)\*/', '<em>$1</em>', $escaped) ?? $escaped;
 
     return $escaped;
+}
+
+// Shared by every free-text body field (text/media_text blocks, a column's
+// text child): splits on blank lines into paragraphs, and — same typed-
+// syntax principle as **vet**/*cursief* — turns a paragraph where every
+// line starts with "- " into a bulleted list (styled like the dedicated
+// List block's naald-bullets) instead of a <p>. Mixed paragraphs (only
+// some lines prefixed) are left as plain text, "- " included, so existing
+// content with a literal leading hyphen never changes appearance.
+function render_text_paragraphs(string $body): string
+{
+    $out = '';
+    foreach (preg_split('/\n{2,}/', $body) as $paragraph) {
+        $paragraph = trim($paragraph);
+        if ($paragraph === '') {
+            continue;
+        }
+
+        $lines = preg_split('/\n/', $paragraph);
+        $items = [];
+        $isList = true;
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            if (!str_starts_with($line, '- ')) {
+                $isList = false;
+                break;
+            }
+            $items[] = trim(substr($line, 2));
+        }
+
+        if ($isList && !empty($items)) {
+            $out .= '<ul class="list-bullet text-list">';
+            foreach ($items as $item) {
+                $out .= '<li>' . render_needle_icon() . '<span>' . render_inline_markup($item) . '</span></li>';
+            }
+            $out .= '</ul>';
+        } else {
+            $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
+        }
+    }
+    return $out;
 }
 
 function decode_blocks(?string $json): array
@@ -512,13 +599,7 @@ function render_text_block(array $block): string
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }
-    foreach (preg_split('/\n{2,}/', $body) as $paragraph) {
-        $paragraph = trim($paragraph);
-        if ($paragraph === '') {
-            continue;
-        }
-        $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
-    }
+    $out .= render_text_paragraphs($body);
     $out .= '</div>';
     return $out;
 }
@@ -658,13 +739,7 @@ function render_media_text_block(array $block): string
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }
-    foreach (preg_split('/\n{2,}/', $body) as $paragraph) {
-        $paragraph = trim($paragraph);
-        if ($paragraph === '') {
-            continue;
-        }
-        $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
-    }
+    $out .= render_text_paragraphs($body);
     $out .= '</div></div>';
     return $out;
 }
@@ -704,15 +779,7 @@ function render_column_child_rows(array $child): string
                 $out .= '</div>';
             }
             if ($body !== '') {
-                $out .= '<div class="col-row col-row-body">';
-                foreach (preg_split('/\n{2,}/', $body) as $paragraph) {
-                    $paragraph = trim($paragraph);
-                    if ($paragraph === '') {
-                        continue;
-                    }
-                    $out .= '<p>' . nl2br(render_inline_markup($paragraph)) . '</p>';
-                }
-                $out .= '</div>';
+                $out .= '<div class="col-row col-row-body">' . render_text_paragraphs($body) . '</div>';
             }
             return $out;
 
