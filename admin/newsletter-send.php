@@ -1,0 +1,101 @@
+<?php
+declare(strict_types=1);
+require __DIR__ . '/../includes/bootstrap.php';
+require __DIR__ . '/../includes/mailer.php';
+require_login();
+
+header('Content-Type: application/json');
+
+function send_fail(string $message, int $status = 400): never
+{
+    http_response_code($status);
+    echo json_encode(['ok' => false, 'error' => $message]);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    send_fail('Ongeldige methode.', 405);
+}
+
+$token = $_POST['csrf_token'] ?? '';
+if (!is_string($token) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $token)) {
+    send_fail('Ongeldige of verlopen aanvraag. Herlaad de pagina.');
+}
+
+$newsletterId = (int) ($_POST['id'] ?? 0);
+if ($newsletterId <= 0) {
+    send_fail('Ongeldige nieuwsbrief.');
+}
+
+$stmt = $mysqli->prepare("SELECT * FROM newsletters WHERE id = ? AND status = 'sending'");
+$stmt->bind_param('i', $newsletterId);
+$stmt->execute();
+$newsletter = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
+if (!$newsletter) {
+    send_fail('Deze nieuwsbrief is niet (meer) bezig met verzenden.');
+}
+
+if (empty($config['smtp']['host'])) {
+    send_fail('Geen SMTP geconfigureerd in config/config.php.', 500);
+}
+
+// One batch per request, called repeatedly by the browser — see
+// admin/assets/js/admin.js. Keeps each request well under any shared-
+// hosting execution-time limit regardless of total list size, and the
+// remaining-count response lets the page show real progress.
+const BATCH_SIZE = 20;
+
+$blocks = decode_blocks($newsletter['content']);
+$bodyHtml = render_newsletter_email_body($blocks);
+
+$stmt = $mysqli->prepare(
+    'SELECT ns.id, ns.send_token, sub.email, sub.unsubscribe_token
+     FROM newsletter_sends ns
+     JOIN newsletter_subscribers sub ON sub.id = ns.subscriber_id
+     WHERE ns.newsletter_id = ? AND ns.sent_at IS NULL
+     LIMIT ' . BATCH_SIZE
+);
+$stmt->bind_param('i', $newsletterId);
+$stmt->execute();
+$batch = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
+$sentIds = [];
+foreach ($batch as $row) {
+    $emailHtml = build_newsletter_email($bodyHtml, $siteName, $siteUrl, $row['send_token'], $row['unsubscribe_token']);
+    smtp_send($config['smtp'], $row['email'], $newsletter['subject'], $emailHtml, null, 'text/html');
+    // Sent (or at least attempted) either way: a single bad address must
+    // never jam the whole batch into retrying it forever.
+    $sentIds[] = (int) $row['id'];
+}
+
+if (!empty($sentIds)) {
+    $placeholders = implode(',', array_fill(0, count($sentIds), '?'));
+    $stmt = $mysqli->prepare("UPDATE newsletter_sends SET sent_at = NOW() WHERE id IN ($placeholders)");
+    $stmt->bind_param(str_repeat('i', count($sentIds)), ...$sentIds);
+    $stmt->execute();
+    $stmt->close();
+}
+
+$stmt = $mysqli->prepare('SELECT COUNT(*) AS total FROM newsletter_sends WHERE newsletter_id = ? AND sent_at IS NULL');
+$stmt->bind_param('i', $newsletterId);
+$stmt->execute();
+$remaining = (int) $stmt->get_result()->fetch_assoc()['total'];
+$stmt->close();
+
+if ($remaining === 0) {
+    $stmt = $mysqli->prepare("UPDATE newsletters SET status = 'sent', sent_at = NOW() WHERE id = ?");
+    $stmt->bind_param('i', $newsletterId);
+    $stmt->execute();
+    $stmt->close();
+}
+
+$stmt = $mysqli->prepare('SELECT COUNT(*) AS total FROM newsletter_sends WHERE newsletter_id = ? AND sent_at IS NOT NULL');
+$stmt->bind_param('i', $newsletterId);
+$stmt->execute();
+$sentCount = (int) $stmt->get_result()->fetch_assoc()['total'];
+$stmt->close();
+
+echo json_encode(['ok' => true, 'done' => $remaining === 0, 'sent' => $sentCount, 'remaining' => $remaining]);

@@ -65,6 +65,17 @@
     ];
     var LABELS = BLOCK_TYPES.reduce(function (acc, t) { acc[t.type] = t.label; return acc; }, {});
 
+    // Restricts which block types the top-level "+ ..." toolbar offers —
+    // used by the newsletter editor (data-block-types="text,image,quote,
+    // list,buttons" on #block-editor) to only offer types that actually
+    // render in an e-mail client, see NEWSLETTER_BLOCK_TYPES in
+    // functions.php. LABELS stays unfiltered so any already-saved content
+    // still displays its proper label regardless.
+    var allowedTypesAttr = container.getAttribute('data-block-types');
+    var TOOLBAR_BLOCK_TYPES = allowedTypesAttr
+        ? BLOCK_TYPES.filter(function (t) { return allowedTypesAttr.split(',').indexOf(t.type) !== -1; })
+        : BLOCK_TYPES;
+
     // Block types a columns-block's column may contain — mirrors
     // COLUMN_CHILD_TYPES in includes/functions.php. No calendar/events/
     // map/media_text/columns, to avoid runaway nesting.
@@ -669,7 +680,7 @@
 
     var toolbar = document.getElementById('block-toolbar');
     if (toolbar) {
-        toolbar.innerHTML = BLOCK_TYPES.map(function (t) {
+        toolbar.innerHTML = TOOLBAR_BLOCK_TYPES.map(function (t) {
             return '<button type="button" data-add="' + t.type + '">+ ' + t.label + '</button>';
         }).join('');
 
@@ -778,4 +789,40 @@
             stray[i].classList.remove('is-drag-over');
         }
     });
+})();
+
+// Newsletter send progress (admin/newsletter-edit.php, once status is
+// "sending"): repeatedly calls newsletter-send.php, each call processing
+// one small batch server-side — see BATCH_SIZE there for why this has to
+// be batched rather than one request sending everyone. Reloads the page
+// once the server reports done, which then renders the final "sent" view.
+(function initNewsletterSendProgress() {
+    var panel = document.getElementById('newsletter-send-progress');
+    if (!panel || panel.getAttribute('data-sending') !== '1') return;
+
+    var newsletterId = panel.getAttribute('data-newsletter-id');
+    var csrfToken = panel.getAttribute('data-csrf');
+    var countEl = panel.querySelector('[data-sent-count]');
+    var barEl = panel.querySelector('[data-progress-bar]');
+
+    function sendBatch() {
+        var formData = new FormData();
+        formData.append('id', newsletterId);
+        formData.append('csrf_token', csrfToken);
+
+        fetch('newsletter-send.php', { method: 'POST', body: formData })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (!data || !data.ok) return;
+                if (countEl) countEl.textContent = data.sent;
+                if (barEl) barEl.value = data.sent;
+                if (data.done) {
+                    window.location.reload();
+                } else {
+                    sendBatch();
+                }
+            });
+    }
+
+    sendBatch();
 })();

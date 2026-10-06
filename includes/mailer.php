@@ -68,7 +68,7 @@ function smtp_format_address(string $email, string $name = ''): string
 // Sends one plain-text e-mail. Returns false (and logs via error_log, never
 // to the visitor) on any failure — callers should treat mail delivery as
 // best-effort and never let it block saving the underlying data.
-function smtp_send(array $smtpConfig, string $toEmail, string $subject, string $body, ?string $replyTo = null): bool
+function smtp_send(array $smtpConfig, string $toEmail, string $subject, string $body, ?string $replyTo = null, string $contentType = 'text/plain'): bool
 {
     $host = (string) ($smtpConfig['host'] ?? '');
     $fromEmail = (string) ($smtpConfig['from_email'] ?? '');
@@ -96,7 +96,7 @@ function smtp_send(array $smtpConfig, string $toEmail, string $subject, string $
     }
     stream_set_timeout($socket, 10);
 
-    $ok = smtp_send_sequence($socket, $host, $port, $encryption, $username, $password, $fromEmail, $fromName, $toEmail, $subject, $body, $replyTo);
+    $ok = smtp_send_sequence($socket, $host, $port, $encryption, $username, $password, $fromEmail, $fromName, $toEmail, $subject, $body, $replyTo, $contentType);
 
     fclose($socket);
     return $ok;
@@ -114,7 +114,8 @@ function smtp_send_sequence(
     string $toEmail,
     string $subject,
     string $body,
-    ?string $replyTo
+    ?string $replyTo,
+    string $contentType = 'text/plain'
 ): bool {
     $greeting = smtp_read_response($socket);
     if ($greeting['code'] !== 220) {
@@ -176,7 +177,7 @@ function smtp_send_sequence(
     $headers[] = 'Date: ' . date('r');
     $headers[] = 'Message-ID: <' . bin2hex(random_bytes(16)) . '@' . $ehloDomain . '>';
     $headers[] = 'MIME-Version: 1.0';
-    $headers[] = 'Content-Type: text/plain; charset=UTF-8';
+    $headers[] = 'Content-Type: ' . $contentType . '; charset=UTF-8';
     $headers[] = 'Content-Transfer-Encoding: 8bit';
 
     $message = implode("\r\n", $headers) . "\r\n\r\n" . smtp_dot_stuff($body);
