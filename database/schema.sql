@@ -128,3 +128,62 @@ CREATE TABLE IF NOT EXISTS analytics_cache (
     payload    MEDIUMTEXT NOT NULL,
     fetched_at DATETIME NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ---------------------------------------------------------------------
+-- Nieuwsbrief: abonnees (opt-in via contactformulier/evenementinschrijving
+-- of handmatig/CSV-import door de beheerder), de nieuwsbrieven zelf
+-- (zelfde blokken-content-model als pages.content, maar beheerd apart),
+-- en per-abonnee verzendrecords die ook dienen als basis voor open-/
+-- klik-tracking en de unieke afmeldlink.
+-- ---------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+    id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    email             VARCHAR(190) NOT NULL UNIQUE,
+    status            ENUM('subscribed', 'unsubscribed') NOT NULL DEFAULT 'subscribed',
+    -- Waar het adres vandaan komt, puur informatief voor in het
+    -- beheerpaneel (geen functioneel gedrag hangt hiervan af).
+    source            VARCHAR(30) NOT NULL DEFAULT 'import',
+    -- Voor de one-click-afmeldlink — nooit het e-mailadres zelf in de URL.
+    unsubscribe_token VARCHAR(64) NOT NULL UNIQUE,
+    subscribed_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    unsubscribed_at   DATETIME DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS newsletters (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    subject    VARCHAR(200) NOT NULL,
+    -- JSON-array van blokken, zelfde model als pages.content maar met een
+    -- kleinere toegestane set bloktypes (zie NEWSLETTER_BLOCK_TYPES in
+    -- functions.php) — enkel wat betrouwbaar rendert in e-mailclients.
+    content    MEDIUMTEXT NOT NULL,
+    status     ENUM('draft', 'sending', 'sent') NOT NULL DEFAULT 'draft',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    sent_at    DATETIME DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Eén rij per (nieuwsbrief, abonnee) — aangemaakt in bulk zodra "Verstuur"
+-- wordt geklikt, dan in batches afgewerkt (sent_at blijft NULL tot de mail
+-- effectief de deur uit is). send_token drijft zowel de open-pixel als de
+-- klik-tracking-redirect.
+CREATE TABLE IF NOT EXISTS newsletter_sends (
+    id             INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    newsletter_id  INT UNSIGNED NOT NULL,
+    subscriber_id  INT UNSIGNED NOT NULL,
+    send_token     VARCHAR(64) NOT NULL UNIQUE,
+    queued_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sent_at        DATETIME DEFAULT NULL,
+    opened_at      DATETIME DEFAULT NULL,
+    FOREIGN KEY (newsletter_id) REFERENCES newsletters(id) ON DELETE CASCADE,
+    FOREIGN KEY (subscriber_id) REFERENCES newsletter_subscribers(id) ON DELETE CASCADE,
+    UNIQUE KEY uniq_newsletter_subscriber (newsletter_id, subscriber_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS newsletter_clicks (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    send_id    INT UNSIGNED NOT NULL,
+    url        VARCHAR(500) NOT NULL,
+    clicked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (send_id) REFERENCES newsletter_sends(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

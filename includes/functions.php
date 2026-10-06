@@ -69,6 +69,8 @@ const ADMIN_ICON_PATHS = [
     'undo' => '<path d="M3 12a9 9 0 1 0 2.6-6.4"></path><path d="M3 4v5h5"></path>',
     'chart' => '<path d="M4 20V10M12 20V4M20 20v-7"></path>',
     'chevron-right' => '<path d="M9 6l6 6-6 6"></path>',
+    'mail' => '<path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path>',
+    'upload' => '<path d="M12 16V4"></path><path d="M6 10l6-6 6 6"></path><path d="M4 20h16"></path>',
 ];
 
 function admin_icon(string $name, string $class = ''): string
@@ -1056,6 +1058,10 @@ function render_events_block(array $block, mysqli $mysqli): string
             $out .= '<input type="text" id="event-name-' . $eventId . '" name="name" required>';
             $out .= '<label for="event-email-' . $eventId . '">E-mailadres</label>';
             $out .= '<input type="email" id="event-email-' . $eventId . '" name="email" required>';
+            $out .= '<label class="form-checkbox-row" for="event-newsletter-' . $eventId . '">';
+            $out .= '<input type="checkbox" id="event-newsletter-' . $eventId . '" name="newsletter_optin" value="1">';
+            $out .= '<span>Ja, ik wil graag de nieuwsbrief ontvangen.</span>';
+            $out .= '</label>';
             $out .= '<button type="submit">Inschrijven</button>';
             $out .= '</form>';
             $out .= '</details>';
@@ -1400,4 +1406,281 @@ function event_schema(array $event): ?array
             'name' => $location,
         ],
     ];
+}
+
+// ---------------------------------------------------------------------
+// Nieuwsbrief: e-mailclients (vooral Outlook desktop) have none of the
+// CSS this site otherwise relies on — no flexbox/grid, no custom
+// properties, often no external stylesheet at all, and no inline SVG. So
+// a newsletter is deliberately restricted to a small set of block types
+// (NEWSLETTER_BLOCK_TYPES) and rendered through its own, email-safe
+// functions below — inline styles only, plain <ul>/<li> bullets instead
+// of the site's needle-icon ones — rather than reusing render_blocks()'s
+// class-based output, which would simply not render in most inboxes.
+// sanitize_blocks() itself is still reused as-is for validation/storage:
+// it already handles every block type safely, so there is nothing
+// newsletter-specific to duplicate there — only which types the admin
+// UI/email renderer are willing to offer or display.
+// ---------------------------------------------------------------------
+
+const NEWSLETTER_BLOCK_TYPES = ['text', 'image', 'quote', 'list', 'buttons'];
+
+// Mirrors .block-bg-accent/.block-bg-surface from assets/css/style.css as
+// inline styles: e-mail clients ignore classes and CSS custom properties,
+// so the admin's "Achtergrond" field (shared with the page editor, via
+// sanitize_block_background()) needs its own, fixed-color translation here
+// rather than being silently ignored.
+function render_newsletter_bg_style(string $background): string
+{
+    return match ($background) {
+        'accent' => 'background:#6b7360;color:#f7f3ee;',
+        'surface' => 'background:#f7f3ee;color:#262420;border:1px solid #ede0d8;',
+        default => '',
+    };
+}
+
+function render_newsletter_text_paragraphs(string $body): string
+{
+    $out = '';
+    foreach (preg_split('/\n{2,}/', $body) as $paragraph) {
+        $paragraph = trim($paragraph);
+        if ($paragraph === '') {
+            continue;
+        }
+
+        $lines = preg_split('/\n/', $paragraph);
+        $items = [];
+        $isList = true;
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            if (!str_starts_with($line, '- ')) {
+                $isList = false;
+                break;
+            }
+            $items[] = trim(substr($line, 2));
+        }
+
+        if ($isList && !empty($items)) {
+            $out .= '<ul style="margin:0 0 16px;padding-left:22px;">';
+            foreach ($items as $item) {
+                $out .= '<li style="margin-bottom:6px;">' . render_inline_markup($item) . '</li>';
+            }
+            $out .= '</ul>';
+        } else {
+            $out .= '<p style="margin:0 0 16px;line-height:1.55;">' . nl2br(render_inline_markup($paragraph)) . '</p>';
+        }
+    }
+    return $out;
+}
+
+function render_newsletter_text_block(array $block): string
+{
+    $heading = trim((string) ($block['heading'] ?? ''));
+    $body = trim((string) ($block['body'] ?? ''));
+    if ($body === '' && $heading === '') {
+        return '';
+    }
+    $bgStyle = render_newsletter_bg_style(sanitize_block_background($block['background'] ?? ''));
+    $wrapperStyle = 'margin:0 0 28px;' . ($bgStyle !== '' ? $bgStyle . 'padding:20px 24px;border-radius:4px;' : '');
+    $out = '<div style="' . $wrapperStyle . '">';
+    if ($heading !== '') {
+        $out .= '<h2 style="margin:0 0 12px;font-family:Georgia,\'Times New Roman\',serif;font-size:1.3rem;color:inherit;">' . e($heading) . '</h2>';
+    }
+    $out .= render_newsletter_text_paragraphs($body);
+    $out .= '</div>';
+    return $out;
+}
+
+function render_newsletter_image_block(array $block): string
+{
+    $url = trim((string) ($block['url'] ?? ''));
+    if ($url === '' || !is_safe_url($url)) {
+        return '';
+    }
+    $alt = trim((string) ($block['alt'] ?? ''));
+    $caption = trim((string) ($block['caption'] ?? ''));
+    $bgStyle = render_newsletter_bg_style(sanitize_block_background($block['background'] ?? ''));
+    $wrapperStyle = 'margin:0 0 28px;' . ($bgStyle !== '' ? $bgStyle . 'padding:20px 24px;border-radius:4px;' : '');
+
+    $out = '<div style="' . $wrapperStyle . '">';
+    $out .= '<img src="' . e($url) . '" alt="' . e($alt) . '" width="544" style="width:100%;max-width:544px;height:auto;display:block;border-radius:4px;">';
+    if ($caption !== '') {
+        $out .= '<p style="margin:8px 0 0;font-size:0.85rem;color:inherit;opacity:0.75;">' . e($caption) . '</p>';
+    }
+    $out .= '</div>';
+    return $out;
+}
+
+function render_newsletter_quote_block(array $block): string
+{
+    $text = trim((string) ($block['text'] ?? ''));
+    if ($text === '') {
+        return '';
+    }
+    $source = trim((string) ($block['source'] ?? ''));
+    $bgStyle = render_newsletter_bg_style(sanitize_block_background($block['background'] ?? ''));
+    $wrapperStyle = $bgStyle !== ''
+        ? 'margin:0 0 28px;padding:16px 20px;border-radius:4px;' . $bgStyle
+        : 'margin:0 0 28px;padding:16px 20px;border-left:3px solid #6b7360;background:#f7f3ee;';
+
+    $out = '<div style="' . $wrapperStyle . '">';
+    $out .= '<p style="margin:0;font-style:italic;line-height:1.5;">' . nl2br(e($text)) . '</p>';
+    if ($source !== '') {
+        $out .= '<p style="margin:8px 0 0;font-size:0.85rem;color:inherit;opacity:0.75;">' . e($source) . '</p>';
+    }
+    $out .= '</div>';
+    return $out;
+}
+
+function render_newsletter_list_block(array $block): string
+{
+    $items = array_values(array_filter(
+        array_map(fn($item) => trim((string) $item), (array) ($block['items'] ?? [])),
+        fn($item) => $item !== ''
+    ));
+    if (empty($items)) {
+        return '';
+    }
+    $heading = trim((string) ($block['heading'] ?? ''));
+    $bgStyle = render_newsletter_bg_style(sanitize_block_background($block['background'] ?? ''));
+    $wrapperStyle = 'margin:0 0 28px;' . ($bgStyle !== '' ? $bgStyle . 'padding:20px 24px;border-radius:4px;' : '');
+
+    $out = '<div style="' . $wrapperStyle . '">';
+    if ($heading !== '') {
+        $out .= '<h3 style="margin:0 0 10px;font-family:Georgia,\'Times New Roman\',serif;font-size:1.1rem;color:inherit;">' . e($heading) . '</h3>';
+    }
+    $out .= '<ul style="margin:0;padding-left:22px;">';
+    foreach ($items as $item) {
+        $out .= '<li style="margin-bottom:6px;">' . render_inline_markup($item) . '</li>';
+    }
+    $out .= '</ul></div>';
+    return $out;
+}
+
+function render_newsletter_buttons_block(array $block): string
+{
+    $background = sanitize_block_background($block['background'] ?? '');
+    // On an accent (dark) panel, the default primary/secondary colors
+    // below would either vanish against the matching panel background or
+    // lose contrast — so swap to a light-on-dark pair instead.
+    $primaryStyle = $background === 'accent'
+        ? 'background:#f7f3ee;color:#6b7360;'
+        : 'background:#6b7360;color:#f7f3ee;';
+    $secondaryStyle = $background === 'accent'
+        ? 'background:transparent;color:#f7f3ee;border:2px solid #f7f3ee;'
+        : 'background:transparent;color:#262420;border:2px solid #262420;';
+
+    $buttons = (array) ($block['buttons'] ?? []);
+    $inner = '';
+    $rendered = 0;
+    foreach ($buttons as $btn) {
+        $label = trim((string) ($btn['label'] ?? ''));
+        $url = trim((string) ($btn['url'] ?? ''));
+        if ($label === '' || $url === '' || !is_safe_url($url)) {
+            continue;
+        }
+        $style = $rendered === 0 ? $primaryStyle : $secondaryStyle;
+        $inner .= '<a href="' . e($url) . '" style="display:inline-block;margin:0 10px 10px 0;padding:11px 22px;border-radius:4px;font-weight:600;text-decoration:none;' . $style . '">' . e($label) . '</a>';
+        $rendered++;
+    }
+    if ($rendered === 0) {
+        return '';
+    }
+    $bgStyle = render_newsletter_bg_style($background);
+    $wrapperStyle = 'margin:0 0 28px;' . ($bgStyle !== '' ? $bgStyle . 'padding:20px 24px;border-radius:4px;' : '');
+    return '<div style="' . $wrapperStyle . '">' . $inner . '</div>';
+}
+
+// Renders only the inner content (no <html>/<body> shell) — mirrors how
+// render_blocks() stays shell-less and header.php/footer.php wrap a page;
+// here build_newsletter_email() does that wrapping instead, once per
+// recipient so it can also inject that recipient's tracking/unsubscribe
+// links.
+function render_newsletter_email_body(array $blocks): string
+{
+    $html = '';
+    foreach ($blocks as $block) {
+        if (!is_array($block) || empty($block['type']) || !in_array($block['type'], NEWSLETTER_BLOCK_TYPES, true)) {
+            continue;
+        }
+        $html .= match ($block['type']) {
+            'text' => render_newsletter_text_block($block),
+            'image' => render_newsletter_image_block($block),
+            'quote' => render_newsletter_quote_block($block),
+            'list' => render_newsletter_list_block($block),
+            'buttons' => render_newsletter_buttons_block($block),
+            default => '',
+        };
+    }
+    return $html;
+}
+
+// Builds the full, per-recipient HTML e-mail: wraps the (shared) rendered
+// body in a table-based layout e-mail clients actually support, rewrites
+// every link through nieuwsbrief-klik.php for click tracking (keyed to
+// this recipient's own send_token, so clicks attribute correctly), and
+// appends a 1x1 open-tracking pixel plus the mandatory one-click
+// unsubscribe footer — both are a legal requirement for commercial
+// e-mail, not an optional nicety.
+function build_newsletter_email(string $bodyHtml, string $siteName, string $siteUrl, string $sendToken, string $unsubscribeToken): string
+{
+    $trackedBody = preg_replace_callback('/href="([^"]+)"/', function (array $m) use ($siteUrl, $sendToken) {
+        $target = html_entity_decode($m[1], ENT_QUOTES, 'UTF-8');
+        $clickUrl = absolute_url($siteUrl, '/nieuwsbrief-klik.php')
+            . '?t=' . rawurlencode($sendToken) . '&u=' . rawurlencode($target);
+        return 'href="' . e($clickUrl) . '"';
+    }, $bodyHtml) ?? $bodyHtml;
+
+    $unsubscribeUrl = absolute_url($siteUrl, '/nieuwsbrief-afmelden.php?t=' . rawurlencode($unsubscribeToken));
+    $pixelUrl = absolute_url($siteUrl, '/nieuwsbrief-pixel.php?t=' . rawurlencode($sendToken));
+
+    $footer = '<div style="margin-top:32px;padding-top:16px;border-top:1px solid #ede0d8;font-size:0.8rem;color:#8b8478;">'
+        . 'Je ontvangt dit bericht omdat je je hebt ingeschreven voor de nieuwsbrief van ' . e($siteName) . '. '
+        . '<a href="' . e($unsubscribeUrl) . '" style="color:#8b8478;">Uitschrijven</a>'
+        . '</div>'
+        . '<img src="' . e($pixelUrl) . '" width="1" height="1" alt="" style="display:block;border:0;">';
+
+    return '<!doctype html><html lang="nl"><head><meta charset="UTF-8">'
+        . '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+        . '<title>' . e($siteName) . '</title></head>'
+        . '<body style="margin:0;padding:0;background:#f7f3ee;font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,Helvetica,Arial,sans-serif;color:#262420;">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f7f3ee;"><tr><td align="center" style="padding:28px 16px;">'
+        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:6px;">'
+        . '<tr><td style="padding:32px 28px;">'
+        . $trackedBody
+        . $footer
+        . '</td></tr></table>'
+        . '</td></tr></table>'
+        . '</body></html>';
+}
+
+function newsletter_generate_token(): string
+{
+    return bin2hex(random_bytes(32));
+}
+
+// Adds an address to the newsletter list, or re-subscribes one that had
+// previously opted out — but never silently resurrects it: a prior
+// unsubscribe always needs a fresh, explicit opt-in action to undo.
+// Shared by the contact form, event registration, and the admin's manual
+// "add one address" action; CSV import deliberately does NOT use this —
+// see newsletter-subscribers.php for why.
+function newsletter_subscribe(mysqli $mysqli, string $email, string $source): void
+{
+    $email = trim($email);
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190) {
+        return;
+    }
+
+    $token = newsletter_generate_token();
+    $stmt = $mysqli->prepare(
+        "INSERT INTO newsletter_subscribers (email, source, unsubscribe_token) VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE status = 'subscribed', unsubscribed_at = NULL"
+    );
+    $stmt->bind_param('sss', $email, $source, $token);
+    $stmt->execute();
+    $stmt->close();
 }

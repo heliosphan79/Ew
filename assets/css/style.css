@@ -477,6 +477,17 @@ main.wrap {
 .contact-form button:hover { opacity: 0.9; }
 .contact-form button:active { transform: scale(0.97); }
 
+.form-checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-weight: 400;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.form-checkbox-row input[type="checkbox"] { margin-top: 0.2rem; flex-shrink: 0; }
+
 /* On an accent background the button would otherwise be the exact same
    color as its own card (both use --accent) and disappear into it — flip
    to a light button so it still reads as a distinct, clickable element. */

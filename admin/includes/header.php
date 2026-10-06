@@ -40,6 +40,9 @@
                 'event-edit.php' => 'events',
                 'event-delete.php' => 'events',
                 'event-registrations.php' => 'events',
+                'newsletters.php' => 'newsletters',
+                'newsletter-edit.php' => 'newsletters',
+                'newsletter-subscribers.php' => 'newsletters',
                 'settings.php' => 'settings',
             ];
             $adminNavActive = $adminNavGroups[$adminNavCurrent] ?? '';
@@ -49,6 +52,7 @@
                 'submissions' => ['submissions.php', 'inbox', 'Contactberichten'],
                 'calendar' => ['calendar.php', 'calendar', 'Kalender'],
                 'events' => ['events.php', 'users', 'Evenementen'],
+                'newsletters' => ['newsletters.php', 'mail', 'Nieuwsbrief'],
                 'settings' => ['settings.php', 'settings', 'Instellingen'],
             ];
             foreach ($adminNavLinks as $key => [$href, $icon, $label]):

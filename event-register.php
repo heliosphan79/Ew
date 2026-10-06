@@ -75,6 +75,10 @@ try {
     $stmt->close();
 
     $mysqli->commit();
+
+    if (!empty($_POST['newsletter_optin'])) {
+        newsletter_subscribe($mysqli, $email, 'event_registration');
+    }
 } catch (mysqli_sql_exception $e) {
     $mysqli->rollback();
     throw $e;

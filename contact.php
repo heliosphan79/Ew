@@ -67,6 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $stmt->close();
 
+        if (!empty($_POST['newsletter_optin'])) {
+            newsletter_subscribe($mysqli, $old['email'], 'contact_form');
+        }
+
         send_contact_notification($config, $mysqli, $old);
 
         redirect('/contact?verzonden=1');
@@ -129,6 +133,11 @@ require __DIR__ . '/includes/header.php';
 
             <label for="message">Bericht</label>
             <textarea id="message" name="message" rows="6" required><?= e($old['message']) ?></textarea>
+
+            <label class="form-checkbox-row" for="newsletter_optin">
+                <input type="checkbox" id="newsletter_optin" name="newsletter_optin" value="1">
+                <span>Ja, ik wil graag de nieuwsbrief ontvangen.</span>
+            </label>
 
             <button type="submit">Versturen</button>
         </form>

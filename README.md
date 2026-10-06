@@ -272,6 +272,51 @@ inschrijving — geen individuele tijdsloten zoals bij een afspraak, gewoon
 - **Nog niet ingebouwd**: e-mailbevestiging bij inschrijving (zie
   "Mogelijke volgende stappen").
 
+## Nieuwsbrief
+
+Een eigen nieuwsbriefmodule — geen koppeling met een extern platform
+(Mailchimp e.d.), alles via de bestaande SMTP-mailclient en de MySQL-
+database van de site zelf.
+
+- **Abonnees** (`database/migrations/014_newsletter.sql`) komen op drie
+  manieren binnen: het opt-in-vinkje ("Ja, ik wil graag de nieuwsbrief
+  ontvangen", standaard uitgevinkt) op het contactformulier en bij een
+  evenementinschrijving, of handmatig/via CSV-import door de beheerder op
+  "Nieuwsbrief → Abonnees beheren". Een CSV-import voegt enkel écht nieuwe
+  adressen toe — een eerder uitgeschreven adres wordt daarbij nooit
+  stilzwijgend heringeschreven; dat kan enkel via een expliciete,
+  individuele actie.
+- **Opmaak**: dezelfde blokkenbouwer als bij een pagina, maar met een
+  kleinere toegestane set (tekst, foto, quote, lijst, knoppen) — geen
+  kalender, evenementen, kaart, foto+tekst of kolommen. E-mailclients
+  (vooral Outlook desktop) ondersteunen geen CSS Grid/Flexbox of externe
+  stylesheets, dus een nieuwsbrief wordt via een eigen, met inline-stijlen
+  opgebouwde HTML-sjabloon gerenderd — niet dezelfde opmaak-code als de
+  website zelf, die zou in een inbox gewoon niet weergeven. De "Achtergrond"-
+  optie (Accentkleur/Zachte kaart) werkt ook hier, als inline-stijl in
+  plaats van de CSS-klasse van de website.
+- **Versturen gebeurt in batches**, niet in één keer: op gedeelde hosting
+  zonder cron zou één verzoek dat honderden losse SMTP-verbindingen opzet,
+  simpelweg de PHP-uitvoeringslimiet overschrijden. Een klik op "Verstuur"
+  zet alle abonnees in een wachtrij; de pagina roept daarna zelf herhaaldelijk
+  een klein batchje (20) af totdat iedereen een mail heeft, met een
+  voortgangsbalk. Een nieuwsbrief kan niet meer bewerkt worden eens het
+  verzenden gestart is.
+- **Tracking**: elke verzonden mail bevat een onzichtbare 1×1-pixel (open-
+  tracking) en elke link wordt herschreven via een eigen omleidings-URL
+  (klik-tracking) — beide gekoppeld aan een uniek, willekeurig token per
+  (nieuwsbrief, abonnee)-combinatie, nooit aan het e-mailadres zelf.
+  Zichtbaar in het nieuwsbrievenoverzicht en op de detailpagina van een
+  verzonden nieuwsbrief.
+- **Afmelden is verplicht, niet optioneel**: elke verzonden mail krijgt
+  automatisch een voettekst met een one-click-afmeldlink (geen login, geen
+  bevestigingsstap) — wettelijk vereist voor commerciële e-mail, dus
+  hiervoor is bewust geen instelling om dit uit te zetten.
+- **Niet ingebouwd**: een live voorvertoning van de opmaak in e-mailclients
+  (enkel de blokkeneditor zelf), en een geautomatiseerd, periodiek
+  verzendschema — een nieuwsbrief wordt altijd met een bewuste klik
+  verstuurd.
+
 ## Homepage-content
 
 `database/seed-homepage.php` (eenmalig via de command line te draaien, zie
