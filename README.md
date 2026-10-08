@@ -88,6 +88,26 @@ opvraagbaar zijn. Zie "Beveiliging" hieronder.
    `MultiViews` dan handmatig uit via het hostingpaneel of vraag het na bij
    support.
 
+### Nadien: code-updates via GitHub Actions (optioneel)
+
+Na deze eerste, handmatige opzet kan je latere code-wijzigingen automatisch
+laten uploaden via FTP, zonder zelf een FTP-client te gebruiken
+(`.github/workflows/deploy.yml`):
+
+1. Zet in de repository-instellingen op GitHub (Settings → Secrets and
+   variables → Actions) twee secrets: `FTP_USERNAME` en `FTP_PASSWORD`, met
+   de inloggegevens van `ftp.dcube-resource.be`.
+2. Ga naar het tabblad "Actions" → "Deploy naar FTP (dcube-resource)" →
+   "Run workflow" om een deploy te starten. Dit gebeurt **nooit
+   automatisch** bij een merge — bewust een apart, manueel moment, zodat er
+   altijd een controlemoment is vlak voor iets live gaat.
+3. Enkel de werkende site-bestanden worden geüpload (niet `database/`,
+   `README.md` of de workflow zelf) — `config/config.php` en `uploads/`
+   staan niet in git en worden dus nooit aangeraakt of overschreven.
+   Database-migraties (`database/migrations/`) worden hierdoor **niet**
+   automatisch uitgevoerd; die blijf je zelf handmatig via phpMyAdmin
+   draaien, zoals voorheen.
+
 ## Functionaliteit (MVP)
 
 - Login voor beheerders (wachtwoorden gehasht met `password_hash`,
