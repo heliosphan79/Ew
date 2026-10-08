@@ -24,6 +24,21 @@ $errors = [];
 $form = ['subject' => $newsletter['subject'] ?? ''];
 $blocksForEditor = $newsletter ? decode_blocks($newsletter['content']) : [];
 
+// Stops an in-progress send — e.g. one stuck on an unresponsive SMTP
+// server with no way to tell how far it got. Whatever already went out
+// stays sent (newsletter_sends rows are never touched); the rest simply
+// never does. Handled separately from the block below since that one is
+// gated on !$isReadOnly, and a 'sending' newsletter IS read-only.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_send']) && $newsletter && $newsletter['status'] === 'sending') {
+    csrf_verify();
+    $stmt = $mysqli->prepare("UPDATE newsletters SET status = 'cancelled', sent_at = NOW() WHERE id = ?");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $stmt->close();
+    set_flash('success', 'Verzending geannuleerd.');
+    redirect('newsletter-edit.php?id=' . $id);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isReadOnly) {
     csrf_verify();
 
@@ -153,6 +168,19 @@ require __DIR__ . '/includes/header.php';
             <?php if ($newsletter['status'] === 'sending'): ?>
                 <p>Bezig met verzenden: <span data-sent-count><?= (int) ($sendStats['sent'] ?? 0) ?></span> / <?= (int) ($sendStats['total'] ?? 0) ?></p>
                 <progress data-progress-bar max="<?= (int) ($sendStats['total'] ?? 1) ?>" value="<?= (int) ($sendStats['sent'] ?? 0) ?>"></progress>
+                <p class="form-errors" data-send-error hidden></p>
+                <div class="page-form-actions">
+                    <button type="button" class="button-secondary" data-retry-send hidden>Opnieuw proberen</button>
+                    <form method="post" action="newsletter-edit.php?id=<?= (int) $id ?>"
+                          onsubmit="return confirm('Verzending annuleren? Reeds verzonden mails kunnen niet worden teruggehaald; abonnees die nog niet aan de beurt waren, ontvangen deze nieuwsbrief niet.');">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="cancel_send" value="1">
+                        <button type="submit" class="button-secondary">Annuleren</button>
+                    </form>
+                </div>
+            <?php elseif ($newsletter['status'] === 'cancelled'): ?>
+                <p>Verzending geannuleerd op <?= e(date('d/m/Y H:i', strtotime($newsletter['sent_at']))) ?> —
+                <?= (int) ($sendStats['sent'] ?? 0) ?> / <?= (int) ($sendStats['total'] ?? 0) ?> abonnees ontvingen de mail nog.</p>
             <?php else: ?>
                 <p>Verzonden op <?= e(date('d/m/Y H:i', strtotime($newsletter['sent_at']))) ?> aan <?= (int) ($sendStats['total'] ?? 0) ?> abonnees.
                 Geopend door <?= (int) ($sendStats['opened'] ?? 0) ?>.</p>

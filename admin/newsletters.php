@@ -48,6 +48,8 @@ require __DIR__ . '/includes/header.php';
                         <span class="badge badge-ok">Verzonden</span>
                     <?php elseif ($nl['status'] === 'sending'): ?>
                         <span class="badge badge-draft">Bezig met verzenden</span>
+                    <?php elseif ($nl['status'] === 'cancelled'): ?>
+                        <span class="badge badge-draft">Geannuleerd</span>
                     <?php else: ?>
                         <span class="badge badge-draft">Concept</span>
                     <?php endif; ?>
@@ -58,8 +60,13 @@ require __DIR__ . '/includes/header.php';
                     <a class="icon-btn icon-btn-accent" href="newsletter-edit.php?id=<?= (int) $nl['id'] ?>" title="<?= $nl['status'] === 'draft' ? 'Bewerken' : 'Bekijken' ?>">
                         <?= admin_icon($nl['status'] === 'draft' ? 'edit' : 'eye') ?><span class="visually-hidden">Bekijken</span>
                     </a>
-                    <?php if ($nl['status'] === 'draft'): ?>
-                    <form method="post" action="newsletter-delete.php" onsubmit="return confirm('Deze nieuwsbrief definitief verwijderen?');">
+                    <?php if ($nl['status'] !== 'sending'): ?>
+                    <?php
+                        $deleteConfirm = $nl['status'] === 'draft'
+                            ? 'Deze nieuwsbrief definitief verwijderen?'
+                            : 'Deze nieuwsbrief definitief verwijderen? Dit verwijdert ook de verzend- en openingsgegevens.';
+                    ?>
+                    <form method="post" action="newsletter-delete.php" onsubmit="return confirm('<?= e($deleteConfirm) ?>');">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= (int) $nl['id'] ?>">
                         <button type="submit" class="icon-btn icon-btn-danger" title="Verwijderen">

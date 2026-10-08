@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS newsletters (
     -- kleinere toegestane set bloktypes (zie NEWSLETTER_BLOCK_TYPES in
     -- functions.php) — enkel wat betrouwbaar rendert in e-mailclients.
     content    MEDIUMTEXT NOT NULL,
-    status     ENUM('draft', 'sending', 'sent') NOT NULL DEFAULT 'draft',
+    status     ENUM('draft', 'sending', 'sent', 'cancelled') NOT NULL DEFAULT 'draft',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     sent_at    DATETIME DEFAULT NULL
