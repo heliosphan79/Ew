@@ -262,6 +262,14 @@ inschrijving — geen individuele tijdsloten zoals bij een afspraak, gewoon
   (`<details>`/`<summary>`, geen JavaScript nodig) met een naam/e-mailveld.
   Is een evenement volzet, dan verschijnt een "Volzet"-label in plaats van
   het formulier.
+- **Aantal vrije plaatsen pas zichtbaar bij oplopende bezetting**
+  (`event_capacity_status()` in `functions.php`, gedeeld door het
+  website-evenementenblok en het compacte nieuwsbriefblok hieronder): bij
+  een vers gepubliceerd evenement toont "10 van de 10 plaatsen vrij" vooral
+  dat er nog niemand ingeschreven is — dus blijft dat cijfer verborgen
+  zolang 75% of meer van de plaatsen nog vrij is, en verschijnt het pas
+  (of "Volzet") vanaf dat punt. Dit geldt enkel voor de publieke weergave;
+  "Evenementen" in het beheerpaneel toont altijd de exacte aantallen.
 - **Race-condition-veilig**: de capaciteitscheck gebeurt binnen één
   databasetransactie met `SELECT ... FOR UPDATE` op het evenement, dus ook
   hier kunnen twee bezoekers nooit allebei de laatste plaats bemachtigen.
@@ -304,11 +312,12 @@ database van de site zelf.
   inhoud ondersteunen `{{voornaam}}` als merge-tag, die bij verzending per
   abonnee wordt ingevuld (onbekende voornaam valt terug op "daar").
 - **Evenementenblok (compact)**: toont automatisch de eerstkomende,
-  gepubliceerde evenementen (datum, titel, locatie, aantal vrije plaatsen
-  of "Volzet") — een apart, beknopt blok naast het volledige evenementenblok
-  van de website, zonder inline inschrijfformulier: inschrijven gebeurt
-  altijd via de website, optioneel via een configureerbare knop
-  (tekst + link) onderaan het blok.
+  gepubliceerde evenementen (datum, titel, locatie, en — vanaf 75%
+  bezetting — het aantal vrije plaatsen of "Volzet", zie hierboven) — een
+  apart, beknopt blok naast het volledige evenementenblok van de website,
+  zonder inline inschrijfformulier: inschrijven gebeurt altijd via de
+  website, optioneel via een configureerbare knop (tekst + link) onderaan
+  het blok.
 - **Nieuwsbrief dupliceren**: elke nieuwsbrief — ook een al verzonden of
   geannuleerde — kan via het kopieer-icoon in het overzicht gedupliceerd
   worden naar een nieuw concept met dezelfde inhoud (onderwerp voorafgegaan

@@ -1014,6 +1014,26 @@ function is_safe_redirect_path(string $path): bool
     return str_starts_with($path, '/') && !str_starts_with($path, '//');
 }
 
+// Deliberately hides the exact spots-left count on public-facing displays
+// (website block, newsletter) while an event is still mostly empty — a
+// freshly published event showing "10 van de 10 plaatsen vrij" reads as
+// "nobody's signed up yet" rather than as useful information, so the
+// count only surfaces once it would actually create urgency (75% or more
+// taken) or the event is full. admin/events.php is unaffected: that's the
+// internal management view, where exact numbers are always needed
+// regardless of this public-facing threshold.
+function event_capacity_status(int $capacity, int $registered): ?string
+{
+    $spotsLeft = max(0, $capacity - $registered);
+    if ($spotsLeft <= 0) {
+        return 'Volzet';
+    }
+    if (($spotsLeft / $capacity) > 0.75) {
+        return null;
+    }
+    return $spotsLeft . ' van de ' . $capacity . ' plaatsen vrij';
+}
+
 // Events themselves live in the events table, managed via admin/events.php
 // — this renders the next few upcoming, published events with an inline
 // registration form (no JS needed: a <details> toggle + a plain POST back
@@ -1065,9 +1085,10 @@ function render_events_block(array $block, mysqli $mysqli): string
         $out .= '<p class="event-description">' . nl2br(e($event['description'])) . '</p>';
 
         if ($capacity !== null) {
-            $out .= $isFull
-                ? '<span class="event-badge badge-full">Volzet</span>'
-                : '<span class="event-badge badge-spots">' . $spotsLeft . ' van de ' . $capacity . ' plaatsen vrij</span>';
+            $status = event_capacity_status($capacity, $registered);
+            if ($status !== null) {
+                $out .= '<span class="event-badge ' . ($isFull ? 'badge-full' : 'badge-spots') . '">' . e($status) . '</span>';
+            }
         }
 
         if (!$isFull) {
@@ -1716,8 +1737,6 @@ function render_newsletter_events_block(array $block, mysqli $mysqli): string
     foreach ($events as $i => $event) {
         $capacity = $event['capacity'] !== null ? (int) $event['capacity'] : null;
         $registered = (int) $event['registered_count'];
-        $spotsLeft = $capacity !== null ? max(0, $capacity - $registered) : null;
-        $isFull = $capacity !== null && $spotsLeft <= 0;
         $rowStyle = 'padding:12px 0;' . ($i < $count - 1 ? 'border-bottom:' . $rowBorder : '');
 
         $out .= '<div style="' . $rowStyle . '">';
@@ -1726,10 +1745,11 @@ function render_newsletter_events_block(array $block, mysqli $mysqli): string
         if (!empty($event['location'])) {
             $out .= '<p style="margin:0;font-size:0.9rem;color:inherit;opacity:0.85;">' . e($event['location']) . '</p>';
         }
-        if ($isFull) {
-            $out .= '<p style="margin:4px 0 0;font-size:0.8rem;color:inherit;opacity:0.75;">Volzet</p>';
-        } elseif ($spotsLeft !== null) {
-            $out .= '<p style="margin:4px 0 0;font-size:0.8rem;color:inherit;opacity:0.75;">' . $spotsLeft . ' van de ' . $capacity . ' plaatsen vrij</p>';
+        if ($capacity !== null) {
+            $status = event_capacity_status($capacity, $registered);
+            if ($status !== null) {
+                $out .= '<p style="margin:4px 0 0;font-size:0.8rem;color:inherit;opacity:0.75;">' . e($status) . '</p>';
+            }
         }
         $out .= '</div>';
     }
