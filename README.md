@@ -347,10 +347,16 @@ database van de site zelf.
   automatisch een voettekst met een one-click-afmeldlink (geen login, geen
   bevestigingsstap) — wettelijk vereist voor commerciële e-mail, dus
   hiervoor is bewust geen instelling om dit uit te zetten.
-- **Niet ingebouwd**: een live voorvertoning van de opmaak in e-mailclients
-  (enkel de blokkeneditor zelf), en een geautomatiseerd, periodiek
-  verzendschema — een nieuwsbrief wordt altijd met een bewuste klik
-  verstuurd.
+- **Voorvertoning en testmail**: op de bewerkpagina van een opgeslagen
+  concept staat een link "Voorvertoning" (`admin/newsletter-preview.php`,
+  rendert de echte, opgemaakte e-mail — inclusief merge-tags met "daar" als
+  fallback — in een iframe) en een veld om een testmail naar één
+  e-mailadres te sturen (`admin/newsletter-test-send.php`): onderwerp
+  voorafgegaan door `[Test]`, geen List-Unsubscribe-header (er is geen
+  echte abonnee/token achter een losse test). Werkt ook na het effectief
+  versturen, als extra controle.
+- **Niet ingebouwd**: een geautomatiseerd, periodiek verzendschema — een
+  nieuwsbrief wordt altijd met een bewuste klik verstuurd.
 
 ## E-mailinstellingen
 
