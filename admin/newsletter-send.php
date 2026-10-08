@@ -37,9 +37,11 @@ if (!$newsletter) {
     send_fail('Deze nieuwsbrief is niet (meer) bezig met verzenden.');
 }
 
-if (empty($config['smtp']['host'])) {
-    send_fail('Geen SMTP geconfigureerd in config/config.php.', 500);
+$mailConfig = resolve_mail_config($config, $mysqli);
+if (empty($mailConfig['host'])) {
+    send_fail('Geen e-mailserver ingesteld. Vul dit aan onder Instellingen → E-mail.', 500);
 }
+$replyTo = $mailConfig['reply_to'] !== '' ? $mailConfig['reply_to'] : null;
 
 // One batch per request, called repeatedly by the browser — see
 // admin/assets/js/admin.js. Keeps each request well under any shared-
@@ -51,7 +53,7 @@ $blocks = decode_blocks($newsletter['content']);
 $bodyHtml = render_newsletter_email_body($blocks);
 
 $stmt = $mysqli->prepare(
-    'SELECT ns.id, ns.send_token, sub.email, sub.unsubscribe_token
+    'SELECT ns.id, ns.send_token, sub.email, sub.unsubscribe_token, sub.first_name
      FROM newsletter_sends ns
      JOIN newsletter_subscribers sub ON sub.id = ns.subscriber_id
      WHERE ns.newsletter_id = ? AND ns.sent_at IS NULL
@@ -64,8 +66,10 @@ $stmt->close();
 
 $sentIds = [];
 foreach ($batch as $row) {
-    $emailHtml = build_newsletter_email($bodyHtml, $siteName, $siteUrl, $row['send_token'], $row['unsubscribe_token']);
-    smtp_send($config['smtp'], $row['email'], $newsletter['subject'], $emailHtml, null, 'text/html');
+    $personalizedBody = render_newsletter_merge_tags($bodyHtml, $row['first_name'], true);
+    $personalizedSubject = render_newsletter_merge_tags($newsletter['subject'], $row['first_name'], false);
+    $emailHtml = build_newsletter_email($personalizedBody, $siteName, $siteUrl, $row['send_token'], $row['unsubscribe_token']);
+    smtp_send($mailConfig, $row['email'], $personalizedSubject, $emailHtml, $replyTo, 'text/html');
     // Sent (or at least attempted) either way: a single bad address must
     // never jam the whole batch into retrying it forever.
     $sentIds[] = (int) $row['id'];

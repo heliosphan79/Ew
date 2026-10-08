@@ -11,10 +11,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['action']) && $_POST['action'] === 'add_one') {
         $email = trim((string) ($_POST['email'] ?? ''));
+        $firstName = trim((string) ($_POST['first_name'] ?? ''));
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors[] = 'Vul een geldig e-mailadres in.';
         } else {
-            newsletter_subscribe($mysqli, $email, 'manual');
+            newsletter_subscribe($mysqli, $email, 'manual', $firstName);
             set_flash('success', 'Adres toegevoegd.');
             redirect('newsletter-subscribers.php');
         }
@@ -33,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // "subscribed" — a manual single add (below) is the one
                 // place that explicit re-subscribe behaviour belongs.
                 $insert = $mysqli->prepare(
-                    'INSERT IGNORE INTO newsletter_subscribers (email, source, unsubscribe_token) VALUES (?, ?, ?)'
+                    'INSERT IGNORE INTO newsletter_subscribers (email, first_name, source, unsubscribe_token) VALUES (?, ?, ?, ?)'
                 );
                 while (($row = fgetcsv($handle)) !== false) {
                     $email = trim((string) ($row[0] ?? ''));
@@ -41,9 +42,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $skipped++;
                         continue;
                     }
+                    // Optional second column — a plain one-address-per-line
+                    // file (no column at all) works exactly as before.
+                    $firstName = trim((string) ($row[1] ?? ''));
+                    $firstNameParam = $firstName !== '' ? mb_substr($firstName, 0, 100) : null;
                     $source = 'import';
                     $token = newsletter_generate_token();
-                    $insert->bind_param('sss', $email, $source, $token);
+                    $insert->bind_param('ssss', $email, $firstNameParam, $source, $token);
                     $insert->execute();
                     if ($insert->affected_rows > 0) {
                         $added++;
@@ -125,6 +130,7 @@ require __DIR__ . '/includes/header.php';
             <thead>
             <tr>
                 <th>E-mailadres</th>
+                <th>Voornaam</th>
                 <th>Status</th>
                 <th>Bron</th>
                 <th>Sinds</th>
@@ -133,11 +139,12 @@ require __DIR__ . '/includes/header.php';
             </thead>
             <tbody>
             <?php if (empty($subscribers)): ?>
-                <tr><td colspan="5">Nog geen abonnees.</td></tr>
+                <tr><td colspan="6">Nog geen abonnees.</td></tr>
             <?php endif; ?>
             <?php foreach ($subscribers as $sub): ?>
                 <tr>
                     <td><?= e($sub['email']) ?></td>
+                    <td><?= e($sub['first_name'] ?? '') ?></td>
                     <td>
                         <?= $sub['status'] === 'subscribed'
                             ? '<span class="badge badge-ok">Geabonneerd</span>'
@@ -178,6 +185,8 @@ require __DIR__ . '/includes/header.php';
             <input type="hidden" name="action" value="add_one">
             <label for="email">Eén adres toevoegen</label>
             <input type="email" id="email" name="email" placeholder="naam@voorbeeld.be" required>
+            <label for="first_name">Voornaam (optioneel)</label>
+            <input type="text" id="first_name" name="first_name" maxlength="100">
             <div class="page-form-actions">
                 <button type="submit">Toevoegen</button>
             </div>
@@ -187,7 +196,7 @@ require __DIR__ . '/includes/header.php';
             <?= csrf_field() ?>
             <input type="hidden" name="action" value="import_csv">
             <label for="csv">CSV importeren</label>
-            <p class="field-hint">Eén e-mailadres per regel, of als eerste kolom van een CSV. Bestaande of uitgeschreven adressen worden nooit overschreven.</p>
+            <p class="field-hint">Eén e-mailadres per regel, optioneel gevolgd door een komma en voornaam. Bestaande of uitgeschreven adressen worden nooit overschreven.</p>
             <input type="file" id="csv" name="csv" accept=".csv,text/csv" required>
             <div class="page-form-actions">
                 <button type="submit"><?= admin_icon('upload') ?> Importeren</button>

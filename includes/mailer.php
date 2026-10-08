@@ -201,7 +201,7 @@ function smtp_send_sequence(
 // to (smtp.to_email, falling back to the address set under Instellingen).
 function send_contact_notification(array $config, mysqli $mysqli, array $submission): void
 {
-    $smtpConfig = $config['smtp'] ?? [];
+    $smtpConfig = resolve_mail_config($config, $mysqli);
     if (empty($smtpConfig['host'])) {
         return;
     }

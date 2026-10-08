@@ -50,9 +50,12 @@ return [
         'secret_key' => '',
     ],
 
-    // SMTP account used to e-mail you when someone submits the contact
-    // form. Leave host empty to disable sending (submissions are still
-    // saved and visible in the beheerpaneel either way).
+    // Legacy fallback only — e-mail is now configured via "Instellingen →
+    // E-mail" in the beheerpaneel (host, poort, login, afzender, reply-to,
+    // ontvanger), stored in the database. Any field left empty there falls
+    // back to the matching field here, so this section only matters until
+    // someone opens that admin page and saves it once. Leave host empty to
+    // disable sending entirely (submissions are still saved either way).
     'smtp' => [
         'host' => '',
         'port' => 587,

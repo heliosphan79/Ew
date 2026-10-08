@@ -1308,6 +1308,57 @@ function get_site_settings(mysqli $mysqli): array
     return $settings;
 }
 
+// E-mailinstellingen (SMTP-server, afzender, reply-to, ontvanger voor
+// contactmeldingen), beheerd via admin/mail-settings.php. Eén vaste rij
+// (id = 1) — zie mail_settings in schema.sql. Every field is NULL until an
+// admin saves the settings page; resolve_mail_config() is what actually
+// combines this with the legacy config.php fallback, use that instead of
+// this directly when you need a usable SMTP config.
+function get_mail_settings(mysqli $mysqli): array
+{
+    static $settings = null;
+    if ($settings === null) {
+        $row = $mysqli->query('SELECT host, port, encryption, username, password, from_email, from_name, reply_to, to_email FROM mail_settings WHERE id = 1')->fetch_assoc();
+        $settings = [
+            'host' => $row['host'] ?? '',
+            'port' => $row['port'] !== null ? (int) $row['port'] : null,
+            'encryption' => $row['encryption'] ?? '',
+            'username' => $row['username'] ?? '',
+            'password' => $row['password'] ?? '',
+            'from_email' => $row['from_email'] ?? '',
+            'from_name' => $row['from_name'] ?? '',
+            'reply_to' => $row['reply_to'] ?? '',
+            'to_email' => $row['to_email'] ?? '',
+        ];
+    }
+    return $settings;
+}
+
+// The SMTP config actually used to send mail (smtp_send()'s $smtpConfig
+// argument), everywhere mail is sent (contact notification, password
+// reset, nieuwsbrief). Database settings (Instellingen → E-mail) win
+// field-by-field; any field left empty there falls back to config/
+// config.php's legacy 'smtp' section, so mail keeps working immediately
+// after this feature ships, before an admin has opened the new settings
+// page even once.
+function resolve_mail_config(array $config, mysqli $mysqli): array
+{
+    $db = get_mail_settings($mysqli);
+    $legacy = $config['smtp'] ?? [];
+
+    $merged = [];
+    foreach (['host', 'username', 'password', 'from_email', 'from_name', 'reply_to', 'to_email'] as $key) {
+        $dbValue = (string) ($db[$key] ?? '');
+        $merged[$key] = $dbValue !== '' ? $dbValue : (string) ($legacy[$key] ?? '');
+    }
+
+    $merged['port'] = $db['port'] ?? (isset($legacy['port']) ? (int) $legacy['port'] : 587);
+    $encryption = $db['encryption'] !== '' ? $db['encryption'] : (string) ($legacy['encryption'] ?? '');
+    $merged['encryption'] = $encryption !== '' ? $encryption : 'tls';
+
+    return $merged;
+}
+
 // Deletes contact submissions and event registrations older than the
 // configured retention window — personal data (name/email/message/IP)
 // that otherwise accumulates indefinitely with no way to expire it. NULL
@@ -1618,6 +1669,21 @@ function render_newsletter_email_body(array $blocks): string
     return $html;
 }
 
+// Replaces the {{voornaam}}-merge-tag an admin can type into a
+// nieuwsbrief's subject or block content — in the subject (plain text) and
+// in the already-rendered body HTML alike, since the tag is just literal
+// text in both. Falls back to a generic "daar" when the subscriber's first
+// name is unknown, so "Hallo {{voornaam}}," never sends as literally
+// "Hallo ,". $escape must be true for HTML contexts (the body) and false
+// for plain text (the subject) — the name itself comes from a subscriber,
+// so it's untrusted input that needs the same e() treatment as any other
+// user-supplied text when it ends up in HTML.
+function render_newsletter_merge_tags(string $text, ?string $firstName, bool $escape): string
+{
+    $name = trim((string) $firstName) !== '' ? trim((string) $firstName) : 'daar';
+    return str_replace('{{voornaam}}', $escape ? e($name) : $name, $text);
+}
+
 // Builds the full, per-recipient HTML e-mail: wraps the (shared) rendered
 // body in a table-based layout e-mail clients actually support, rewrites
 // every link through nieuwsbrief-klik.php for click tracking (keyed to
@@ -1662,25 +1728,45 @@ function newsletter_generate_token(): string
     return bin2hex(random_bytes(32));
 }
 
+// The contact form and event registration only ask for a full name, not a
+// first name separately — asking twice would be pure friction for an
+// optional newsletter checkbox. Takes the first whitespace-separated token
+// instead, same convention as most newsletter tools ("Jan De Smet" ->
+// "Jan"). Returns '' (not stored) when that's not possible.
+function extract_first_name(string $fullName): string
+{
+    $parts = preg_split('/\s+/u', trim($fullName), -1, PREG_SPLIT_NO_EMPTY);
+    return $parts[0] ?? '';
+}
+
 // Adds an address to the newsletter list, or re-subscribes one that had
 // previously opted out — but never silently resurrects it: a prior
 // unsubscribe always needs a fresh, explicit opt-in action to undo.
 // Shared by the contact form, event registration, and the admin's manual
 // "add one address" action; CSV import deliberately does NOT use this —
 // see newsletter-subscribers.php for why.
-function newsletter_subscribe(mysqli $mysqli, string $email, string $source): void
+// $firstName is optional (for the {{voornaam}}-merge-tag) — re-opting-in
+// refreshes it when a new, non-empty value comes in, but never blanks an
+// already-known name just because this particular call didn't collect one.
+function newsletter_subscribe(mysqli $mysqli, string $email, string $source, ?string $firstName = null): void
 {
     $email = trim($email);
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190) {
         return;
     }
+    $firstName = trim((string) $firstName);
+    if (mb_strlen($firstName) > 100) {
+        $firstName = mb_substr($firstName, 0, 100);
+    }
+    $firstNameParam = $firstName !== '' ? $firstName : null;
 
     $token = newsletter_generate_token();
     $stmt = $mysqli->prepare(
-        "INSERT INTO newsletter_subscribers (email, source, unsubscribe_token) VALUES (?, ?, ?)
-         ON DUPLICATE KEY UPDATE status = 'subscribed', unsubscribed_at = NULL"
+        "INSERT INTO newsletter_subscribers (email, first_name, source, unsubscribe_token) VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE status = 'subscribed', unsubscribed_at = NULL,
+             first_name = COALESCE(VALUES(first_name), first_name)"
     );
-    $stmt->bind_param('sss', $email, $source, $token);
+    $stmt->bind_param('ssss', $email, $firstNameParam, $source, $token);
     $stmt->execute();
     $stmt->close();
 }
