@@ -39,7 +39,7 @@ if (empty($mailConfig['host'])) {
 }
 
 $blocks = decode_blocks($newsletter['content']);
-$bodyHtml = render_newsletter_email_body($blocks);
+$bodyHtml = render_newsletter_email_body($blocks, $mysqli);
 $bodyHtml = render_newsletter_merge_tags($bodyHtml, null, true);
 // Prefixed so a test is never mistaken for the real send, and no
 // List-Unsubscribe header — there's no real subscriber/token behind a

@@ -293,8 +293,8 @@ database van de site zelf.
   toevoegen apart invulbaar; bij CSV-import optioneel als tweede kolom
   (`e-mail,voornaam`). Onbekend blijft gewoon onbekend, nooit verplicht.
 - **Opmaak**: dezelfde blokkenbouwer als bij een pagina, maar met een
-  kleinere toegestane set (tekst, foto, quote, lijst, knoppen) — geen
-  kalender, evenementen, kaart, foto+tekst of kolommen. E-mailclients
+  kleinere toegestane set (tekst, foto, quote, lijst, knoppen, evenementen-
+  overzicht) — geen kalender, kaart, foto+tekst of kolommen. E-mailclients
   (vooral Outlook desktop) ondersteunen geen CSS Grid/Flexbox of externe
   stylesheets, dus een nieuwsbrief wordt via een eigen, met inline-stijlen
   opgebouwde HTML-sjabloon gerenderd — niet dezelfde opmaak-code als de
@@ -303,6 +303,17 @@ database van de site zelf.
   plaats van de CSS-klasse van de website. Zowel het onderwerp als de
   inhoud ondersteunen `{{voornaam}}` als merge-tag, die bij verzending per
   abonnee wordt ingevuld (onbekende voornaam valt terug op "daar").
+- **Evenementenblok (compact)**: toont automatisch de eerstkomende,
+  gepubliceerde evenementen (datum, titel, locatie, aantal vrije plaatsen
+  of "Volzet") — een apart, beknopt blok naast het volledige evenementenblok
+  van de website, zonder inline inschrijfformulier: inschrijven gebeurt
+  altijd via de website, optioneel via een configureerbare knop
+  (tekst + link) onderaan het blok.
+- **Nieuwsbrief dupliceren**: elke nieuwsbrief — ook een al verzonden of
+  geannuleerde — kan via het kopieer-icoon in het overzicht gedupliceerd
+  worden naar een nieuw concept met dezelfde inhoud (onderwerp voorafgegaan
+  door "Kopie van"), zodat een periodieke nieuwsbrief niet elke keer van nul
+  opgebouwd moet worden.
 - **Versturen gebeurt in batches**, niet in één keer: op gedeelde hosting
   zonder cron zou één verzoek dat honderden losse SMTP-verbindingen opzet,
   simpelweg de PHP-uitvoeringslimiet overschrijden. Een klik op "Verstuur"

@@ -29,7 +29,7 @@ if (!$newsletter) {
 }
 
 $blocks = decode_blocks($newsletter['content']);
-$bodyHtml = render_newsletter_email_body($blocks);
+$bodyHtml = render_newsletter_email_body($blocks, $mysqli);
 $bodyHtml = render_newsletter_merge_tags($bodyHtml, null, true);
 $emailHtml = build_newsletter_email($bodyHtml, $siteName, $siteUrl, 'voorvertoning', 'voorvertoning');
 

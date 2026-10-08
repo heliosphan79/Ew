@@ -204,7 +204,7 @@ require __DIR__ . '/includes/header.php';
         </div>
 
         <h2>Inhoud</h2>
-        <?= render_newsletter_email_body($blocksForEditor) ?>
+        <?= render_newsletter_email_body($blocksForEditor, $mysqli) ?>
 
         <p>
             <a href="newsletters.php" class="button-secondary">Terug naar overzicht</a>
@@ -257,7 +257,7 @@ require __DIR__ . '/includes/header.php';
                     e-mailclients (tekst, foto, quote, lijst, knoppen). Geen
                     kalender, evenementen, kaart, foto+tekst of kolommen.
                 </p>
-                <div id="block-editor" class="block-editor" data-block-types="text,image,quote,list,buttons"></div>
+                <div id="block-editor" class="block-editor" data-block-types="text,image,quote,list,buttons,newsletter_events"></div>
                 <div id="block-toolbar" class="block-toolbar"></div>
                 <script type="application/json" id="initial-blocks"><?= json_encode($blocksForEditor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
                 <input type="hidden" id="blocks_json" name="blocks_json">
