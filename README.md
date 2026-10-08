@@ -320,6 +320,14 @@ database van de site zelf.
   verwijderen kan in elke status behalve "Bezig met verzenden" (eerst
   annuleren); bij een verzonden/geannuleerde nieuwsbrief verdwijnen dan ook
   de bijhorende open-/klikgegevens.
+- **Foutmeldingen van de mailserver zelf** zijn zichtbaar, niet enkel een
+  generieke "het is mislukt": elke verzending die de mailserver weigert
+  (verkeerde login, geweigerde afzender, ...) toont het échte antwoord van
+  de server (bv. "535 5.7.8 Authentication failed"), zowel live tijdens het
+  verzenden als nadien op de nieuwsbrief zelf — want elke verzending wordt
+  sowieso als verzonden geregistreerd zodra ze geprobeerd is, ook als de
+  mailserver ze weigerde (zie hierboven), dus zonder dit zou zo'n mislukking
+  onzichtbaar blijven. Inloggegevens verschijnen nooit in deze meldingen.
 - **Tracking**: elke verzonden mail bevat een onzichtbare 1×1-pixel (open-
   tracking) en elke link wordt herschreven via een eigen omleidings-URL
   (klik-tracking) — beide gekoppeld aan een uniek, willekeurig token per

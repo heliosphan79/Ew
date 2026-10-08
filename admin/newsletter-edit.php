@@ -168,6 +168,11 @@ require __DIR__ . '/includes/header.php';
             <?php if ($newsletter['status'] === 'sending'): ?>
                 <p>Bezig met verzenden: <span data-sent-count><?= (int) ($sendStats['sent'] ?? 0) ?></span> / <?= (int) ($sendStats['total'] ?? 0) ?></p>
                 <progress data-progress-bar max="<?= (int) ($sendStats['total'] ?? 1) ?>" value="<?= (int) ($sendStats['sent'] ?? 0) ?>"></progress>
+                <?php if (!empty($newsletter['last_send_error'])): ?>
+                    <p class="field-hint" data-last-smtp-error>Laatste foutmelding van de mailserver: <?= e($newsletter['last_send_error']) ?></p>
+                <?php else: ?>
+                    <p class="field-hint" data-last-smtp-error hidden></p>
+                <?php endif; ?>
                 <p class="form-errors" data-send-error hidden></p>
                 <div class="page-form-actions">
                     <button type="button" class="button-secondary" data-retry-send hidden>Opnieuw proberen</button>
@@ -181,9 +186,20 @@ require __DIR__ . '/includes/header.php';
             <?php elseif ($newsletter['status'] === 'cancelled'): ?>
                 <p>Verzending geannuleerd op <?= e(date('d/m/Y H:i', strtotime($newsletter['sent_at']))) ?> —
                 <?= (int) ($sendStats['sent'] ?? 0) ?> / <?= (int) ($sendStats['total'] ?? 0) ?> abonnees ontvingen de mail nog.</p>
+                <?php if (!empty($newsletter['last_send_error'])): ?>
+                    <p class="field-hint">Laatste foutmelding van de mailserver vóór het annuleren: <?= e($newsletter['last_send_error']) ?></p>
+                <?php endif; ?>
             <?php else: ?>
                 <p>Verzonden op <?= e(date('d/m/Y H:i', strtotime($newsletter['sent_at']))) ?> aan <?= (int) ($sendStats['total'] ?? 0) ?> abonnees.
                 Geopend door <?= (int) ($sendStats['opened'] ?? 0) ?>.</p>
+                <?php if (!empty($newsletter['last_send_error'])): ?>
+                    <p class="field-hint">
+                        Let op: de mailserver meldde een fout bij (een deel van) de laatste batch —
+                        "<?= e($newsletter['last_send_error']) ?>". Elke verzending wordt als verzonden
+                        geregistreerd zodra ze geprobeerd is, ook als de mailserver ze weigerde — dit
+                        is dus geen garantie dat alle abonnees de mail effectief ontvingen.
+                    </p>
+                <?php endif; ?>
             <?php endif; ?>
         </div>
 

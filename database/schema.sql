@@ -163,7 +163,13 @@ CREATE TABLE IF NOT EXISTS newsletters (
     status     ENUM('draft', 'sending', 'sent', 'cancelled') NOT NULL DEFAULT 'draft',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    sent_at    DATETIME DEFAULT NULL
+    sent_at    DATETIME DEFAULT NULL,
+    -- Meest recente SMTP-foutmelding tijdens het verzenden (bv. een
+    -- geweigerde login), ververst per batch — NULL zodra een batch zonder
+    -- fouten afrondt. Elke verzending wordt sowieso als sent_at gemarkeerd
+    -- ongeacht of de mailserver ze effectief aanvaardde, dus dit is de
+    -- enige plek waar een mislukte verzending zichtbaar wordt.
+    last_send_error VARCHAR(500) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Eén rij per (nieuwsbrief, abonnee) — aangemaakt in bulk zodra "Verstuur"
