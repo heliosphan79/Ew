@@ -139,6 +139,7 @@ require __DIR__ . '/includes/header.php';
                 <span>Ja, ik wil graag de nieuwsbrief ontvangen.</span>
             </label>
 
+            <?= render_privacy_note($mysqli) ?>
             <button type="submit">Versturen</button>
         </form>
     <?php endif; ?>

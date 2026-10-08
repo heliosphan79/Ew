@@ -452,13 +452,22 @@ placeholder stonden — vul zelf aan via het beheerpaneel zodra je ze hebt:
 
 ## Site-instellingen (footer + contactpagina)
 
-Via "Instellingen" in het beheerpaneel (`admin/settings.php`) vul je adres,
+Via "Instellingen" in het beheerpaneel (`admin/settings.php`) vul je adres
+(straat, postcode en gemeente als aparte velden — zie hieronder),
 telefoonnummer en e-mailadres in — die verschijnen dan automatisch in de
 voettekst van elke pagina (telefoon/e-mail als klikbare `tel:`/`mailto:`-
-links). Een leeg veld wordt gewoon niet getoond; er wordt nergens iets
-verzonnen. Opgeslagen in de eenrijige tabel `site_settings`
-(`database/migrations/006_site_settings.sql`).
+links, adres samengevoegd tot één regel). Een leeg veld wordt gewoon niet
+getoond; er wordt nergens iets verzonnen. Opgeslagen in de eenrijige tabel
+`site_settings` (`database/migrations/006_site_settings.sql`,
+uitgebreid in `019_schema_privacy_faq.sql`).
 - Beschikbare tijdsloten voor het kalenderblok (anders toont dat blok niets).
+
+Verderop op diezelfde pagina staat "Structuurdata (schema.org)": prijsklasse,
+werkgebied, LinkedIn-/Google Business-link, en Wendy als persoon (naam,
+functietitel, expertise, korte bio) — allemaal onzichtbaar op de site zelf,
+enkel voor zoekmachines/AI, en elk veld apart optioneel. Zie
+[SEO & vindbaarheid voor AI-zoekfuncties](#seo--vindbaarheid-voor-ai-zoekfuncties)
+hieronder voor hoe dit precies in het JSON-LD terechtkomt.
 
 Op diezelfde pagina staat ook "Inhoud contactpagina": dezelfde
 blokkenbouwer als bij een gewone pagina (tekst, foto, kaart, ...), die op
@@ -489,6 +498,26 @@ Verder staan er twee eigen SEO/AI-velden op die pagina:
   [SEO & vindbaarheid voor AI-zoekfuncties](#seo--vindbaarheid-voor-ai-zoekfuncties)
   hieronder. Leeg = die sectie verschijnt simpelweg niet
   (`database/migrations/010_ai_summary.sql`).
+
+## Privacypagina
+
+Geen aparte, hardcoded privacypagina (zoals contact.php) — het is een
+gewone pagina, aangemaakt zoals elke andere via "Pagina's → Nieuwe pagina",
+die je via het vinkje "Als privacypagina instellen" markeert
+(`database/migrations/019_schema_privacy_faq.sql`, kolom `is_privacy_page`
+op `pages`, zelfde exclusief-vlag-patroon als "Als homepagina instellen" —
+er kan er maar één tegelijk zijn). Die markering bepaalt automatisch:
+- De link "Privacybeleid" in de voettekst van elke pagina.
+- De korte vermelding "Door te verzenden ga je akkoord met ons
+  privacybeleid" net boven de verstuurknop van het contactformulier, een
+  evenementinschrijving en een afspraakboeking (`render_privacy_note()` in
+  `functions.php`, en de JS-tegenhanger in `calendar-block.js` voor de
+  kalenderboeking die geen paginaherlading gebruikt). Een informatieve
+  link, geen verplicht aan te vinken vakje.
+
+Is er nog geen enkele pagina als privacypagina gemarkeerd (of niet
+gepubliceerd), dan verschijnt er simpelweg nergens een link of vermelding —
+nooit een dode link naar een pagina die niet bestaat.
 
 ## Google Analytics
 
@@ -619,14 +648,36 @@ bovenop, nooit een voorwaarde om het bericht te bewaren.
   - `Organization`- en `WebPage`-schema.org-markup op elke pagina.
   - Zodra adres of telefoonnummer is ingevuld bij "Instellingen", wordt
     `Organization` automatisch `ProfessionalService` (een LocalBusiness-
-    subtype, passend voor een therapie-/coachingpraktijk) met die gegevens
-    erbij. Leeg = gewoon `Organization`, zoals voorheen — nooit verzonnen
-    bedrijfsgegevens.
+    subtype, passend voor een therapie-/coachingpraktijk), met een
+    gestructureerd `PostalAddress` (straat/postcode/gemeente apart, zie het
+    adresveld hieronder) in plaats van één platte tekstregel. Elk
+    afzonderlijk veld — adres, telefoon, prijsklasse, werkgebied,
+    LinkedIn-/Google Business-link — wordt enkel toegevoegd als het effectief
+    is ingevuld; leeg = gewoon weggelaten, nooit verzonnen bedrijfsgegevens.
+  - **Behandelaar als Person** (`founder`): naam, functietitel, expertise
+    (kommagescheiden lijst → `knowsAbout`) en een korte bio, ook volledig
+    optioneel — verschijnt pas zodra minstens de naam is ingevuld.
+  - **Adres**: straat, postcode en gemeente zijn drie aparte velden (i.p.v.
+    één vrij tekstveld) zodat het schema.org-adres een echte `PostalAddress`
+    kan zijn; de footer voegt ze automatisch weer samen tot één leesbare
+    regel (`format_address()` in `functions.php`). `addressCountry` staat
+    vast op `BE`.
+  - **Openingsuren**: bewust niet ingebouwd — de praktijk werkt uitsluitend
+    op afspraak via het bestaande kalenderblok, een vast urenschema zou dus
+    niet kloppen.
   - Elk aankomend, gepubliceerd evenement met een locatie krijgt eigen
     `Event`-schema.org-markup (naam, beschrijving, datum/tijd, locatie) op
     de pagina waar het evenementenblok staat. Zonder locatie (nog niet
     ingevuld) verschijnt er geen `Event`-markup voor dat evenement — Google
     vereist een locatie, en die wordt nooit verzonnen.
+  - **FAQ-blok** (`faq`, enkel beschikbaar in de paginablokkenbouwer, niet
+    in de nieuwsbrief): een lijst vraag/antwoord, ingevoerd als platte tekst
+    met een lichte conventie (elke vraag begint met "V: ", gevolgd door het
+    antwoord op de volgende regel(s), een lege regel scheidt de volgende
+    vraag — zelfde stijl als de "- "-conventie van het lijstblok). Rendert
+    als een uitklapbare lijst (`<details>`/`<summary>`, geen JavaScript
+    nodig) én genereert automatisch `FAQPage`-schema.org-markup, enkel op de
+    pagina waar het blok effectief staat.
 - Elk fotoblok (los, foto+tekst, of in een kolom) vereist een alt-tekst,
   zowel in de admin-UI als hard afgedwongen bij het opslaan — nooit een
   foto zonder beschrijving.

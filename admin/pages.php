@@ -4,7 +4,7 @@ require __DIR__ . '/../includes/bootstrap.php';
 require_login();
 
 $pages = $mysqli->query(
-    'SELECT id, slug, title, theme_variant, published, is_homepage, show_in_menu, nav_order, updated_at FROM pages ORDER BY nav_order ASC, title ASC'
+    'SELECT id, slug, title, theme_variant, published, is_homepage, is_privacy_page, show_in_menu, nav_order, updated_at FROM pages ORDER BY nav_order ASC, title ASC'
 )->fetch_all(MYSQLI_ASSOC);
 
 $pageTitle = "Pagina's";
@@ -34,7 +34,7 @@ require __DIR__ . '/includes/header.php';
             <th>Slug</th>
             <th>Variant</th>
             <th>Status</th>
-            <th>Homepagina</th>
+            <th>Rol</th>
             <th>In menu</th>
             <th>Laatst bewerkt</th>
             <th></th>
@@ -51,7 +51,18 @@ require __DIR__ . '/includes/header.php';
                 </td>
                 <td><?= e(THEME_VARIANTS[$page['theme_variant']] ?? $page['theme_variant']) ?></td>
                 <td><?= $page['published'] ? '<span class="badge badge-ok">Gepubliceerd</span>' : '<span class="badge badge-draft">Concept</span>' ?></td>
-                <td><?= $page['is_homepage'] ? 'Ja' : '' ?></td>
+                <td>
+                    <?php
+                    $pageRoles = [];
+                    if ($page['is_homepage']) {
+                        $pageRoles[] = 'Homepagina';
+                    }
+                    if ($page['is_privacy_page']) {
+                        $pageRoles[] = 'Privacypagina';
+                    }
+                    echo e(implode(', ', $pageRoles));
+                    ?>
+                </td>
                 <td><?= ($page['is_homepage'] || $page['show_in_menu']) ? 'Ja' : '<span class="badge badge-draft">Enkel via link</span>' ?></td>
                 <td><?= e(date('d/m/Y H:i', strtotime($page['updated_at']))) ?></td>
                 <td class="admin-table-actions">

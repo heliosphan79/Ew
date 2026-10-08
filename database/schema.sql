@@ -24,6 +24,10 @@ CREATE TABLE IF NOT EXISTS pages (
     theme_variant     VARCHAR(4) NOT NULL DEFAULT 'a',
     meta_description  VARCHAR(300) DEFAULT NULL,
     is_homepage       TINYINT(1) NOT NULL DEFAULT 0,
+    -- Markeert welke pagina het privacybeleid is, zelfde exclusieve-vlag-
+    -- patroon als is_homepage — footer.php en de formulieren linken ernaar
+    -- via get_privacy_page_url() in plaats van een aangenomen slug.
+    is_privacy_page   TINYINT(1) NOT NULL DEFAULT 0,
     published         TINYINT(1) NOT NULL DEFAULT 0,
     -- Whether this page gets a main-menu link. A published page with this
     -- off is still reachable at its own URL — just only via a direct link
@@ -93,9 +97,28 @@ CREATE TABLE IF NOT EXISTS event_registrations (
 -- tonen in de footer, nooit verzinnen.
 CREATE TABLE IF NOT EXISTS site_settings (
     id         TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
-    address    VARCHAR(255) DEFAULT NULL,
+    -- Opgesplitst (i.p.v. één vrij adresveld) zodat het schema.org-adres
+    -- een echte PostalAddress kan zijn — zie organization_schema() in
+    -- functions.php, dat ze ook weer samenvoegt tot één regel voor de
+    -- footer. addressCountry staat vast op 'BE' (Belgische praktijk).
+    street_address VARCHAR(150) DEFAULT NULL,
+    postal_code    VARCHAR(12)  DEFAULT NULL,
+    city           VARCHAR(100) DEFAULT NULL,
     phone      VARCHAR(50)  DEFAULT NULL,
     email      VARCHAR(190) DEFAULT NULL,
+    -- Overige schema.org-velden (ProfessionalService), allemaal optioneel —
+    -- leeg = weggelaten uit het JSON-LD, net als adres/telefoon al deden.
+    price_range         VARCHAR(50)  DEFAULT NULL,
+    area_served         VARCHAR(200) DEFAULT NULL,
+    linkedin_url        VARCHAR(300) DEFAULT NULL,
+    google_business_url VARCHAR(300) DEFAULT NULL,
+    -- Wendy als Person-entiteit (schema.org founder), ook enkel gebruikt
+    -- wanneer person_name is ingevuld. person_expertise is een kommagescheiden
+    -- lijst, omgezet naar het knowsAbout-array.
+    person_name       VARCHAR(150)  DEFAULT NULL,
+    person_job_title  VARCHAR(150)  DEFAULT NULL,
+    person_expertise  VARCHAR(500)  DEFAULT NULL,
+    person_bio        VARCHAR(1000) DEFAULT NULL,
     -- JSON-encoded array of content blocks shown above the (fixed) contact
     -- form on contact.php — same block system/renderer as pages.content.
     -- No DEFAULT here: MySQL rejects a default value on TEXT/BLOB columns

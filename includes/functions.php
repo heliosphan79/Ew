@@ -214,6 +214,7 @@ const BLOCK_TYPE_LABELS = [
     'map' => 'Kaart',
     'media_text' => 'Foto + tekst',
     'columns' => 'Kolommen',
+    'faq' => 'Veelgestelde vragen',
 ];
 
 // Block types allowed inside a columns-block's column. Deliberately a
@@ -362,6 +363,34 @@ function decode_blocks(?string $json): array
     }
     $decoded = json_decode($json, true);
     return is_array($decoded) ? $decoded : [];
+}
+
+// The privacy page is any regular page the admin marks as such
+// (is_privacy_page, same exclusive-flag pattern as is_homepage) rather
+// than an assumed slug — so the footer and every form's privacy note can
+// link to it without having to guess what the admin named/slugged it, and
+// simply show nothing until such a page actually exists and is published.
+function get_privacy_page_url(mysqli $mysqli): ?string
+{
+    static $url = false;
+    if ($url === false) {
+        $row = $mysqli->query('SELECT slug FROM pages WHERE is_privacy_page = 1 AND published = 1 LIMIT 1')->fetch_assoc();
+        $url = $row ? '/pagina/' . $row['slug'] : null;
+    }
+    return $url;
+}
+
+// Shared "door te verzenden ga je akkoord..." note shown just above the
+// submit button on every public form (contact, evenementinschrijving) —
+// an informational link, not a required checkbox, per the earlier design
+// decision. Empty string (nothing rendered) until a privacy page exists.
+function render_privacy_note(mysqli $mysqli): string
+{
+    $url = get_privacy_page_url($mysqli);
+    if ($url === null) {
+        return '';
+    }
+    return '<p class="form-privacy-note">Door te verzenden ga je akkoord met ons <a href="' . e($url) . '">privacybeleid</a>.</p>';
 }
 
 // Validates and cleans blocks submitted from the admin block editor.
@@ -551,6 +580,27 @@ function sanitize_blocks(array $rawBlocks): array
                 ];
                 break;
 
+            case 'faq':
+                $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
+                $items = [];
+                foreach ((array) ($raw['items'] ?? []) as $item) {
+                    if (count($items) >= 20) {
+                        break;
+                    }
+                    $question = mb_substr(trim((string) ($item['question'] ?? '')), 0, 200);
+                    $answer = mb_substr(trim((string) ($item['answer'] ?? '')), 0, 1000);
+                    if ($question === '' || $answer === '') {
+                        continue;
+                    }
+                    $items[] = ['question' => $question, 'answer' => $answer];
+                }
+                if (empty($items)) {
+                    $errors[] = "FAQ-blok #$count: vul minstens één vraag met antwoord in.";
+                    continue 2;
+                }
+                $clean[] = ['type' => 'faq', 'heading' => $heading, 'items' => $items, 'background' => sanitize_block_background($raw['background'] ?? '')];
+                break;
+
             case 'columns':
                 $columnCount = (int) ($raw['column_count'] ?? 2);
                 $columnCount = in_array($columnCount, [2, 3], true) ? $columnCount : 2;
@@ -695,6 +745,7 @@ function render_blocks(array $blocks, mysqli $mysqli): string
             'map' => render_map_block($block),
             'media_text' => render_media_text_block($block),
             'columns' => render_columns_block($block),
+            'faq' => render_faq_block($block),
             default => '',
         };
     }
@@ -981,6 +1032,61 @@ function render_columns_block(array $block): string
     return '<div class="block block-columns columns-' . $columnCount . $columnsClass . $bgClass . '" data-animate>' . $renderedColumns . '</div>';
 }
 
+// FAQPage structured data for a faq-block's questions — same inline-
+// emission pattern as event_schema()/render_events_block(): the <script>
+// tag lives right next to the content it describes instead of being
+// collected centrally, so it only ever appears on a page that actually
+// has this block.
+function faq_schema(array $items): ?array
+{
+    if (empty($items)) {
+        return null;
+    }
+    return [
+        '@context' => 'https://schema.org',
+        '@type' => 'FAQPage',
+        'mainEntity' => array_map(fn($item) => [
+            '@type' => 'Question',
+            'name' => $item['question'],
+            'acceptedAnswer' => ['@type' => 'Answer', 'text' => $item['answer']],
+        ], $items),
+    ];
+}
+
+// Each question renders as its own <details>/<summary> — same no-JS-
+// needed disclosure pattern already used for event registration
+// (render_events_block), rather than a custom accordion widget.
+function render_faq_block(array $block): string
+{
+    $heading = trim((string) ($block['heading'] ?? ''));
+    $items = (array) ($block['items'] ?? []);
+    if (empty($items)) {
+        return '';
+    }
+
+    $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
+    $out = '<div class="block block-faq' . $bgClass . '" data-animate>';
+    if ($heading !== '') {
+        $out .= '<h2>' . e($heading) . '</h2>';
+    }
+    $out .= '<div class="faq-list">';
+    foreach ($items as $item) {
+        $out .= '<details class="faq-item">';
+        $out .= '<summary>' . e($item['question']) . '</summary>';
+        $out .= '<div class="faq-answer">' . nl2br(e($item['answer'])) . '</div>';
+        $out .= '</details>';
+    }
+    $out .= '</div>';
+
+    $schema = faq_schema($items);
+    if ($schema !== null) {
+        $out .= '<script type="application/ld+json">' . json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>';
+    }
+
+    $out .= '</div>';
+    return $out;
+}
+
 // Available slots are shared, global data (calendar_slots), managed in
 // admin/calendar.php — not part of the block content. This just renders
 // the mount point; assets/js/calendar-block.js fetches availability
@@ -1123,6 +1229,7 @@ function render_events_block(array $block, mysqli $mysqli): string
             $out .= '<input type="checkbox" id="event-newsletter-' . $eventId . '" name="newsletter_optin" value="1">';
             $out .= '<span>Ja, ik wil graag de nieuwsbrief ontvangen.</span>';
             $out .= '</label>';
+            $out .= render_privacy_note($mysqli);
             $out .= '<button type="submit">Inschrijven</button>';
             $out .= '</form>';
             $out .= '</details>';
@@ -1353,9 +1460,17 @@ function get_site_settings(mysqli $mysqli): array
 {
     static $settings = null;
     if ($settings === null) {
-        $row = $mysqli->query('SELECT address, phone, email, content, contact_meta_title, contact_meta_description, ai_summary, contact_form_background, submission_retention_days FROM site_settings WHERE id = 1')->fetch_assoc();
+        $row = $mysqli->query(
+            'SELECT street_address, postal_code, city, phone, email, content, contact_meta_title,
+                contact_meta_description, ai_summary, contact_form_background, submission_retention_days,
+                price_range, area_served, linkedin_url, google_business_url,
+                person_name, person_job_title, person_expertise, person_bio
+             FROM site_settings WHERE id = 1'
+        )->fetch_assoc();
         $settings = [
-            'address' => $row['address'] ?? '',
+            'street_address' => $row['street_address'] ?? '',
+            'postal_code' => $row['postal_code'] ?? '',
+            'city' => $row['city'] ?? '',
             'phone' => $row['phone'] ?? '',
             'email' => $row['email'] ?? '',
             'content' => $row['content'] ?? '[]',
@@ -1364,9 +1479,31 @@ function get_site_settings(mysqli $mysqli): array
             'ai_summary' => $row['ai_summary'] ?? '',
             'contact_form_background' => $row['contact_form_background'] ?? 'none',
             'submission_retention_days' => $row['submission_retention_days'] !== null ? (int) $row['submission_retention_days'] : null,
+            'price_range' => $row['price_range'] ?? '',
+            'area_served' => $row['area_served'] ?? '',
+            'linkedin_url' => $row['linkedin_url'] ?? '',
+            'google_business_url' => $row['google_business_url'] ?? '',
+            'person_name' => $row['person_name'] ?? '',
+            'person_job_title' => $row['person_job_title'] ?? '',
+            'person_expertise' => $row['person_expertise'] ?? '',
+            'person_bio' => $row['person_bio'] ?? '',
         ];
     }
     return $settings;
+}
+
+// Composes the footer's single-line address display from the structured
+// street/postal_code/city fields — the one place that recombines them, so
+// organization_schema() and the footer never need two separate sources of
+// truth for the same address.
+function format_address(array $siteSettings): string
+{
+    $street = trim((string) ($siteSettings['street_address'] ?? ''));
+    $postalCode = trim((string) ($siteSettings['postal_code'] ?? ''));
+    $city = trim((string) ($siteSettings['city'] ?? ''));
+    $cityLine = trim($postalCode . ' ' . $city);
+
+    return implode(', ', array_filter([$street, $cityLine]));
 }
 
 // E-mailinstellingen (SMTP-server, afzender, reply-to, ontvanger voor
@@ -1457,25 +1594,41 @@ function cleanup_expired_submissions(mysqli $mysqli): void
 
 // Switches to ProfessionalService (a LocalBusiness subtype — fits a
 // therapy/coaching practice) once there's real address/phone data to back
-// it up, same "never verzin data" principle as the footer: only claim to
-// be a located, reachable business when Instellingen actually says so.
-// address stays a plain string (schema.org allows this, not just a
-// PostalAddress object) since it's a single free-text field, not
-// street/city/postcode split out separately.
+// it up, same "never verzin data" principle as the footer: every field
+// below is only included once Instellingen actually has a value for it —
+// nothing here is ever guessed or defaulted to a plausible-looking value.
 function organization_schema(string $siteName, string $siteUrl, array $siteSettings = []): array
 {
-    $address = trim((string) ($siteSettings['address'] ?? ''));
+    $street = trim((string) ($siteSettings['street_address'] ?? ''));
+    $postalCode = trim((string) ($siteSettings['postal_code'] ?? ''));
+    $city = trim((string) ($siteSettings['city'] ?? ''));
     $phone = trim((string) ($siteSettings['phone'] ?? ''));
     $email = trim((string) ($siteSettings['email'] ?? ''));
+    $priceRange = trim((string) ($siteSettings['price_range'] ?? ''));
+    $areaServed = trim((string) ($siteSettings['area_served'] ?? ''));
+    $linkedinUrl = trim((string) ($siteSettings['linkedin_url'] ?? ''));
+    $googleBusinessUrl = trim((string) ($siteSettings['google_business_url'] ?? ''));
+
+    $hasAddress = $street !== '' || $postalCode !== '' || $city !== '';
 
     $schema = [
         '@context' => 'https://schema.org',
-        '@type' => ($address !== '' || $phone !== '') ? 'ProfessionalService' : 'Organization',
+        '@type' => ($hasAddress || $phone !== '') ? 'ProfessionalService' : 'Organization',
         'name' => $siteName,
         'url' => $siteUrl,
     ];
 
-    if ($address !== '') {
+    if ($hasAddress) {
+        $address = ['@type' => 'PostalAddress', 'addressCountry' => 'BE'];
+        if ($street !== '') {
+            $address['streetAddress'] = $street;
+        }
+        if ($postalCode !== '') {
+            $address['postalCode'] = $postalCode;
+        }
+        if ($city !== '') {
+            $address['addressLocality'] = $city;
+        }
         $schema['address'] = $address;
     }
     if ($phone !== '') {
@@ -1484,8 +1637,56 @@ function organization_schema(string $siteName, string $siteUrl, array $siteSetti
     if ($email !== '') {
         $schema['email'] = $email;
     }
+    if ($priceRange !== '') {
+        $schema['priceRange'] = $priceRange;
+    }
+    if ($areaServed !== '') {
+        $schema['areaServed'] = $areaServed;
+    }
+
+    $sameAs = array_values(array_filter([$linkedinUrl, $googleBusinessUrl], fn($url) => $url !== '' && is_safe_url($url)));
+    if (!empty($sameAs)) {
+        $schema['sameAs'] = $sameAs;
+    }
+
+    $person = person_schema($siteSettings);
+    if ($person !== null) {
+        $schema['founder'] = $person;
+    }
 
     return $schema;
+}
+
+// Wendy (or whoever runs the practice) as a schema.org Person, linked to
+// the ProfessionalService via 'founder' — fits a one-person practice
+// better than 'employee'. Only built once a name is actually filled in;
+// job title/expertise/bio are each independently optional on top of that.
+function person_schema(array $siteSettings): ?array
+{
+    $name = trim((string) ($siteSettings['person_name'] ?? ''));
+    if ($name === '') {
+        return null;
+    }
+
+    $jobTitle = trim((string) ($siteSettings['person_job_title'] ?? ''));
+    $bio = trim((string) ($siteSettings['person_bio'] ?? ''));
+    $expertiseRaw = trim((string) ($siteSettings['person_expertise'] ?? ''));
+
+    $person = ['@type' => 'Person', 'name' => $name];
+    if ($jobTitle !== '') {
+        $person['jobTitle'] = $jobTitle;
+    }
+    if ($bio !== '') {
+        $person['description'] = $bio;
+    }
+    if ($expertiseRaw !== '') {
+        $knowsAbout = array_values(array_filter(array_map('trim', explode(',', $expertiseRaw)), fn($item) => $item !== ''));
+        if (!empty($knowsAbout)) {
+            $person['knowsAbout'] = $knowsAbout;
+        }
+    }
+
+    return $person;
 }
 
 function webpage_schema(string $name, ?string $description, ?string $url): array
