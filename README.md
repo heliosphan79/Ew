@@ -328,6 +328,15 @@ database van de site zelf.
   sowieso als verzonden geregistreerd zodra ze geprobeerd is, ook als de
   mailserver ze weigerde (zie hierboven), dus zonder dit zou zo'n mislukking
   onzichtbaar blijven. Inloggegevens verschijnen nooit in deze meldingen.
+- **List-Unsubscribe-headers**: elke nieuwsbrief krijgt een `List-Unsubscribe`-
+  en `List-Unsubscribe-Post`-header (RFC 8058), gekoppeld aan dezelfde
+  afmeldlink als in de mail zelf. Gmail/Outlook/Yahoo gebruiken dit zowel
+  als signaal dat het om een legitieme, correct beheerde verzendlijst gaat
+  (relevant voor of een mail in de inbox dan wel het "Promoties"-tabblad
+  terechtkomt) als om hun eigen "Uitschrijven"-knop naast de afzender te
+  tonen. Dit alleen garandeert geen inbox-plaatsing — dat hangt ook af van
+  SPF/DKIM/DMARC-configuratie op DNS-niveau en afzenderreputatie, buiten
+  wat deze applicatie kan afdwingen.
 - **Tracking**: elke verzonden mail bevat een onzichtbare 1×1-pixel (open-
   tracking) en elke link wordt herschreven via een eigen omleidings-URL
   (klik-tracking) — beide gekoppeld aan een uniek, willekeurig token per

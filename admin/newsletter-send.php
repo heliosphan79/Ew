@@ -84,8 +84,9 @@ foreach ($batch as $row) {
     $personalizedBody = render_newsletter_merge_tags($bodyHtml, $row['first_name'], true);
     $personalizedSubject = render_newsletter_merge_tags($newsletter['subject'], $row['first_name'], false);
     $emailHtml = build_newsletter_email($personalizedBody, $siteName, $siteUrl, $row['send_token'], $row['unsubscribe_token']);
+    $unsubscribeUrl = absolute_url($siteUrl, '/nieuwsbrief-afmelden.php?t=' . rawurlencode($row['unsubscribe_token']));
     $sendError = null;
-    $sent = smtp_send($mailConfig, $row['email'], $personalizedSubject, $emailHtml, $replyTo, 'text/html', $sendError);
+    $sent = smtp_send($mailConfig, $row['email'], $personalizedSubject, $emailHtml, $replyTo, 'text/html', $sendError, $unsubscribeUrl);
     if (!$sent) {
         $lastError = $sendError;
         $lastErrorEmail = $row['email'];

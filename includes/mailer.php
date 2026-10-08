@@ -80,7 +80,7 @@ function smtp_format_address(string $email, string $name = ''): string
 // failure, or the SMTP server's own response text) for callers that do
 // want to report it somewhere — currently only the nieuwsbrief batch-send,
 // whose admin UI shows it live so a stuck send is actually diagnosable.
-function smtp_send(array $smtpConfig, string $toEmail, string $subject, string $body, ?string $replyTo = null, string $contentType = 'text/plain', ?string &$error = null): bool
+function smtp_send(array $smtpConfig, string $toEmail, string $subject, string $body, ?string $replyTo = null, string $contentType = 'text/plain', ?string &$error = null, ?string $listUnsubscribeUrl = null): bool
 {
     $error = null;
     $host = (string) ($smtpConfig['host'] ?? '');
@@ -111,7 +111,7 @@ function smtp_send(array $smtpConfig, string $toEmail, string $subject, string $
     }
     stream_set_timeout($socket, 10);
 
-    $ok = smtp_send_sequence($socket, $host, $port, $encryption, $username, $password, $fromEmail, $fromName, $toEmail, $subject, $body, $replyTo, $contentType, $error);
+    $ok = smtp_send_sequence($socket, $host, $port, $encryption, $username, $password, $fromEmail, $fromName, $toEmail, $subject, $body, $replyTo, $contentType, $error, $listUnsubscribeUrl);
 
     fclose($socket);
     return $ok;
@@ -131,7 +131,8 @@ function smtp_send_sequence(
     string $body,
     ?string $replyTo,
     string $contentType = 'text/plain',
-    ?string &$error = null
+    ?string &$error = null,
+    ?string $listUnsubscribeUrl = null
 ): bool {
     $greeting = smtp_read_response($socket);
     if ($greeting['code'] !== 220) {
@@ -190,6 +191,17 @@ function smtp_send_sequence(
     ];
     if ($replyTo !== null && $replyTo !== '') {
         $headers[] = 'Reply-To: ' . $replyTo;
+    }
+    if ($listUnsubscribeUrl !== null && $listUnsubscribeUrl !== '') {
+        // Gmail/Yahoo/Outlook all use this pair as a strong signal that a
+        // message is a legitimate, properly-run bulk mailing rather than
+        // spam — it's also what puts their native "Unsubscribe" link next
+        // to the sender name. List-Unsubscribe-Post (RFC 8058) tells the
+        // client it can POST the literal body below to unsubscribe
+        // without opening anything; nieuwsbrief-afmelden.php already
+        // handles that with no login/confirmation step, so this is safe.
+        $headers[] = 'List-Unsubscribe: <' . $listUnsubscribeUrl . '>';
+        $headers[] = 'List-Unsubscribe-Post: List-Unsubscribe=One-Click';
     }
     $headers[] = 'Subject: ' . smtp_encode_header($subject);
     $headers[] = 'Date: ' . date('r');
