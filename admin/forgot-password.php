@@ -15,13 +15,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $username = trim((string) ($_POST['username'] ?? ''));
     $toEmail = trim((string) (get_site_settings($mysqli)['email'] ?? ''));
-    $smtpConfigured = !empty($config['smtp']['host']);
+    $mailConfig = resolve_mail_config($config, $mysqli);
+    $smtpConfigured = !empty($mailConfig['host']);
 
     if (!$smtpConfigured || $toEmail === '' || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
         // Not a secret either way — this is a site configuration gap, not
         // something tied to whether $username happens to be valid.
         $error = 'Wachtwoordherstel per e-mail is niet ingesteld voor deze site '
-            . '(geen e-mailadres onder Instellingen, of geen SMTP in config/config.php). '
+            . '(geen e-mailadres onder Instellingen, of geen e-mailserver ingesteld onder Instellingen → E-mail). '
             . 'Neem contact op met de beheerder van de website.';
     } else {
         $stmt = $mysqli->prepare('SELECT id FROM admin_users WHERE username = ?');
@@ -50,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 . "Heb je dit zelf niet aangevraagd? Dan kan je dit bericht gewoon negeren — "
                 . "er verandert niets aan het wachtwoord zonder op de link te klikken.";
 
-            smtp_send($config['smtp'], $toEmail, $subject, $body);
+            smtp_send($mailConfig, $toEmail, $subject, $body);
         }
 
         $sent = true;

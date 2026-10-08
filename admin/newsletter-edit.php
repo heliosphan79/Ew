@@ -172,6 +172,12 @@ require __DIR__ . '/includes/header.php';
 
         <label for="subject">Onderwerp</label>
         <input type="text" id="subject" name="subject" value="<?= e($form['subject']) ?>" required maxlength="200">
+        <p class="field-hint">
+            Gebruik <code>{{voornaam}}</code> om een abonnee bij de voornaam
+            aan te spreken, zowel hier als in de inhoud hieronder — bv. "Hallo
+            {{voornaam}}," wordt "Hallo Jan,". Onbekende voornaam valt terug
+            op "daar".
+        </p>
 
         <div class="page-form-columns">
             <div class="page-form-main">

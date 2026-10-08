@@ -77,7 +77,7 @@ try {
     $mysqli->commit();
 
     if (!empty($_POST['newsletter_optin'])) {
-        newsletter_subscribe($mysqli, $email, 'event_registration');
+        newsletter_subscribe($mysqli, $email, 'event_registration', extract_first_name($name));
     }
 } catch (mysqli_sql_exception $e) {
     $mysqli->rollback();

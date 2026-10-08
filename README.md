@@ -278,14 +278,20 @@ Een eigen nieuwsbriefmodule — geen koppeling met een extern platform
 (Mailchimp e.d.), alles via de bestaande SMTP-mailclient en de MySQL-
 database van de site zelf.
 
-- **Abonnees** (`database/migrations/014_newsletter.sql`) komen op drie
-  manieren binnen: het opt-in-vinkje ("Ja, ik wil graag de nieuwsbrief
-  ontvangen", standaard uitgevinkt) op het contactformulier en bij een
-  evenementinschrijving, of handmatig/via CSV-import door de beheerder op
-  "Nieuwsbrief → Abonnees beheren". Een CSV-import voegt enkel écht nieuwe
-  adressen toe — een eerder uitgeschreven adres wordt daarbij nooit
-  stilzwijgend heringeschreven; dat kan enkel via een expliciete,
-  individuele actie.
+- **Abonnees** (`database/migrations/014_newsletter.sql`,
+  `016_newsletter_first_name.sql`) komen op drie manieren binnen: het
+  opt-in-vinkje ("Ja, ik wil graag de nieuwsbrief ontvangen", standaard
+  uitgevinkt) op het contactformulier en bij een evenementinschrijving, of
+  handmatig/via CSV-import door de beheerder op "Nieuwsbrief → Abonnees
+  beheren". Een CSV-import voegt enkel écht nieuwe adressen toe — een eerder
+  uitgeschreven adres wordt daarbij nooit stilzwijgend heringeschreven; dat
+  kan enkel via een expliciete, individuele actie.
+- **Voornaam**: optioneel per abonnee, voor persoonlijke aanspreking via de
+  `{{voornaam}}`-merge-tag (zie hieronder). Via het contactformulier/
+  evenementinschrijving wordt dit automatisch afgeleid uit het bestaande
+  "Naam"-veld (eerste woord) — geen apart veld nodig. Bij handmatig
+  toevoegen apart invulbaar; bij CSV-import optioneel als tweede kolom
+  (`e-mail,voornaam`). Onbekend blijft gewoon onbekend, nooit verplicht.
 - **Opmaak**: dezelfde blokkenbouwer als bij een pagina, maar met een
   kleinere toegestane set (tekst, foto, quote, lijst, knoppen) — geen
   kalender, evenementen, kaart, foto+tekst of kolommen. E-mailclients
@@ -294,7 +300,9 @@ database van de site zelf.
   opgebouwde HTML-sjabloon gerenderd — niet dezelfde opmaak-code als de
   website zelf, die zou in een inbox gewoon niet weergeven. De "Achtergrond"-
   optie (Accentkleur/Zachte kaart) werkt ook hier, als inline-stijl in
-  plaats van de CSS-klasse van de website.
+  plaats van de CSS-klasse van de website. Zowel het onderwerp als de
+  inhoud ondersteunen `{{voornaam}}` als merge-tag, die bij verzending per
+  abonnee wordt ingevuld (onbekende voornaam valt terug op "daar").
 - **Versturen gebeurt in batches**, niet in één keer: op gedeelde hosting
   zonder cron zou één verzoek dat honderden losse SMTP-verbindingen opzet,
   simpelweg de PHP-uitvoeringslimiet overschrijden. Een klik op "Verstuur"
@@ -316,6 +324,28 @@ database van de site zelf.
   (enkel de blokkeneditor zelf), en een geautomatiseerd, periodiek
   verzendschema — een nieuwsbrief wordt altijd met een bewuste klik
   verstuurd.
+
+## E-mailinstellingen
+
+Alle mail die de site verstuurt — contactmeldingen, wachtwoordherstel voor
+het beheerpaneel, en de nieuwsbrief — gebruikt vanaf nu dezelfde SMTP-
+configuratie, instelbaar via "Instellingen → E-mail"
+(`admin/mail-settings.php`, tabel `mail_settings`,
+`database/migrations/015_mail_settings.sql`): server, poort, encryptie,
+gebruikersnaam, wachtwoord, afzenderadres/-naam, reply-to-adres en het
+ontvangeradres voor contactmeldingen.
+
+- **Terugval op `config/config.php`**: elk veld dat hier leeg is gelaten
+  valt per veld terug op de overeenkomstige waarde in de `smtp`-sectie van
+  `config/config.php` (de vroegere, enige manier). Zo blijft mail na deze
+  update meteen werken zonder iets te moeten doen — eenmaal deze pagina
+  opgeslagen is, heeft de database voorrang. Het wachtwoordveld toont nooit
+  de huidige waarde (leeg laten bij opslaan behoudt het bestaande
+  wachtwoord, uit de database of anders uit config.php).
+- **Reply-to**: optioneel, wordt gebruikt als `Reply-To`-header op elke
+  verzonden nieuwsbrief. Contactmeldingen gebruiken in plaats daarvan altijd
+  het e-mailadres van de inzender zelf (al zo, en nuttiger dan een vast
+  adres), dat gedrag blijft ongewijzigd.
 
 ## Homepage-content
 

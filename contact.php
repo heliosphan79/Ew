@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->close();
 
         if (!empty($_POST['newsletter_optin'])) {
-            newsletter_subscribe($mysqli, $old['email'], 'contact_form');
+            newsletter_subscribe($mysqli, $old['email'], 'contact_form', extract_first_name($old['name']));
         }
 
         send_contact_notification($config, $mysqli, $old);

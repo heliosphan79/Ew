@@ -44,6 +44,7 @@
                 'newsletter-edit.php' => 'newsletters',
                 'newsletter-subscribers.php' => 'newsletters',
                 'settings.php' => 'settings',
+                'mail-settings.php' => 'mail-settings',
             ];
             $adminNavActive = $adminNavGroups[$adminNavCurrent] ?? '';
             $adminNavLinks = [
@@ -54,6 +55,7 @@
                 'events' => ['events.php', 'users', 'Evenementen'],
                 'newsletters' => ['newsletters.php', 'mail', 'Nieuwsbrief'],
                 'settings' => ['settings.php', 'settings', 'Instellingen'],
+                'mail-settings' => ['mail-settings.php', 'mail', 'E-mail'],
             ];
             foreach ($adminNavLinks as $key => [$href, $icon, $label]):
             ?>
