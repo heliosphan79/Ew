@@ -24,12 +24,20 @@ function smtp_read_response($socket): array
     return ['code' => $code, 'text' => $full];
 }
 
-function smtp_command($socket, string $command, int $expectedCode): bool
+// $label overrides $command in the error text — used for the AUTH LOGIN
+// username/password lines, which are the base64-encoded credentials
+// themselves and must never appear in an error message that ends up in
+// the admin UI (or a log file).
+function smtp_command($socket, string $command, int $expectedCode, ?string &$error = null, ?string $label = null): bool
 {
     fwrite($socket, $command . "\r\n");
     $response = smtp_read_response($socket);
     if ($response['code'] !== $expectedCode) {
-        error_log('SMTP: expected ' . $expectedCode . ' after "' . $command . '", got: ' . trim($response['text']));
+        $received = trim($response['text']);
+        $error = $received === ''
+            ? 'Geen antwoord op "' . ($label ?? $command) . '" (time-out of verbinding verbroken).'
+            : 'Na "' . ($label ?? $command) . '" verwacht: ' . $expectedCode . ', ontvangen: ' . $received;
+        error_log('SMTP: ' . $error);
         return false;
     }
     return true;
@@ -67,12 +75,18 @@ function smtp_format_address(string $email, string $name = ''): string
 
 // Sends one plain-text e-mail. Returns false (and logs via error_log, never
 // to the visitor) on any failure — callers should treat mail delivery as
-// best-effort and never let it block saving the underlying data.
-function smtp_send(array $smtpConfig, string $toEmail, string $subject, string $body, ?string $replyTo = null, string $contentType = 'text/plain'): bool
+// best-effort and never let it block saving the underlying data. The
+// optional $error out-parameter carries the actual reason (a connection
+// failure, or the SMTP server's own response text) for callers that do
+// want to report it somewhere — currently only the nieuwsbrief batch-send,
+// whose admin UI shows it live so a stuck send is actually diagnosable.
+function smtp_send(array $smtpConfig, string $toEmail, string $subject, string $body, ?string $replyTo = null, string $contentType = 'text/plain', ?string &$error = null): bool
 {
+    $error = null;
     $host = (string) ($smtpConfig['host'] ?? '');
     $fromEmail = (string) ($smtpConfig['from_email'] ?? '');
     if ($host === '' || $fromEmail === '' || $toEmail === '') {
+        $error = 'Geen SMTP-server, afzenderadres of geldig ontvangeradres ingesteld.';
         return false;
     }
 
@@ -91,12 +105,13 @@ function smtp_send(array $smtpConfig, string $toEmail, string $subject, string $
         STREAM_CLIENT_CONNECT
     );
     if ($socket === false) {
+        $error = "Kon geen verbinding maken met $host:$port ($errstr, foutcode $errno).";
         error_log("SMTP: connect to $host:$port failed: $errstr ($errno)");
         return false;
     }
     stream_set_timeout($socket, 10);
 
-    $ok = smtp_send_sequence($socket, $host, $port, $encryption, $username, $password, $fromEmail, $fromName, $toEmail, $subject, $body, $replyTo, $contentType);
+    $ok = smtp_send_sequence($socket, $host, $port, $encryption, $username, $password, $fromEmail, $fromName, $toEmail, $subject, $body, $replyTo, $contentType, $error);
 
     fclose($socket);
     return $ok;
@@ -115,54 +130,57 @@ function smtp_send_sequence(
     string $subject,
     string $body,
     ?string $replyTo,
-    string $contentType = 'text/plain'
+    string $contentType = 'text/plain',
+    ?string &$error = null
 ): bool {
     $greeting = smtp_read_response($socket);
     if ($greeting['code'] !== 220) {
-        error_log('SMTP: no 220 greeting from server: ' . trim($greeting['text']));
+        $error = 'Geen 220-begroeting ontvangen: ' . trim($greeting['text']);
+        error_log('SMTP: ' . $error);
         return false;
     }
 
     $atPos = strpos($fromEmail, '@');
     $ehloDomain = $atPos !== false ? substr($fromEmail, $atPos + 1) : 'localhost';
 
-    if (!smtp_command($socket, 'EHLO ' . $ehloDomain, 250)) {
+    if (!smtp_command($socket, 'EHLO ' . $ehloDomain, 250, $error)) {
         return false;
     }
 
     if ($encryption === 'tls') {
-        if (!smtp_command($socket, 'STARTTLS', 220)) {
+        if (!smtp_command($socket, 'STARTTLS', 220, $error)) {
             return false;
         }
         if (!@stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-            error_log('SMTP: STARTTLS negotiation failed');
+            $error = 'STARTTLS-onderhandeling mislukt.';
+            error_log('SMTP: ' . $error);
             return false;
         }
         // Capabilities can change after STARTTLS (RFC 3207) — re-greet.
-        if (!smtp_command($socket, 'EHLO ' . $ehloDomain, 250)) {
+        if (!smtp_command($socket, 'EHLO ' . $ehloDomain, 250, $error)) {
             return false;
         }
     }
 
     if ($username !== '') {
-        if (!smtp_command($socket, 'AUTH LOGIN', 334)) {
+        if (!smtp_command($socket, 'AUTH LOGIN', 334, $error)) {
             return false;
         }
-        if (!smtp_command($socket, base64_encode($username), 334)) {
+        if (!smtp_command($socket, base64_encode($username), 334, $error, 'AUTH-gebruikersnaam')) {
             return false;
         }
-        if (!smtp_command($socket, base64_encode($password), 235)) {
+        if (!smtp_command($socket, base64_encode($password), 235, $error, 'AUTH-wachtwoord')) {
             return false;
         }
     }
 
-    if (!smtp_command($socket, 'MAIL FROM:<' . $fromEmail . '>', 250)) {
+    if (!smtp_command($socket, 'MAIL FROM:<' . $fromEmail . '>', 250, $error)) {
         return false;
     }
-    if (!smtp_command($socket, 'RCPT TO:<' . $toEmail . '>', 250)) {
+    if (!smtp_command($socket, 'RCPT TO:<' . $toEmail . '>', 250, $error)) {
         return false;
     }
-    if (!smtp_command($socket, 'DATA', 354)) {
+    if (!smtp_command($socket, 'DATA', 354, $error)) {
         return false;
     }
 
@@ -185,7 +203,8 @@ function smtp_send_sequence(
 
     $response = smtp_read_response($socket);
     if ($response['code'] !== 250) {
-        error_log('SMTP: message not accepted: ' . trim($response['text']));
+        $error = 'Bericht niet geaccepteerd: ' . trim($response['text']);
+        error_log('SMTP: ' . $error);
         return false;
     }
 

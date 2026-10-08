@@ -71,12 +71,25 @@ $stmt->close();
 // nothing at all, and the next poll would re-attempt the exact same
 // recipients and could die at the exact same point again, looking like a
 // permanent hang.
+// Keeps the most recent SMTP-level failure in this batch (an auth
+// rejection, a connection timeout, a relay refusal, ...) so the admin UI
+// can show the mail server's own response instead of a generic "it
+// failed" — the whole reason this project hand-rolls smtp_send() instead
+// of trusting a library's own (often swallowed) error handling.
+$lastError = null;
+$lastErrorEmail = null;
+
 $markSent = $mysqli->prepare('UPDATE newsletter_sends SET sent_at = NOW() WHERE id = ?');
 foreach ($batch as $row) {
     $personalizedBody = render_newsletter_merge_tags($bodyHtml, $row['first_name'], true);
     $personalizedSubject = render_newsletter_merge_tags($newsletter['subject'], $row['first_name'], false);
     $emailHtml = build_newsletter_email($personalizedBody, $siteName, $siteUrl, $row['send_token'], $row['unsubscribe_token']);
-    smtp_send($mailConfig, $row['email'], $personalizedSubject, $emailHtml, $replyTo, 'text/html');
+    $sendError = null;
+    $sent = smtp_send($mailConfig, $row['email'], $personalizedSubject, $emailHtml, $replyTo, 'text/html', $sendError);
+    if (!$sent) {
+        $lastError = $sendError;
+        $lastErrorEmail = $row['email'];
+    }
     // Sent (or at least attempted) either way: a single bad address must
     // never jam the whole batch into retrying it forever.
     $sentId = (int) $row['id'];
@@ -84,6 +97,21 @@ foreach ($batch as $row) {
     $markSent->execute();
 }
 $markSent->close();
+
+// Persisted on the newsletter itself — not just reported transiently in
+// this response — so the problem is still visible after sending finishes
+// (or the admin reloads mid-send), not only during the few seconds this
+// one batch's response is on screen. NULL (cleared) when this batch had
+// no failures, so it reflects the current state rather than a stale
+// failure from early in a long send that later started working (e.g.
+// after the admin fixed the mail settings and clicked "Opnieuw proberen").
+$persistedError = $lastError !== null
+    ? mb_substr('(' . $lastErrorEmail . ') ' . $lastError, 0, 500)
+    : null;
+$stmt = $mysqli->prepare('UPDATE newsletters SET last_send_error = ? WHERE id = ?');
+$stmt->bind_param('si', $persistedError, $newsletterId);
+$stmt->execute();
+$stmt->close();
 
 $stmt = $mysqli->prepare('SELECT COUNT(*) AS total FROM newsletter_sends WHERE newsletter_id = ? AND sent_at IS NULL');
 $stmt->bind_param('i', $newsletterId);
@@ -104,4 +132,11 @@ $stmt->execute();
 $sentCount = (int) $stmt->get_result()->fetch_assoc()['total'];
 $stmt->close();
 
-echo json_encode(['ok' => true, 'done' => $remaining === 0, 'sent' => $sentCount, 'remaining' => $remaining]);
+echo json_encode([
+    'ok' => true,
+    'done' => $remaining === 0,
+    'sent' => $sentCount,
+    'remaining' => $remaining,
+    'last_error' => $lastError,
+    'last_error_email' => $lastErrorEmail,
+]);

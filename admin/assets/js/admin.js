@@ -806,6 +806,7 @@
     var barEl = panel.querySelector('[data-progress-bar]');
     var errorEl = panel.querySelector('[data-send-error]');
     var retryBtn = panel.querySelector('[data-retry-send]');
+    var lastSmtpErrorEl = panel.querySelector('[data-last-smtp-error]');
 
     function showError(message) {
         if (errorEl) {
@@ -813,6 +814,22 @@
             errorEl.hidden = false;
         }
         if (retryBtn) retryBtn.hidden = false;
+    }
+
+    // The AJAX call itself can succeed (data.ok) while individual sends
+    // inside that batch still failed at the SMTP level — the request
+    // "worked", the mail server just rejected something. Shown separately
+    // from showError() above (which is for the AJAX call itself failing)
+    // so the admin can actually see what the mail server said instead of
+    // just watching the counter stall.
+    function showLastSmtpError(message, email) {
+        if (!lastSmtpErrorEl) return;
+        if (!message) {
+            lastSmtpErrorEl.hidden = true;
+            return;
+        }
+        lastSmtpErrorEl.textContent = 'Laatste foutmelding van de mailserver (' + email + '): ' + message;
+        lastSmtpErrorEl.hidden = false;
     }
 
     function sendBatch() {
@@ -841,6 +858,7 @@
                 }
                 if (countEl) countEl.textContent = data.sent;
                 if (barEl) barEl.value = data.sent;
+                showLastSmtpError(data.last_error, data.last_error_email);
                 if (data.done) {
                     window.location.reload();
                 } else {
