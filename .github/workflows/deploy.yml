@@ -1,0 +1,34 @@
+name: Deploy naar FTP (dcube-resource)
+
+# Enkel handmatig te starten via "Run workflow" in de Actions-tab — nooit
+# automatisch bij een push of merge, zodat er altijd een bewust moment is
+# vlak voor iets effectief live gaat.
+on:
+  workflow_dispatch:
+
+jobs:
+  ftp-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code uitchecken
+        uses: actions/checkout@v4
+
+      - name: Uploaden via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ftp.dcube-resource.be
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp
+          local-dir: ./
+          server-dir: ./
+          # Nooit bestanden op de server verwijderen die niet in git staan.
+          # config/config.php en uploads/* bestaan bewust alleen op de
+          # server (zie .gitignore) — clean-slate zou die net wissen.
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .github/**
+            database/**
+            README.md
