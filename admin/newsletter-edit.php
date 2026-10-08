@@ -204,12 +204,38 @@ require __DIR__ . '/includes/header.php';
         </div>
 
         <h2>Inhoud</h2>
-        <?= render_newsletter_email_body($blocksForEditor) ?>
+        <?= render_newsletter_email_body($blocksForEditor, $mysqli) ?>
 
-        <p><a href="newsletters.php" class="button-secondary">Terug naar overzicht</a></p>
+        <p>
+            <a href="newsletters.php" class="button-secondary">Terug naar overzicht</a>
+            <a href="newsletter-preview.php?id=<?= (int) $id ?>" class="button-secondary" target="_blank" rel="noopener"><?= admin_icon('eye') ?> Voorvertoning</a>
+        </p>
+
+        <form method="post" action="newsletter-test-send.php" class="page-form">
+            <?= csrf_field() ?>
+            <input type="hidden" name="id" value="<?= (int) $id ?>">
+            <label for="test_email">Testmail (opnieuw) versturen naar</label>
+            <input type="email" id="test_email" name="test_email" placeholder="jij@voorbeeld.be" required>
+            <div class="page-form-actions">
+                <button type="submit" class="button-secondary">Stuur testmail</button>
+            </div>
+        </form>
     </div>
 
 <?php else: ?>
+
+    <?php if ($id): ?>
+        <!-- Standalone, unnested <form>s for the sidebar's test-send and
+        "Verstuur" actions — their fields live inside the big save-draft
+        <form> below (for layout), associated here via each field's
+        form="..." attribute instead of actually nesting <form> inside
+        <form>, which HTML forbids: a browser silently closes the
+        OUTER form at the first nested </form> it meets, corrupting
+        everything after it in the same form. -->
+        <form id="newsletter-test-send-form" method="post" action="newsletter-test-send.php"></form>
+        <form id="newsletter-start-send-form" method="post" action="newsletter-edit.php?id=<?= (int) $id ?>"
+              onsubmit="return confirm('Nieuwsbrief versturen naar <?= $subscriberCount ?> abonnees? Dit kan niet ongedaan gemaakt worden.');"></form>
+    <?php endif; ?>
 
     <form method="post" action="newsletter-edit.php<?= $id ? '?id=' . (int) $id : '' ?>" class="page-form page-form-wide">
         <?= csrf_field() ?>
@@ -231,7 +257,7 @@ require __DIR__ . '/includes/header.php';
                     e-mailclients (tekst, foto, quote, lijst, knoppen). Geen
                     kalender, evenementen, kaart, foto+tekst of kolommen.
                 </p>
-                <div id="block-editor" class="block-editor" data-block-types="text,image,quote,list,buttons"></div>
+                <div id="block-editor" class="block-editor" data-block-types="text,image,quote,list,buttons,newsletter_events"></div>
                 <div id="block-toolbar" class="block-toolbar"></div>
                 <script type="application/json" id="initial-blocks"><?= json_encode($blocksForEditor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
                 <input type="hidden" id="blocks_json" name="blocks_json">
@@ -245,15 +271,24 @@ require __DIR__ . '/includes/header.php';
 
                 <?php if ($id): ?>
                     <hr>
+                    <p><a href="newsletter-preview.php?id=<?= (int) $id ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?> Voorvertoning</a></p>
+                    <p class="field-hint">Gebaseerd op de laatst opgeslagen versie.</p>
+
+                    <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>" form="newsletter-test-send-form">
+                    <input type="hidden" name="id" value="<?= (int) $id ?>" form="newsletter-test-send-form">
+                    <label for="test_email">Testmail naar</label>
+                    <input type="email" id="test_email" name="test_email" placeholder="jij@voorbeeld.be" required form="newsletter-test-send-form">
+                    <div class="page-form-actions">
+                        <button type="submit" form="newsletter-test-send-form" class="button-secondary">Stuur testmail</button>
+                    </div>
+
+                    <hr>
                     <p><?= $subscriberCount ?> abonnee<?= $subscriberCount === 1 ? '' : 's' ?> op dit moment.</p>
-                    <form method="post" action="newsletter-edit.php?id=<?= (int) $id ?>"
-                          onsubmit="return confirm('Nieuwsbrief versturen naar <?= $subscriberCount ?> abonnees? Dit kan niet ongedaan gemaakt worden.');">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="start_send" value="1">
-                        <button type="submit" class="button" <?= $subscriberCount === 0 ? 'disabled' : '' ?>><?= admin_icon('mail') ?> Verstuur</button>
-                    </form>
+                    <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>" form="newsletter-start-send-form">
+                    <input type="hidden" name="start_send" value="1" form="newsletter-start-send-form">
+                    <button type="submit" form="newsletter-start-send-form" class="button" <?= $subscriberCount === 0 ? 'disabled' : '' ?>><?= admin_icon('mail') ?> Verstuur</button>
                 <?php else: ?>
-                    <p class="field-hint">Sla eerst op als concept — versturen kan pas daarna.</p>
+                    <p class="field-hint">Sla eerst op als concept — versturen en testen kan pas daarna.</p>
                 <?php endif; ?>
             </div>
         </div>

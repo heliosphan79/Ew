@@ -60,6 +60,13 @@ require __DIR__ . '/includes/header.php';
                     <a class="icon-btn icon-btn-accent" href="newsletter-edit.php?id=<?= (int) $nl['id'] ?>" title="<?= $nl['status'] === 'draft' ? 'Bewerken' : 'Bekijken' ?>">
                         <?= admin_icon($nl['status'] === 'draft' ? 'edit' : 'eye') ?><span class="visually-hidden">Bekijken</span>
                     </a>
+                    <form method="post" action="newsletter-copy.php">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="id" value="<?= (int) $nl['id'] ?>">
+                        <button type="submit" class="icon-btn" title="Dupliceren als nieuw concept">
+                            <?= admin_icon('copy') ?><span class="visually-hidden">Dupliceren</span>
+                        </button>
+                    </form>
                     <?php if ($nl['status'] !== 'sending'): ?>
                     <?php
                         $deleteConfirm = $nl['status'] === 'draft'

@@ -262,6 +262,14 @@ inschrijving — geen individuele tijdsloten zoals bij een afspraak, gewoon
   (`<details>`/`<summary>`, geen JavaScript nodig) met een naam/e-mailveld.
   Is een evenement volzet, dan verschijnt een "Volzet"-label in plaats van
   het formulier.
+- **Aantal vrije plaatsen pas zichtbaar bij oplopende bezetting**
+  (`event_capacity_status()` in `functions.php`, gedeeld door het
+  website-evenementenblok en het compacte nieuwsbriefblok hieronder): bij
+  een vers gepubliceerd evenement toont "10 van de 10 plaatsen vrij" vooral
+  dat er nog niemand ingeschreven is — dus blijft dat cijfer verborgen
+  zolang 75% of meer van de plaatsen nog vrij is, en verschijnt het pas
+  (of "Volzet") vanaf dat punt. Dit geldt enkel voor de publieke weergave;
+  "Evenementen" in het beheerpaneel toont altijd de exacte aantallen.
 - **Race-condition-veilig**: de capaciteitscheck gebeurt binnen één
   databasetransactie met `SELECT ... FOR UPDATE` op het evenement, dus ook
   hier kunnen twee bezoekers nooit allebei de laatste plaats bemachtigen.
@@ -293,8 +301,8 @@ database van de site zelf.
   toevoegen apart invulbaar; bij CSV-import optioneel als tweede kolom
   (`e-mail,voornaam`). Onbekend blijft gewoon onbekend, nooit verplicht.
 - **Opmaak**: dezelfde blokkenbouwer als bij een pagina, maar met een
-  kleinere toegestane set (tekst, foto, quote, lijst, knoppen) — geen
-  kalender, evenementen, kaart, foto+tekst of kolommen. E-mailclients
+  kleinere toegestane set (tekst, foto, quote, lijst, knoppen, evenementen-
+  overzicht) — geen kalender, kaart, foto+tekst of kolommen. E-mailclients
   (vooral Outlook desktop) ondersteunen geen CSS Grid/Flexbox of externe
   stylesheets, dus een nieuwsbrief wordt via een eigen, met inline-stijlen
   opgebouwde HTML-sjabloon gerenderd — niet dezelfde opmaak-code als de
@@ -303,6 +311,18 @@ database van de site zelf.
   plaats van de CSS-klasse van de website. Zowel het onderwerp als de
   inhoud ondersteunen `{{voornaam}}` als merge-tag, die bij verzending per
   abonnee wordt ingevuld (onbekende voornaam valt terug op "daar").
+- **Evenementenblok (compact)**: toont automatisch de eerstkomende,
+  gepubliceerde evenementen (datum, titel, locatie, en — vanaf 75%
+  bezetting — het aantal vrije plaatsen of "Volzet", zie hierboven) — een
+  apart, beknopt blok naast het volledige evenementenblok van de website,
+  zonder inline inschrijfformulier: inschrijven gebeurt altijd via de
+  website, optioneel via een configureerbare knop (tekst + link) onderaan
+  het blok.
+- **Nieuwsbrief dupliceren**: elke nieuwsbrief — ook een al verzonden of
+  geannuleerde — kan via het kopieer-icoon in het overzicht gedupliceerd
+  worden naar een nieuw concept met dezelfde inhoud (onderwerp voorafgegaan
+  door "Kopie van"), zodat een periodieke nieuwsbrief niet elke keer van nul
+  opgebouwd moet worden.
 - **Versturen gebeurt in batches**, niet in één keer: op gedeelde hosting
   zonder cron zou één verzoek dat honderden losse SMTP-verbindingen opzet,
   simpelweg de PHP-uitvoeringslimiet overschrijden. Een klik op "Verstuur"
@@ -347,10 +367,16 @@ database van de site zelf.
   automatisch een voettekst met een one-click-afmeldlink (geen login, geen
   bevestigingsstap) — wettelijk vereist voor commerciële e-mail, dus
   hiervoor is bewust geen instelling om dit uit te zetten.
-- **Niet ingebouwd**: een live voorvertoning van de opmaak in e-mailclients
-  (enkel de blokkeneditor zelf), en een geautomatiseerd, periodiek
-  verzendschema — een nieuwsbrief wordt altijd met een bewuste klik
-  verstuurd.
+- **Voorvertoning en testmail**: op de bewerkpagina van een opgeslagen
+  concept staat een link "Voorvertoning" (`admin/newsletter-preview.php`,
+  rendert de echte, opgemaakte e-mail — inclusief merge-tags met "daar" als
+  fallback — in een iframe) en een veld om een testmail naar één
+  e-mailadres te sturen (`admin/newsletter-test-send.php`): onderwerp
+  voorafgegaan door `[Test]`, geen List-Unsubscribe-header (er is geen
+  echte abonnee/token achter een losse test). Werkt ook na het effectief
+  versturen, als extra controle.
+- **Niet ingebouwd**: een geautomatiseerd, periodiek verzendschema — een
+  nieuwsbrief wordt altijd met een bewuste klik verstuurd.
 
 ## E-mailinstellingen
 

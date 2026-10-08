@@ -61,20 +61,26 @@
         { type: 'events', label: 'Evenementen' },
         { type: 'map', label: 'Kaart' },
         { type: 'media_text', label: 'Foto + tekst' },
-        { type: 'columns', label: 'Kolommen' }
+        { type: 'columns', label: 'Kolommen' },
+        // Newsletter-only — see NEWSLETTER_BLOCK_TYPES in functions.php.
+        // Kept out of the page editor's unfiltered default below via
+        // newsletterOnly rather than needing an explicit data-block-types
+        // allowlist on every other #block-editor (page-edit.php,
+        // settings.php) that currently relies on "no attribute = all".
+        { type: 'newsletter_events', label: 'Evenementen (compact)', newsletterOnly: true }
     ];
     var LABELS = BLOCK_TYPES.reduce(function (acc, t) { acc[t.type] = t.label; return acc; }, {});
 
     // Restricts which block types the top-level "+ ..." toolbar offers —
     // used by the newsletter editor (data-block-types="text,image,quote,
-    // list,buttons" on #block-editor) to only offer types that actually
-    // render in an e-mail client, see NEWSLETTER_BLOCK_TYPES in
-    // functions.php. LABELS stays unfiltered so any already-saved content
-    // still displays its proper label regardless.
+    // list,buttons,newsletter_events" on #block-editor) to only offer types
+    // that actually render in an e-mail client, see NEWSLETTER_BLOCK_TYPES
+    // in functions.php. LABELS stays unfiltered so any already-saved
+    // content still displays its proper label regardless.
     var allowedTypesAttr = container.getAttribute('data-block-types');
     var TOOLBAR_BLOCK_TYPES = allowedTypesAttr
         ? BLOCK_TYPES.filter(function (t) { return allowedTypesAttr.split(',').indexOf(t.type) !== -1; })
-        : BLOCK_TYPES;
+        : BLOCK_TYPES.filter(function (t) { return !t.newsletterOnly; });
 
     // Block types a columns-block's column may contain — mirrors
     // COLUMN_CHILD_TYPES in includes/functions.php. No calendar/events/
@@ -91,6 +97,7 @@
             case 'buttons': return { type: 'buttons', buttonsText: '', align: 'left', background: 'none' };
             case 'calendar': return { type: 'calendar', heading: '', background: 'none' };
             case 'events': return { type: 'events', heading: '', background: 'none' };
+            case 'newsletter_events': return { type: 'newsletter_events', heading: '', link_label: '', link_url: '', background: 'none' };
             case 'map': return { type: 'map', address: '', heading: '', layout: 'box', background: 'none' };
             case 'media_text': return { type: 'media_text', url: '', alt: '', caption: '', heading: '', body: '', image_position: 'left', background: 'none' };
             case 'columns': return { type: 'columns', column_count: 2, columns: [[], []], column_backgrounds: ['none', 'none'], background: 'none' };
@@ -273,6 +280,14 @@
                 out = (
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
                     '<p class="field-hint">De evenementen zelf beheer je apart via "Evenementen" in het zijmenu — dit blok toont automatisch de eerstkomende, gepubliceerde evenementen.</p>'
+                );
+                break;
+            case 'newsletter_events':
+                out = (
+                    fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
+                    fieldRow('Knoptekst (optioneel)', '<input type="text" data-field="link_label" value="' + escapeAttr(block.link_label) + '" placeholder="Schrijf je in">') +
+                    fieldRow('Linkt naar (optioneel)', '<input type="text" data-field="link_url" value="' + escapeAttr(block.link_url) + '" placeholder="https://eigen-wijzer.be/evenementen">') +
+                    '<p class="field-hint">Toont automatisch de eerstkomende, gepubliceerde evenementen in compacte vorm (datum, titel, locatie, plaatsen vrij) — zonder inschrijfformulier. Inschrijven doen abonnees altijd via de website, bijvoorbeeld via de knop hierboven.</p>'
                 );
                 break;
             case 'map':

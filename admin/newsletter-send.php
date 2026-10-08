@@ -50,7 +50,7 @@ $replyTo = $mailConfig['reply_to'] !== '' ? $mailConfig['reply_to'] : null;
 const BATCH_SIZE = 20;
 
 $blocks = decode_blocks($newsletter['content']);
-$bodyHtml = render_newsletter_email_body($blocks);
+$bodyHtml = render_newsletter_email_body($blocks, $mysqli);
 
 $stmt = $mysqli->prepare(
     'SELECT ns.id, ns.send_token, sub.email, sub.unsubscribe_token, sub.first_name

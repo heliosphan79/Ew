@@ -71,6 +71,7 @@ const ADMIN_ICON_PATHS = [
     'chevron-right' => '<path d="M9 6l6 6-6 6"></path>',
     'mail' => '<path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path>',
     'upload' => '<path d="M12 16V4"></path><path d="M6 10l6-6 6 6"></path><path d="M4 20h16"></path>',
+    'copy' => '<rect x="8" y="8" width="13" height="13" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>',
 ];
 
 function admin_icon(string $name, string $class = ''): string
@@ -467,6 +468,32 @@ function sanitize_blocks(array $rawBlocks): array
                 // admin/events.php — this block only carries an optional heading.
                 $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
                 $clean[] = ['type' => 'events', 'heading' => $heading, 'background' => sanitize_block_background($raw['background'] ?? '')];
+                break;
+
+            case 'newsletter_events':
+                // Newsletter-only compact events overview (see
+                // NEWSLETTER_BLOCK_TYPES/render_newsletter_events_block) — a
+                // separate type from 'events' because registration always
+                // happens on the website, never inside the e-mail itself, so
+                // this carries an optional single button (label+url) instead
+                // of the page block's inline registration form.
+                $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
+                $linkLabel = mb_substr(trim((string) ($raw['link_label'] ?? '')), 0, 60);
+                $linkUrl = mb_substr(trim((string) ($raw['link_url'] ?? '')), 0, 500);
+                if ($linkUrl !== '' && !is_safe_url($linkUrl)) {
+                    $errors[] = "Evenementenblok #$count: ongeldige link.";
+                    continue 2;
+                }
+                if ($linkUrl === '') {
+                    $linkLabel = '';
+                }
+                $clean[] = [
+                    'type' => 'newsletter_events',
+                    'heading' => $heading,
+                    'link_label' => $linkLabel,
+                    'link_url' => $linkUrl,
+                    'background' => sanitize_block_background($raw['background'] ?? ''),
+                ];
                 break;
 
             case 'map':
@@ -987,6 +1014,26 @@ function is_safe_redirect_path(string $path): bool
     return str_starts_with($path, '/') && !str_starts_with($path, '//');
 }
 
+// Deliberately hides the exact spots-left count on public-facing displays
+// (website block, newsletter) while an event is still mostly empty — a
+// freshly published event showing "10 van de 10 plaatsen vrij" reads as
+// "nobody's signed up yet" rather than as useful information, so the
+// count only surfaces once it would actually create urgency (75% or more
+// taken) or the event is full. admin/events.php is unaffected: that's the
+// internal management view, where exact numbers are always needed
+// regardless of this public-facing threshold.
+function event_capacity_status(int $capacity, int $registered): ?string
+{
+    $spotsLeft = max(0, $capacity - $registered);
+    if ($spotsLeft <= 0) {
+        return 'Volzet';
+    }
+    if (($spotsLeft / $capacity) > 0.75) {
+        return null;
+    }
+    return $spotsLeft . ' van de ' . $capacity . ' plaatsen vrij';
+}
+
 // Events themselves live in the events table, managed via admin/events.php
 // — this renders the next few upcoming, published events with an inline
 // registration form (no JS needed: a <details> toggle + a plain POST back
@@ -1038,9 +1085,10 @@ function render_events_block(array $block, mysqli $mysqli): string
         $out .= '<p class="event-description">' . nl2br(e($event['description'])) . '</p>';
 
         if ($capacity !== null) {
-            $out .= $isFull
-                ? '<span class="event-badge badge-full">Volzet</span>'
-                : '<span class="event-badge badge-spots">' . $spotsLeft . ' van de ' . $capacity . ' plaatsen vrij</span>';
+            $status = event_capacity_status($capacity, $registered);
+            if ($status !== null) {
+                $out .= '<span class="event-badge ' . ($isFull ? 'badge-full' : 'badge-spots') . '">' . e($status) . '</span>';
+            }
         }
 
         if (!$isFull) {
@@ -1482,7 +1530,7 @@ function event_schema(array $event): ?array
 // UI/email renderer are willing to offer or display.
 // ---------------------------------------------------------------------
 
-const NEWSLETTER_BLOCK_TYPES = ['text', 'image', 'quote', 'list', 'buttons'];
+const NEWSLETTER_BLOCK_TYPES = ['text', 'image', 'quote', 'list', 'buttons', 'newsletter_events'];
 
 // Mirrors .block-bg-accent/.block-bg-surface from assets/css/style.css as
 // inline styles: e-mail clients ignore classes and CSS custom properties,
@@ -1653,12 +1701,78 @@ function render_newsletter_buttons_block(array $block): string
     return '<div style="' . $wrapperStyle . '">' . $inner . '</div>';
 }
 
+// Compact events overview for the newsletter — unlike render_events_block()
+// (used on pages), there is deliberately no inline registration form: a
+// subscriber always registers on the website itself, so this only lists
+// the upcoming events and, optionally, a single button linking there.
+function render_newsletter_events_block(array $block, mysqli $mysqli): string
+{
+    $stmt = $mysqli->prepare(
+        'SELECT e.*, (SELECT COUNT(*) FROM event_registrations r WHERE r.event_id = e.id) AS registered_count
+         FROM events e
+         WHERE e.published = 1 AND e.event_date >= CURDATE()
+         ORDER BY e.event_date ASC, e.event_time ASC
+         LIMIT 5'
+    );
+    $stmt->execute();
+    $events = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    if (empty($events)) {
+        return '';
+    }
+
+    $heading = trim((string) ($block['heading'] ?? ''));
+    $background = sanitize_block_background($block['background'] ?? '');
+    $bgStyle = render_newsletter_bg_style($background);
+    $wrapperStyle = 'margin:0 0 28px;' . ($bgStyle !== '' ? $bgStyle . 'padding:20px 24px;border-radius:4px;' : '');
+    $rowBorder = $background === 'accent' ? '1px solid rgba(247,243,238,0.25);' : '1px solid #ede0d8;';
+
+    $out = '<div style="' . $wrapperStyle . '">';
+    if ($heading !== '') {
+        $out .= '<h2 style="margin:0 0 14px;font-family:Georgia,\'Times New Roman\',serif;font-size:1.3rem;color:inherit;">' . e($heading) . '</h2>';
+    }
+
+    $count = count($events);
+    foreach ($events as $i => $event) {
+        $capacity = $event['capacity'] !== null ? (int) $event['capacity'] : null;
+        $registered = (int) $event['registered_count'];
+        $rowStyle = 'padding:12px 0;' . ($i < $count - 1 ? 'border-bottom:' . $rowBorder : '');
+
+        $out .= '<div style="' . $rowStyle . '">';
+        $out .= '<p style="margin:0 0 2px;font-size:0.85rem;font-weight:600;color:inherit;opacity:0.75;">' . e(format_event_date($event['event_date'], $event['event_time'])) . '</p>';
+        $out .= '<p style="margin:0 0 4px;font-size:1.05rem;font-weight:600;color:inherit;">' . e($event['title']) . '</p>';
+        if (!empty($event['location'])) {
+            $out .= '<p style="margin:0;font-size:0.9rem;color:inherit;opacity:0.85;">' . e($event['location']) . '</p>';
+        }
+        if ($capacity !== null) {
+            $status = event_capacity_status($capacity, $registered);
+            if ($status !== null) {
+                $out .= '<p style="margin:4px 0 0;font-size:0.8rem;color:inherit;opacity:0.75;">' . e($status) . '</p>';
+            }
+        }
+        $out .= '</div>';
+    }
+
+    $linkLabel = trim((string) ($block['link_label'] ?? ''));
+    $linkUrl = trim((string) ($block['link_url'] ?? ''));
+    if ($linkLabel !== '' && $linkUrl !== '' && is_safe_url($linkUrl)) {
+        $buttonStyle = $background === 'accent'
+            ? 'background:#f7f3ee;color:#6b7360;'
+            : 'background:#6b7360;color:#f7f3ee;';
+        $out .= '<p style="margin:16px 0 0;"><a href="' . e($linkUrl) . '" style="display:inline-block;padding:11px 22px;border-radius:4px;font-weight:600;text-decoration:none;' . $buttonStyle . '">' . e($linkLabel) . '</a></p>';
+    }
+
+    $out .= '</div>';
+    return $out;
+}
+
 // Renders only the inner content (no <html>/<body> shell) — mirrors how
 // render_blocks() stays shell-less and header.php/footer.php wrap a page;
 // here build_newsletter_email() does that wrapping instead, once per
 // recipient so it can also inject that recipient's tracking/unsubscribe
 // links.
-function render_newsletter_email_body(array $blocks): string
+function render_newsletter_email_body(array $blocks, mysqli $mysqli): string
 {
     $html = '';
     foreach ($blocks as $block) {
@@ -1671,6 +1785,7 @@ function render_newsletter_email_body(array $blocks): string
             'quote' => render_newsletter_quote_block($block),
             'list' => render_newsletter_list_block($block),
             'buttons' => render_newsletter_buttons_block($block),
+            'newsletter_events' => render_newsletter_events_block($block, $mysqli),
             default => '',
         };
     }
