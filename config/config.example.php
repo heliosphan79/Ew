@@ -74,4 +74,35 @@ return [
         // e-mail set under Instellingen in the beheerpaneel if left empty.
         'to_email' => '',
     ],
+
+    // DKIM-ondertekening van alle uitgaande mail (contactmeldingen,
+    // wachtwoordherstel, nieuwsbrief) — samen met SPF een van de signalen
+    // die mailproviders (Gmail, Outlook, ...) gebruiken om te bepalen of
+    // mail in de inbox dan wel het spam-/reclamefilter terechtkomt. Leeg
+    // laten schakelt DKIM gewoon uit (mail verstuurt nog steeds, enkel
+    // zonder deze extra handtekening) — in tegenstelling tot de
+    // e-mailinstellingen hierboven is dit bewust NIET via het beheerpaneel
+    // instelbaar: het is een langlevend cryptografisch geheim dat je één
+    // keer instelt, geen login/wachtwoord dat ooit via een webformulier
+    // hoeft te wijzigen.
+    //
+    // Eenmalig opzetten:
+    //   1. Genereer een sleutelpaar:
+    //        openssl genrsa -out dkim.key 2048
+    //        openssl rsa -in dkim.key -pubout -out dkim.pub
+    //   2. domain = je verzenddomein (moet overeenkomen met het
+    //      afzenderadres, bv. "eigen-wijzer.be").
+    //   3. selector = een zelfgekozen naam, bv. "ew1" — wordt deel van het
+    //      DNS-record hieronder.
+    //   4. private_key = de volledige inhoud van dkim.key (inclusief de
+    //      -----BEGIN/END----- regels).
+    //   5. Voeg een TXT-record toe in je DNS op
+    //      "<selector>._domainkey.<domain>" met als waarde:
+    //        v=DKIM1; k=rsa; p=<de inhoud van dkim.pub, zonder
+    //        -----BEGIN/END----- regels en zonder regeleinden>
+    'dkim' => [
+        'domain' => '',
+        'selector' => '',
+        'private_key' => '',
+    ],
 ];

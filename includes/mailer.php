@@ -7,6 +7,104 @@ declare(strict_types=1);
 // hosting-provider and webmail SMTP setups. Included only where mail is
 // actually sent (contact.php), not on every request.
 
+// DKIM (RFC 6376, rsa-sha256, relaxed/relaxed canonicalization) — signs
+// outgoing mail so receivers can cryptographically verify it really came
+// from this domain, which (together with SPF) is what most inbox
+// providers weigh when deciding "Primary" vs. "Promotions"/spam. Hand-
+// rolled like the rest of this file; openssl_sign() is the only
+// non-core-PHP dependency, already required for stream_socket_enable_crypto
+// above. Signing is best-effort: any failure here must never block a send,
+// since an unsigned mail still sends fine, just without this extra signal.
+
+// Relaxed body canonicalization: collapse runs of space/tab within a line
+// to a single space, strip trailing space/tab per line, strip trailing
+// blank lines (an entirely empty body canonicalizes to a single CRLF).
+function dkim_canonicalize_body(string $body): string
+{
+    $normalized = str_replace(["\r\n", "\r"], "\n", $body);
+    $lines = explode("\n", $normalized);
+    foreach ($lines as &$line) {
+        $line = rtrim(preg_replace('/[ \t]+/', ' ', $line), " \t");
+    }
+    unset($line);
+    while (count($lines) > 1 && end($lines) === '') {
+        array_pop($lines);
+    }
+    if (count($lines) === 1 && $lines[0] === '') {
+        return "\r\n";
+    }
+    return implode("\r\n", $lines) . "\r\n";
+}
+
+// Relaxed header canonicalization: lowercase the header name, collapse
+// internal whitespace runs in the value to a single space, trim the value.
+function dkim_canonicalize_header(string $name, string $value): string
+{
+    return strtolower(trim($name)) . ':' . preg_replace('/\s+/', ' ', trim($value));
+}
+
+// $headerLines: the exact "Name: value" lines as they'll be sent, in
+// order — only those named in $dkimConfig get signed (From/To/Subject/
+// Date/Message-ID), the rest (Reply-To, List-Unsubscribe, ...) are left
+// out of h= on purpose: selectively signing only the stable "core"
+// headers is normal DKIM practice and keeps the signature from breaking
+// over header variations between mail types. Returns the full
+// "DKIM-Signature: ..." line (no trailing CRLF) to prepend, or null if
+// DKIM isn't configured or signing fails for any reason.
+function dkim_sign(array $headerLines, string $body, array $dkimConfig): ?string
+{
+    $domain = trim((string) ($dkimConfig['domain'] ?? ''));
+    $selector = trim((string) ($dkimConfig['selector'] ?? ''));
+    $privateKeyPem = (string) ($dkimConfig['private_key'] ?? '');
+    if ($domain === '' || $selector === '' || trim($privateKeyPem) === '') {
+        return null;
+    }
+
+    $privateKey = openssl_pkey_get_private($privateKeyPem);
+    if ($privateKey === false) {
+        error_log('DKIM: kon privésleutel niet laden.');
+        return null;
+    }
+
+    $signableNames = ['from', 'to', 'subject', 'date', 'message-id'];
+    $canonHeaders = '';
+    $signedHeaderNames = [];
+    foreach ($headerLines as $line) {
+        $colon = strpos($line, ':');
+        if ($colon === false) {
+            continue;
+        }
+        $name = substr($line, 0, $colon);
+        if (!in_array(strtolower($name), $signableNames, true)) {
+            continue;
+        }
+        $canonHeaders .= dkim_canonicalize_header($name, substr($line, $colon + 1)) . "\r\n";
+        $signedHeaderNames[] = strtolower($name);
+    }
+    if (empty($signedHeaderNames)) {
+        return null;
+    }
+
+    $bodyHash = base64_encode(hash('sha256', dkim_canonicalize_body($body), true));
+
+    $signatureHeader = 'DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=' . $domain
+        . '; s=' . $selector . '; h=' . implode(':', $signedHeaderNames)
+        . '; bh=' . $bodyHash . '; b=';
+
+    // The DKIM-Signature header itself is part of what gets signed — with
+    // an empty b= tag and, unlike the other headers above, no trailing
+    // CRLF (RFC 6376 §3.7).
+    $dataToSign = $canonHeaders
+        . dkim_canonicalize_header('DKIM-Signature', substr($signatureHeader, strlen('DKIM-Signature:')));
+
+    if (!openssl_sign($dataToSign, $binarySignature, $privateKey, OPENSSL_ALGO_SHA256)) {
+        error_log('DKIM: ondertekenen mislukt.');
+        return null;
+    }
+
+    return $signatureHeader . base64_encode($binarySignature);
+}
+
 function smtp_read_response($socket): array
 {
     $full = '';
@@ -95,6 +193,11 @@ function smtp_send(array $smtpConfig, string $toEmail, string $subject, string $
     $username = (string) ($smtpConfig['username'] ?? '');
     $password = (string) ($smtpConfig['password'] ?? '');
     $fromName = (string) ($smtpConfig['from_name'] ?? '');
+    $dkimConfig = [
+        'domain' => $smtpConfig['dkim_domain'] ?? '',
+        'selector' => $smtpConfig['dkim_selector'] ?? '',
+        'private_key' => $smtpConfig['dkim_private_key'] ?? '',
+    ];
 
     $transport = $encryption === 'ssl' ? 'ssl://' : 'tcp://';
     $socket = @stream_socket_client(
@@ -111,7 +214,7 @@ function smtp_send(array $smtpConfig, string $toEmail, string $subject, string $
     }
     stream_set_timeout($socket, 10);
 
-    $ok = smtp_send_sequence($socket, $host, $port, $encryption, $username, $password, $fromEmail, $fromName, $toEmail, $subject, $body, $replyTo, $contentType, $error, $listUnsubscribeUrl);
+    $ok = smtp_send_sequence($socket, $host, $port, $encryption, $username, $password, $fromEmail, $fromName, $toEmail, $subject, $body, $replyTo, $contentType, $error, $listUnsubscribeUrl, $dkimConfig);
 
     fclose($socket);
     return $ok;
@@ -132,7 +235,8 @@ function smtp_send_sequence(
     ?string $replyTo,
     string $contentType = 'text/plain',
     ?string &$error = null,
-    ?string $listUnsubscribeUrl = null
+    ?string $listUnsubscribeUrl = null,
+    array $dkimConfig = []
 ): bool {
     $greeting = smtp_read_response($socket);
     if ($greeting['code'] !== 220) {
@@ -209,6 +313,11 @@ function smtp_send_sequence(
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-Type: ' . $contentType . '; charset=UTF-8';
     $headers[] = 'Content-Transfer-Encoding: 8bit';
+
+    $dkimHeader = dkim_sign($headers, $body, $dkimConfig);
+    if ($dkimHeader !== null) {
+        array_unshift($headers, $dkimHeader);
+    }
 
     $message = implode("\r\n", $headers) . "\r\n\r\n" . smtp_dot_stuff($body);
     fwrite($socket, $message . "\r\n.\r\n");

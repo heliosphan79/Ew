@@ -373,6 +373,19 @@ ontvangeradres voor contactmeldingen.
   verzonden nieuwsbrief. Contactmeldingen gebruiken in plaats daarvan altijd
   het e-mailadres van de inzender zelf (al zo, en nuttiger dan een vast
   adres), dat gedrag blijft ongewijzigd.
+- **DKIM** (digitale ondertekening van elke uitgaande mail, `includes/
+  mailer.php`'s `dkim_sign()`) is, in tegenstelling tot de rest van de
+  e-mailinstellingen, bewust **niet** via het beheerpaneel instelbaar —
+  het is een langlevend cryptografisch geheim, geen login die ooit via een
+  webformulier wijzigt. Configureren kan enkel via een `'dkim' => [...]`-
+  sectie in `config/config.php` (zie het commentaar in
+  `config/config.example.php` voor de volledige opzet: sleutelpaar
+  genereren, `domain`/`selector`/`private_key` invullen, en een
+  bijhorend `<selector>._domainkey.<domain>` TXT-record toevoegen in DNS).
+  Leeg laten (de standaard) verstuurt mail gewoon zonder DKIM-handtekening.
+  Samen met het bestaande SPF-record is dit een van de signalen die
+  Gmail/Outlook/Yahoo gebruiken om inbox- vs. Promoties-/spamplaatsing te
+  bepalen — geen garantie op zich, maar wel een directe verbetering.
 
 ## Homepage-content
 
