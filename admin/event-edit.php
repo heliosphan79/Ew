@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_verify();
 
     $form['title'] = trim((string) ($_POST['title'] ?? ''));
-    $form['description'] = trim((string) ($_POST['description'] ?? ''));
+    $form['description'] = trim(normalize_newlines((string) ($_POST['description'] ?? '')));
     $form['event_date'] = (string) ($_POST['event_date'] ?? '');
     $form['event_time'] = trim((string) ($_POST['event_time'] ?? ''));
     $form['location'] = trim((string) ($_POST['location'] ?? ''));

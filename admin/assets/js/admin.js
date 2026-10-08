@@ -62,6 +62,7 @@
         { type: 'map', label: 'Kaart' },
         { type: 'media_text', label: 'Foto + tekst' },
         { type: 'columns', label: 'Kolommen' },
+        { type: 'faq', label: 'Veelgestelde vragen' },
         // Newsletter-only — see NEWSLETTER_BLOCK_TYPES in functions.php.
         // Kept out of the page editor's unfiltered default below via
         // newsletterOnly rather than needing an explicit data-block-types
@@ -101,6 +102,7 @@
             case 'map': return { type: 'map', address: '', heading: '', layout: 'box', background: 'none' };
             case 'media_text': return { type: 'media_text', url: '', alt: '', caption: '', heading: '', body: '', image_position: 'left', background: 'none' };
             case 'columns': return { type: 'columns', column_count: 2, columns: [[], []], column_backgrounds: ['none', 'none'], background: 'none' };
+            case 'faq': return { type: 'faq', heading: '', itemsText: '', background: 'none' };
             default: return null;
         }
     }
@@ -126,6 +128,10 @@
                 background: b.background || 'none'
             };
         }
+        if (b.type === 'faq') {
+            var faqLines = (b.items || []).map(function (item) { return 'V: ' + (item.question || '') + '\n' + (item.answer || ''); });
+            return { type: 'faq', heading: b.heading || '', itemsText: faqLines.join('\n\n'), background: b.background || 'none' };
+        }
         return Object.assign({}, b);
     }
 
@@ -149,6 +155,18 @@
                 column_backgrounds: (b.column_backgrounds || []).slice(),
                 background: b.background || 'none'
             };
+        }
+        if (b.type === 'faq') {
+            var faqChunks = (b.itemsText || '').split(/\n\s*\n/);
+            var faqItems = faqChunks.map(function (chunk) {
+                var lines = chunk.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+                if (!lines.length) return null;
+                var question = lines[0].replace(/^V:\s*/, '').trim();
+                var answer = lines.slice(1).join('\n').trim();
+                if (!question || !answer) return null;
+                return { question: question, answer: answer };
+            }).filter(Boolean).slice(0, 20);
+            return { type: 'faq', heading: b.heading || '', items: faqItems, background: b.background || 'none' };
         }
         return Object.assign({}, b);
     }
@@ -327,6 +345,16 @@
                     fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
                     fieldRow('Tekst', richTextToolbar('body', true) + '<textarea data-field="body" rows="4">' + escapeHtml(block.body) + '</textarea>') +
                     '<p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url), of een regel die begint met "- " voor een opsomming — of gebruik de knoppen hierboven.</p>'
+                );
+                break;
+            case 'faq':
+                out = (
+                    fieldRow('Titel (optioneel)', '<input type="text" data-field="heading" value="' + escapeAttr(block.heading) + '">') +
+                    fieldRow(
+                        'Vragen en antwoorden',
+                        '<textarea data-field="itemsText" rows="8" placeholder="V: Hoe lang duurt een sessie?\nEen sessie duurt gemiddeld 50 minuten.\n\nV: Is een verwijzing nodig?\nNee, je kan rechtstreeks een afspraak maken.">' + escapeHtml(block.itemsText) + '</textarea>'
+                    ) +
+                    '<p class="field-hint">Elke vraag begint op een eigen regel met "V: ", gevolgd door het antwoord op de volgende regel(s). Een lege regel scheidt de volgende vraag. Verschijnt ook als FAQ-structuurdata voor zoekmachines.</p>'
                 );
                 break;
             default:

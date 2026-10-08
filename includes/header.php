@@ -42,7 +42,7 @@
     <meta name="recaptcha-site-key" content="<?= e($recaptchaSiteKey) ?>">
     <?php endif; ?>
 </head>
-<body data-theme="<?= e(normalize_theme_variant($themeVariant ?? null)) ?>">
+<body data-theme="<?= e(normalize_theme_variant($themeVariant ?? null)) ?>" data-privacy-url="<?= e(get_privacy_page_url($mysqli) ?? '') ?>">
 <header class="site-header">
     <div class="wrap site-header-row">
         <a class="site-logo" href="/" aria-label="<?= e($siteName) ?> — naar home">

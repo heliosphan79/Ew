@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $old['name'] = trim((string) ($_POST['name'] ?? ''));
     $old['email'] = trim((string) ($_POST['email'] ?? ''));
-    $old['message'] = trim((string) ($_POST['message'] ?? ''));
+    $old['message'] = trim(normalize_newlines((string) ($_POST['message'] ?? '')));
 
     if ($old['name'] === '' || mb_strlen($old['name']) > 150) {
         $errors[] = 'Vul een geldige naam in.';
@@ -139,6 +139,7 @@ require __DIR__ . '/includes/header.php';
                 <span>Ja, ik wil graag de nieuwsbrief ontvangen.</span>
             </label>
 
+            <?= render_privacy_note($mysqli) ?>
             <button type="submit">Versturen</button>
         </form>
     <?php endif; ?>

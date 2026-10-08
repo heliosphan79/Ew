@@ -26,6 +26,7 @@ $form = [
     'meta_description' => $page['meta_description'] ?? '',
     'published' => $page['published'] ?? 0,
     'is_homepage' => $page['is_homepage'] ?? 0,
+    'is_privacy_page' => $page['is_privacy_page'] ?? 0,
     'show_in_menu' => $page['show_in_menu'] ?? 1,
     'theme_variant' => normalize_theme_variant($page['theme_variant'] ?? null),
 ];
@@ -40,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['meta_description'] = trim((string) ($_POST['meta_description'] ?? ''));
     $form['published'] = isset($_POST['published']) ? 1 : 0;
     $form['is_homepage'] = isset($_POST['is_homepage']) ? 1 : 0;
+    $form['is_privacy_page'] = isset($_POST['is_privacy_page']) ? 1 : 0;
     $form['show_in_menu'] = isset($_POST['show_in_menu']) ? 1 : 0;
     $form['theme_variant'] = normalize_theme_variant($_POST['theme_variant'] ?? null);
 
@@ -82,15 +84,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($form['is_homepage']) {
                 $mysqli->query('UPDATE pages SET is_homepage = 0');
             }
+            if ($form['is_privacy_page']) {
+                $mysqli->query('UPDATE pages SET is_privacy_page = 0');
+            }
 
             if ($id) {
                 // nav_order isn't touched here — it's managed exclusively via
                 // the drag-and-drop reorder list in pages.php.
                 $stmt = $mysqli->prepare(
-                    'UPDATE pages SET title = ?, slug = ?, content = ?, theme_variant = ?, meta_description = ?, published = ?, is_homepage = ?, show_in_menu = ? WHERE id = ?'
+                    'UPDATE pages SET title = ?, slug = ?, content = ?, theme_variant = ?, meta_description = ?, published = ?, is_homepage = ?, is_privacy_page = ?, show_in_menu = ? WHERE id = ?'
                 );
                 $stmt->bind_param(
-                    'sssssiiii',
+                    'sssssiiiii',
                     $form['title'],
                     $form['slug'],
                     $contentJson,
@@ -98,6 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $form['meta_description'],
                     $form['published'],
                     $form['is_homepage'],
+                    $form['is_privacy_page'],
                     $form['show_in_menu'],
                     $id
                 );
@@ -109,10 +115,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $nextOrder = (int) ($mysqli->query('SELECT COALESCE(MAX(nav_order), -1) + 1 AS next FROM pages')->fetch_assoc()['next']);
 
                 $stmt = $mysqli->prepare(
-                    'INSERT INTO pages (title, slug, content, theme_variant, meta_description, published, is_homepage, show_in_menu, nav_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                    'INSERT INTO pages (title, slug, content, theme_variant, meta_description, published, is_homepage, is_privacy_page, show_in_menu, nav_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 );
                 $stmt->bind_param(
-                    'sssssiiii',
+                    'sssssiiiii',
                     $form['title'],
                     $form['slug'],
                     $contentJson,
@@ -120,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $form['meta_description'],
                     $form['published'],
                     $form['is_homepage'],
+                    $form['is_privacy_page'],
                     $form['show_in_menu'],
                     $nextOrder
                 );
@@ -194,10 +201,19 @@ require __DIR__ . '/includes/header.php';
                     Als homepagina instellen
                 </label>
                 <label class="checkbox-label">
+                    <input type="checkbox" name="is_privacy_page" <?= $form['is_privacy_page'] ? 'checked' : '' ?>>
+                    Als privacypagina instellen
+                </label>
+                <label class="checkbox-label">
                     <input type="checkbox" name="show_in_menu" <?= $form['show_in_menu'] ? 'checked' : '' ?>>
                     Tonen in hoofdmenu
                 </label>
             </div>
+            <p class="field-hint">
+                "Als privacypagina instellen" bepaalt naar welke pagina de footer en
+                de privacyvermelding bij elk formulier linken — er kan maar één
+                privacypagina tegelijk zijn, net als bij de homepagina.
+            </p>
             <p class="field-hint">
                 Staat "Tonen in hoofdmenu" uit, dan blijft de pagina bereikbaar via
                 haar eigen link (bv. vanuit een knoppenblok) maar krijgt ze geen

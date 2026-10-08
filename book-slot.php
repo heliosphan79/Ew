@@ -30,7 +30,7 @@ $date = (string) ($_POST['date'] ?? '');
 $time = (string) ($_POST['time'] ?? '');
 $name = trim((string) ($_POST['name'] ?? ''));
 $email = trim((string) ($_POST['email'] ?? ''));
-$message = trim((string) ($_POST['message'] ?? ''));
+$message = trim(normalize_newlines((string) ($_POST['message'] ?? '')));
 
 if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !checkdate((int) substr($date, 5, 2), (int) substr($date, 8, 2), (int) substr($date, 0, 4))) {
     booking_fail('Ongeldige datum.');

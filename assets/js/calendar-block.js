@@ -84,6 +84,12 @@
             );
         }
 
+        function privacyNote() {
+            var url = document.body.getAttribute('data-privacy-url') || '';
+            if (!url) return '';
+            return '<p class="form-privacy-note">Door te verzenden ga je akkoord met ons <a href="' + url + '">privacybeleid</a>.</p>';
+        }
+
         function bookingForm() {
             if (!selectedDate || !selectedTime) return '';
             return (
@@ -98,6 +104,7 @@
                     '<input type="email" id="cal-email" name="email" required>' +
                     '<label for="cal-message">Bericht (optioneel)</label>' +
                     '<textarea id="cal-message" name="message" rows="3"></textarea>' +
+                    privacyNote() +
                     '<button type="submit">Bevestig afspraak</button>' +
                     '<p class="cal-form-status" data-cal-status></p>' +
                 '</form>'

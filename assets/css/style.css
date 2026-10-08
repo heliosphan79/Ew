@@ -972,6 +972,34 @@ html.js .block-events[data-animate].is-visible .event-card:hover { transform: tr
 }
 .event-register button:hover { background: var(--btn-primary-hover); }
 
+/* Shown just above the submit button on contact/event/calendar forms —
+   an informational link, not a required checkbox (see render_privacy_note()
+   in functions.php and its JS twin in calendar-block.js). */
+.form-privacy-note { font-size: 0.82rem; color: var(--text-muted); margin: 0.75rem 0 0; }
+.form-privacy-note a { color: inherit; text-decoration: underline; }
+
+/* ---------- FAQ block ---------- */
+
+.faq-list { display: flex; flex-direction: column; gap: 0.75rem; max-width: 720px; }
+
+.faq-item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 0.2rem 1.25rem;
+}
+.faq-item summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    cursor: pointer; list-style: none; font-weight: 600; font-size: 1rem; color: var(--text);
+    padding: 1rem 0;
+}
+.faq-item summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+    content: "›"; flex-shrink: 0; font-size: 1.2rem; line-height: 1; color: var(--accent);
+    transition: transform var(--dur) var(--ease);
+}
+.faq-item[open] summary::after { transform: rotate(90deg); }
+.faq-answer { color: var(--text-muted); padding: 0 0 1.1rem; line-height: 1.55; }
+
 /* ---------- Scroll-triggered reveal (progressive enhancement) ----------
    The "js" class is added by an inline script in <head> before paint, so
    content stays fully visible if JavaScript is unavailable. Motion is a
