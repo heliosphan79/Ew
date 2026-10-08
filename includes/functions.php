@@ -1356,6 +1356,14 @@ function resolve_mail_config(array $config, mysqli $mysqli): array
     $encryption = $db['encryption'] !== '' ? $db['encryption'] : (string) ($legacy['encryption'] ?? '');
     $merged['encryption'] = $encryption !== '' ? $encryption : 'tls';
 
+    // DKIM is config.php-only, no database/admin-UI equivalent — it's a
+    // long-lived cryptographic secret set up once, not something to edit
+    // through a web form (same reasoning as the GA service-account key).
+    $dkim = $config['dkim'] ?? [];
+    $merged['dkim_domain'] = (string) ($dkim['domain'] ?? '');
+    $merged['dkim_selector'] = (string) ($dkim['selector'] ?? '');
+    $merged['dkim_private_key'] = (string) ($dkim['private_key'] ?? '');
+
     return $merged;
 }
 

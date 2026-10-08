@@ -328,6 +328,15 @@ database van de site zelf.
   sowieso als verzonden geregistreerd zodra ze geprobeerd is, ook als de
   mailserver ze weigerde (zie hierboven), dus zonder dit zou zo'n mislukking
   onzichtbaar blijven. Inloggegevens verschijnen nooit in deze meldingen.
+- **List-Unsubscribe-headers**: elke nieuwsbrief krijgt een `List-Unsubscribe`-
+  en `List-Unsubscribe-Post`-header (RFC 8058), gekoppeld aan dezelfde
+  afmeldlink als in de mail zelf. Gmail/Outlook/Yahoo gebruiken dit zowel
+  als signaal dat het om een legitieme, correct beheerde verzendlijst gaat
+  (relevant voor of een mail in de inbox dan wel het "Promoties"-tabblad
+  terechtkomt) als om hun eigen "Uitschrijven"-knop naast de afzender te
+  tonen. Dit alleen garandeert geen inbox-plaatsing — dat hangt ook af van
+  SPF/DKIM/DMARC-configuratie op DNS-niveau en afzenderreputatie, buiten
+  wat deze applicatie kan afdwingen.
 - **Tracking**: elke verzonden mail bevat een onzichtbare 1×1-pixel (open-
   tracking) en elke link wordt herschreven via een eigen omleidings-URL
   (klik-tracking) — beide gekoppeld aan een uniek, willekeurig token per
@@ -364,6 +373,19 @@ ontvangeradres voor contactmeldingen.
   verzonden nieuwsbrief. Contactmeldingen gebruiken in plaats daarvan altijd
   het e-mailadres van de inzender zelf (al zo, en nuttiger dan een vast
   adres), dat gedrag blijft ongewijzigd.
+- **DKIM** (digitale ondertekening van elke uitgaande mail, `includes/
+  mailer.php`'s `dkim_sign()`) is, in tegenstelling tot de rest van de
+  e-mailinstellingen, bewust **niet** via het beheerpaneel instelbaar —
+  het is een langlevend cryptografisch geheim, geen login die ooit via een
+  webformulier wijzigt. Configureren kan enkel via een `'dkim' => [...]`-
+  sectie in `config/config.php` (zie het commentaar in
+  `config/config.example.php` voor de volledige opzet: sleutelpaar
+  genereren, `domain`/`selector`/`private_key` invullen, en een
+  bijhorend `<selector>._domainkey.<domain>` TXT-record toevoegen in DNS).
+  Leeg laten (de standaard) verstuurt mail gewoon zonder DKIM-handtekening.
+  Samen met het bestaande SPF-record is dit een van de signalen die
+  Gmail/Outlook/Yahoo gebruiken om inbox- vs. Promoties-/spamplaatsing te
+  bepalen — geen garantie op zich, maar wel een directe verbetering.
 
 ## Homepage-content
 
