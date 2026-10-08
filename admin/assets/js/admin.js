@@ -804,16 +804,41 @@
     var csrfToken = panel.getAttribute('data-csrf');
     var countEl = panel.querySelector('[data-sent-count]');
     var barEl = panel.querySelector('[data-progress-bar]');
+    var errorEl = panel.querySelector('[data-send-error]');
+    var retryBtn = panel.querySelector('[data-retry-send]');
+
+    function showError(message) {
+        if (errorEl) {
+            errorEl.textContent = message;
+            errorEl.hidden = false;
+        }
+        if (retryBtn) retryBtn.hidden = false;
+    }
 
     function sendBatch() {
+        if (errorEl) errorEl.hidden = true;
+        if (retryBtn) retryBtn.hidden = true;
+
         var formData = new FormData();
         formData.append('id', newsletterId);
         formData.append('csrf_token', csrfToken);
 
-        fetch('newsletter-send.php', { method: 'POST', body: formData })
+        // Without this, a request the server never answers (an
+        // unresponsive SMTP server, a shared-hosting execution-time limit
+        // killing the script mid-batch without closing the connection
+        // cleanly) left the page silently stuck on "Bezig met verzenden"
+        // forever, with nothing in the browser to explain why.
+        var controller = new AbortController();
+        var timeoutId = setTimeout(function () { controller.abort(); }, 45000);
+
+        fetch('newsletter-send.php', { method: 'POST', body: formData, signal: controller.signal })
             .then(function (response) { return response.json(); })
             .then(function (data) {
-                if (!data || !data.ok) return;
+                clearTimeout(timeoutId);
+                if (!data || !data.ok) {
+                    showError((data && data.error) || 'Onbekende fout bij het verzenden.');
+                    return;
+                }
                 if (countEl) countEl.textContent = data.sent;
                 if (barEl) barEl.value = data.sent;
                 if (data.done) {
@@ -821,7 +846,15 @@
                 } else {
                     sendBatch();
                 }
+            })
+            .catch(function () {
+                clearTimeout(timeoutId);
+                showError('Geen (tijdige) reactie van de server — mogelijk een traag reagerende mailserver. Klik op "Opnieuw proberen", of annuleer de verzending.');
             });
+    }
+
+    if (retryBtn) {
+        retryBtn.addEventListener('click', sendBatch);
     }
 
     sendBatch();

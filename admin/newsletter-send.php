@@ -64,7 +64,14 @@ $stmt->execute();
 $batch = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
-$sentIds = [];
+// Committed right after each individual send — not batched until the end
+// of the loop — so a timeout or crash partway through (a slow/unresponsive
+// SMTP server, a shared-hosting execution-time limit) never loses progress
+// already made. Before this, a request that died mid-batch committed
+// nothing at all, and the next poll would re-attempt the exact same
+// recipients and could die at the exact same point again, looking like a
+// permanent hang.
+$markSent = $mysqli->prepare('UPDATE newsletter_sends SET sent_at = NOW() WHERE id = ?');
 foreach ($batch as $row) {
     $personalizedBody = render_newsletter_merge_tags($bodyHtml, $row['first_name'], true);
     $personalizedSubject = render_newsletter_merge_tags($newsletter['subject'], $row['first_name'], false);
@@ -72,16 +79,11 @@ foreach ($batch as $row) {
     smtp_send($mailConfig, $row['email'], $personalizedSubject, $emailHtml, $replyTo, 'text/html');
     // Sent (or at least attempted) either way: a single bad address must
     // never jam the whole batch into retrying it forever.
-    $sentIds[] = (int) $row['id'];
+    $sentId = (int) $row['id'];
+    $markSent->bind_param('i', $sentId);
+    $markSent->execute();
 }
-
-if (!empty($sentIds)) {
-    $placeholders = implode(',', array_fill(0, count($sentIds), '?'));
-    $stmt = $mysqli->prepare("UPDATE newsletter_sends SET sent_at = NOW() WHERE id IN ($placeholders)");
-    $stmt->bind_param(str_repeat('i', count($sentIds)), ...$sentIds);
-    $stmt->execute();
-    $stmt->close();
-}
+$markSent->close();
 
 $stmt = $mysqli->prepare('SELECT COUNT(*) AS total FROM newsletter_sends WHERE newsletter_id = ? AND sent_at IS NULL');
 $stmt->bind_param('i', $newsletterId);

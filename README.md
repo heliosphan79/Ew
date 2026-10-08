@@ -309,7 +309,17 @@ database van de site zelf.
   zet alle abonnees in een wachtrij; de pagina roept daarna zelf herhaaldelijk
   een klein batchje (20) af totdat iedereen een mail heeft, met een
   voortgangsbalk. Een nieuwsbrief kan niet meer bewerkt worden eens het
-  verzenden gestart is.
+  verzenden gestart is. Elke verzonden mail wordt meteen als dusdanig
+  opgeslagen (niet pas na een volledig batchje) — een trage of niet-
+  reagerende mailserver kan dus nooit al gemaakte voortgang ongedaan maken.
+  Loopt een batch vast (geen antwoord binnen 45 seconden), dan toont de
+  pagina dat zichtbaar met een "Opnieuw proberen"-knop, in plaats van stil
+  te blijven hangen. Een verzending die nog bezig is, kan ook altijd
+  geannuleerd worden ("Annuleren") — reeds verzonden mails blijven verzonden,
+  de rest van de wachtrij wordt niet meer aangeschreven. Een nieuwsbrief
+  verwijderen kan in elke status behalve "Bezig met verzenden" (eerst
+  annuleren); bij een verzonden/geannuleerde nieuwsbrief verdwijnen dan ook
+  de bijhorende open-/klikgegevens.
 - **Tracking**: elke verzonden mail bevat een onzichtbare 1×1-pixel (open-
   tracking) en elke link wordt herschreven via een eigen omleidings-URL
   (klik-tracking) — beide gekoppeld aan een uniek, willekeurig token per
