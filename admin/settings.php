@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $form['email'] = trim((string) ($_POST['email'] ?? ''));
     $form['contact_meta_title'] = trim((string) ($_POST['contact_meta_title'] ?? ''));
     $form['contact_meta_description'] = trim((string) ($_POST['contact_meta_description'] ?? ''));
-    $form['ai_summary'] = trim((string) ($_POST['ai_summary'] ?? ''));
+    $form['ai_summary'] = trim(normalize_newlines((string) ($_POST['ai_summary'] ?? '')));
     $form['contact_form_background'] = sanitize_block_background($_POST['contact_form_background'] ?? '');
     $form['submission_retention_days'] = sanitize_retention_days($_POST['submission_retention_days'] ?? '');
 

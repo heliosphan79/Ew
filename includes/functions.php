@@ -8,6 +8,19 @@ function e(?string $value): string
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+// A <textarea> submitted via a classic HTML form always arrives with CRLF
+// line endings (the browser normalizes \n to \r\n while encoding the form
+// data) — unlike the block editor's textareas, whose content never touches
+// a real form submission: it's read via JS .value (already LF-only) and
+// serialized straight into blocks_json. Apply this to every directly-
+// submitted multi-line field (event description, AI-samenvatting, ...)
+// before storing it, so plain-text output (llms.txt) never ends up with a
+// mix of LF and CRLF depending on which field a line break came from.
+function normalize_newlines(string $text): string
+{
+    return str_replace(["\r\n", "\r"], "\n", $text);
+}
+
 // Renders the site name with its first hyphen styled in the accent color
 // (matching the "Eigen-Wijzer" logo lockup) — falls back to plain escaped
 // text if the configured site name has no hyphen to style.

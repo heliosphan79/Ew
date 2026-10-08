@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $old['name'] = trim((string) ($_POST['name'] ?? ''));
     $old['email'] = trim((string) ($_POST['email'] ?? ''));
-    $old['message'] = trim((string) ($_POST['message'] ?? ''));
+    $old['message'] = trim(normalize_newlines((string) ($_POST['message'] ?? '')));
 
     if ($old['name'] === '' || mb_strlen($old['name']) > 150) {
         $errors[] = 'Vul een geldige naam in.';
