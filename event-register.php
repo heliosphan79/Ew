@@ -94,5 +94,5 @@ try {
     throw $e;
 }
 
-set_flash('success', 'Je interesse voor "' . $event['title'] . '" is doorgegeven!');
+set_flash('success', resolve_event_registration_success_message(get_site_settings($mysqli), $event['title']));
 redirect($redirectTarget);

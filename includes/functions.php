@@ -1553,7 +1553,8 @@ function get_site_settings(mysqli $mysqli): array
             'SELECT street_address, postal_code, city, phone, email, content, contact_meta_title,
                 contact_meta_description, ai_summary, contact_form_background, submission_retention_days,
                 price_range, area_served, linkedin_url, google_business_url,
-                person_name, person_job_title, person_expertise, person_bio
+                person_name, person_job_title, person_expertise, person_bio,
+                contact_success_message, event_registration_success_message
              FROM site_settings WHERE id = 1'
         )->fetch_assoc();
         $settings = [
@@ -1576,9 +1577,31 @@ function get_site_settings(mysqli $mysqli): array
             'person_job_title' => $row['person_job_title'] ?? '',
             'person_expertise' => $row['person_expertise'] ?? '',
             'person_bio' => $row['person_bio'] ?? '',
+            'contact_success_message' => $row['contact_success_message'] ?? '',
+            'event_registration_success_message' => $row['event_registration_success_message'] ?? '',
         ];
     }
     return $settings;
+}
+
+// Admin-editable, with the original hardcoded copy as the fallback — never
+// leaves a visitor looking at a blank confirmation just because the field
+// was never filled in.
+function resolve_contact_success_message(array $siteSettings): string
+{
+    $message = trim((string) ($siteSettings['contact_success_message'] ?? ''));
+    return $message !== '' ? $message : 'Bedankt, je bericht is verzonden. We nemen zo snel mogelijk contact op.';
+}
+
+// Same fallback idea, plus a {{titel}}-merge-tag for the event name — same
+// pattern as {{voornaam}} in the newsletter (render_newsletter_merge_tags()).
+function resolve_event_registration_success_message(array $siteSettings, string $eventTitle): string
+{
+    $message = trim((string) ($siteSettings['event_registration_success_message'] ?? ''));
+    if ($message === '') {
+        $message = 'Je interesse voor "{{titel}}" is doorgegeven!';
+    }
+    return str_replace('{{titel}}', $eventTitle, $message);
 }
 
 // Composes the footer's single-line address display from the structured

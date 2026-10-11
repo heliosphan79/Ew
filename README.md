@@ -526,6 +526,17 @@ Verder staan er twee eigen SEO/AI-velden op die pagina:
   hieronder. Leeg = die sectie verschijnt simpelweg niet
   (`database/migrations/010_ai_summary.sql`).
 
+Nog verder op diezelfde pagina staat "Bevestigingsberichten": de tekst die
+de bezoeker zelf te zien krijgt nadat die het contactformulier verstuurt
+of interesse doorgeeft voor een evenement (zie
+[Evenementenblok](#evenementenblok-lezingenworkshopsreeksen-aankondigen)
+hieronder). Twee apart instelbare velden, elk optioneel — leeg = de
+bestaande vaste standaardtekst blijft gebruikt. Bij het bericht na een
+evenement-inschrijving kan je `{{titel}}` gebruiken, dat wordt automatisch
+vervangen door de naam van het evenement (zelfde idee als `{{voornaam}}`
+in de nieuwsbrief). Opgeslagen in `site_settings`
+(`database/migrations/022_success_messages.sql`).
+
 ## Privacypagina
 
 Geen aparte, hardcoded privacypagina (zoals contact.php) — het is een

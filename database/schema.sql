@@ -165,6 +165,14 @@ CREATE TABLE IF NOT EXISTS site_settings (
     -- Bewaartermijn (in dagen) voor contactberichten en evenement-
     -- inschrijvingen. NULL = voor altijd bewaren (de standaard).
     submission_retention_days SMALLINT UNSIGNED DEFAULT NULL,
+    -- Bevestigingsberichten die de bezoeker zelf te zien krijgt na het
+    -- versturen van het contactformulier / een evenement-interesse-opgave.
+    -- Leeg = de hardcoded standaardtekst blijft gebruikt (zie contact.php /
+    -- event-register.php). event_registration_success_message ondersteunt
+    -- een {{titel}}-merge-tag voor de evenementnaam, zelfde idee als de
+    -- {{voornaam}}-tag in de nieuwsbrief.
+    contact_success_message             VARCHAR(500) DEFAULT NULL,
+    event_registration_success_message  VARCHAR(500) DEFAULT NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

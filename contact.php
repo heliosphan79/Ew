@@ -107,7 +107,7 @@ require __DIR__ . '/includes/header.php';
     <?= render_blocks($contactBlocks, $mysqli) ?>
 
     <?php if (isset($_GET['verzonden'])): ?>
-        <p class="flash flash-success">Bedankt, je bericht is verzonden. We nemen zo snel mogelijk contact op.</p>
+        <p class="flash flash-success"><?= e(resolve_contact_success_message($contactSettings)) ?></p>
     <?php else: ?>
 
         <?php if (!empty($errors)): ?>
