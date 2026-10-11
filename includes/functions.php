@@ -258,6 +258,28 @@ function block_bg_class(string $background): string
     return $background === 'none' ? '' : ' block-bg-' . $background;
 }
 
+// Admin-entered anchor id for "jump to this block" buttons elsewhere on
+// the page (a Knoppenblok linking to "#anchor") — same slug rules as a
+// page slug (slugify()), but optional: empty stays empty, no 'pagina'
+// fallback, since most blocks don't need to be a jump target.
+function sanitize_block_anchor(mixed $raw): string
+{
+    $raw = trim((string) $raw);
+    if ($raw === '') {
+        return '';
+    }
+    return mb_substr(slugify($raw), 0, 60);
+}
+
+// Renders the id="..." attribute for a block's wrapper element when an
+// anchor is set — sanitize_block_anchor() already restricts the stored
+// value to safe slug characters, so this never needs escaping.
+function block_anchor_attr(array $block): string
+{
+    $anchor = trim((string) ($block['anchor'] ?? ''));
+    return $anchor !== '' ? ' id="' . $anchor . '"' : '';
+}
+
 // Bewaartermijn voor contactberichten/evenement-inschrijvingen — een vaste
 // keuzelijst in plaats van een vrij getal, zodat een admin nooit per
 // ongeluk een extreem korte termijn ingeeft. null = voor altijd bewaren.
@@ -432,7 +454,7 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Tekstblok #$count: vul een titel of inhoud in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'text', 'eyebrow' => $eyebrow, 'heading' => $heading, 'body' => $body, 'background' => sanitize_block_background($raw['background'] ?? '')];
+                $clean[] = ['type' => 'text', 'eyebrow' => $eyebrow, 'heading' => $heading, 'body' => $body, 'background' => sanitize_block_background($raw['background'] ?? ''), 'anchor' => sanitize_block_anchor($raw['anchor'] ?? '')];
                 break;
 
             case 'image':
@@ -447,7 +469,7 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Fotoblok #$count: vul een korte alt-tekst in (toegankelijkheid).";
                     continue 2;
                 }
-                $clean[] = ['type' => 'image', 'url' => $url, 'alt' => $alt, 'caption' => $caption, 'background' => sanitize_block_background($raw['background'] ?? '')];
+                $clean[] = ['type' => 'image', 'url' => $url, 'alt' => $alt, 'caption' => $caption, 'background' => sanitize_block_background($raw['background'] ?? ''), 'anchor' => sanitize_block_anchor($raw['anchor'] ?? '')];
                 break;
 
             case 'quote':
@@ -457,7 +479,7 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Quoteblok #$count: vul een citaat in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'quote', 'text' => $text, 'source' => $source, 'background' => sanitize_block_background($raw['background'] ?? '')];
+                $clean[] = ['type' => 'quote', 'text' => $text, 'source' => $source, 'background' => sanitize_block_background($raw['background'] ?? ''), 'anchor' => sanitize_block_anchor($raw['anchor'] ?? '')];
                 break;
 
             case 'list':
@@ -477,7 +499,7 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Lijstblok #$count: vul minstens één item in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'list', 'heading' => $heading, 'style' => $style, 'items' => $items, 'background' => sanitize_block_background($raw['background'] ?? '')];
+                $clean[] = ['type' => 'list', 'heading' => $heading, 'style' => $style, 'items' => $items, 'background' => sanitize_block_background($raw['background'] ?? ''), 'anchor' => sanitize_block_anchor($raw['anchor'] ?? '')];
                 break;
 
             case 'buttons':
@@ -506,6 +528,7 @@ function sanitize_blocks(array $rawBlocks): array
                     'buttons' => $buttons,
                     'align' => sanitize_block_align($raw['align'] ?? ''),
                     'background' => sanitize_block_background($raw['background'] ?? ''),
+                    'anchor' => sanitize_block_anchor($raw['anchor'] ?? ''),
                 ];
                 break;
 
@@ -513,14 +536,14 @@ function sanitize_blocks(array $rawBlocks): array
                 // Available slots live in calendar_slots, managed globally via
                 // admin/calendar.php — this block only carries an optional heading.
                 $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
-                $clean[] = ['type' => 'calendar', 'heading' => $heading, 'background' => sanitize_block_background($raw['background'] ?? '')];
+                $clean[] = ['type' => 'calendar', 'heading' => $heading, 'background' => sanitize_block_background($raw['background'] ?? ''), 'anchor' => sanitize_block_anchor($raw['anchor'] ?? '')];
                 break;
 
             case 'events':
                 // Events themselves live in the events table, managed via
                 // admin/events.php — this block only carries an optional heading.
                 $heading = mb_substr(trim((string) ($raw['heading'] ?? '')), 0, 200);
-                $clean[] = ['type' => 'events', 'heading' => $heading, 'background' => sanitize_block_background($raw['background'] ?? '')];
+                $clean[] = ['type' => 'events', 'heading' => $heading, 'background' => sanitize_block_background($raw['background'] ?? ''), 'anchor' => sanitize_block_anchor($raw['anchor'] ?? '')];
                 break;
 
             case 'newsletter_events':
@@ -557,7 +580,7 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "Kaartblok #$count: vul het adres van de praktijk in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'map', 'address' => $address, 'heading' => $heading, 'layout' => $layout, 'background' => sanitize_block_background($raw['background'] ?? '')];
+                $clean[] = ['type' => 'map', 'address' => $address, 'heading' => $heading, 'layout' => $layout, 'background' => sanitize_block_background($raw['background'] ?? ''), 'anchor' => sanitize_block_anchor($raw['anchor'] ?? '')];
                 break;
 
             case 'media_text':
@@ -588,6 +611,7 @@ function sanitize_blocks(array $rawBlocks): array
                     'body' => $body,
                     'image_position' => $imagePosition,
                     'background' => sanitize_block_background($raw['background'] ?? ''),
+                    'anchor' => sanitize_block_anchor($raw['anchor'] ?? ''),
                 ];
                 break;
 
@@ -609,7 +633,7 @@ function sanitize_blocks(array $rawBlocks): array
                     $errors[] = "FAQ-blok #$count: vul minstens één vraag met antwoord in.";
                     continue 2;
                 }
-                $clean[] = ['type' => 'faq', 'heading' => $heading, 'items' => $items, 'background' => sanitize_block_background($raw['background'] ?? '')];
+                $clean[] = ['type' => 'faq', 'heading' => $heading, 'items' => $items, 'background' => sanitize_block_background($raw['background'] ?? ''), 'anchor' => sanitize_block_anchor($raw['anchor'] ?? '')];
                 break;
 
             case 'columns':
@@ -648,6 +672,7 @@ function sanitize_blocks(array $rawBlocks): array
                     'columns' => $columns,
                     'column_backgrounds' => $columnBackgrounds,
                     'background' => sanitize_block_background($raw['background'] ?? ''),
+                    'anchor' => sanitize_block_anchor($raw['anchor'] ?? ''),
                 ];
                 break;
 
@@ -773,7 +798,7 @@ function render_text_block(array $block): string
     }
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<div class="block block-text' . $bgClass . '" data-animate>';
+    $out = '<div class="block block-text' . $bgClass . '"' . block_anchor_attr($block) . ' data-animate>';
     if ($eyebrow !== '') {
         $out .= '<span class="eyebrow">' . e($eyebrow) . '</span>';
     }
@@ -795,7 +820,7 @@ function render_image_block(array $block): string
     $caption = trim((string) ($block['caption'] ?? ''));
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<figure class="block block-image' . $bgClass . '" data-animate>';
+    $out = '<figure class="block block-image' . $bgClass . '"' . block_anchor_attr($block) . ' data-animate>';
     $out .= '<img src="' . e($url) . '" alt="' . e($alt) . '" loading="lazy">';
     if ($caption !== '') {
         $out .= '<figcaption>' . e($caption) . '</figcaption>';
@@ -813,7 +838,7 @@ function render_quote_block(array $block): string
     $source = trim((string) ($block['source'] ?? ''));
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<blockquote class="block block-quote' . $bgClass . '" data-animate>';
+    $out = '<blockquote class="block block-quote' . $bgClass . '"' . block_anchor_attr($block) . ' data-animate>';
     $out .= '<p>' . nl2br(e($text)) . '</p>';
     if ($source !== '') {
         $out .= '<cite>' . e($source) . '</cite>';
@@ -835,7 +860,7 @@ function render_list_block(array $block): string
     $listClass = ($block['style'] ?? '') === 'check' ? 'list-check' : 'list-bullet';
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<div class="block block-list' . $bgClass . '" data-animate>';
+    $out = '<div class="block block-list' . $bgClass . '"' . block_anchor_attr($block) . ' data-animate>';
     if ($heading !== '') {
         $out .= '<h3>' . e($heading) . '</h3>';
     }
@@ -868,7 +893,7 @@ function render_buttons_block(array $block): string
     }
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
     $alignClass = buttons_align_class(sanitize_block_align($block['align'] ?? ''));
-    return '<div class="block block-buttons' . $bgClass . $alignClass . '" data-animate>' . $inner . '</div>';
+    return '<div class="block block-buttons' . $bgClass . $alignClass . '"' . block_anchor_attr($block) . ' data-animate>' . $inner . '</div>';
 }
 
 // Plain Google Maps iframe embed (https://www.google.com/maps?q=...&output=embed)
@@ -885,7 +910,7 @@ function render_map_block(array $block): string
     $embedUrl = 'https://www.google.com/maps?q=' . urlencode($address) . '&output=embed';
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<div class="block block-map map-' . $layout . $bgClass . '" data-animate>';
+    $out = '<div class="block block-map map-' . $layout . $bgClass . '"' . block_anchor_attr($block) . ' data-animate>';
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }
@@ -910,7 +935,7 @@ function render_media_text_block(array $block): string
     $position = ($block['image_position'] ?? '') === 'right' ? 'right' : 'left';
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<div class="block block-media-text media-text-' . $position . $bgClass . '" data-animate>';
+    $out = '<div class="block block-media-text media-text-' . $position . $bgClass . '"' . block_anchor_attr($block) . ' data-animate>';
     $out .= '<figure class="media-text-figure">';
     $out .= '<img src="' . e($url) . '" alt="' . e($alt) . '" loading="lazy">';
     if ($caption !== '') {
@@ -1040,7 +1065,7 @@ function render_columns_block(array $block): string
     }
 
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
-    return '<div class="block block-columns columns-' . $columnCount . $columnsClass . $bgClass . '" data-animate>' . $renderedColumns . '</div>';
+    return '<div class="block block-columns columns-' . $columnCount . $columnsClass . $bgClass . '"' . block_anchor_attr($block) . ' data-animate>' . $renderedColumns . '</div>';
 }
 
 // FAQPage structured data for a faq-block's questions — same inline-
@@ -1076,7 +1101,7 @@ function render_faq_block(array $block): string
     }
 
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
-    $out = '<div class="block block-faq' . $bgClass . '" data-animate>';
+    $out = '<div class="block block-faq' . $bgClass . '"' . block_anchor_attr($block) . ' data-animate>';
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }
@@ -1111,7 +1136,7 @@ function render_calendar_block(array $block): string
     $heading = trim((string) ($block['heading'] ?? ''));
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
 
-    $out = '<div class="block block-calendar' . $bgClass . '" data-animate>';
+    $out = '<div class="block block-calendar' . $bgClass . '"' . block_anchor_attr($block) . ' data-animate>';
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }
@@ -1256,7 +1281,7 @@ function render_events_block(array $block, mysqli $mysqli): string
     }
 
     $bgClass = block_bg_class(sanitize_block_background($block['background'] ?? ''));
-    $out = '<div class="block block-events' . $bgClass . '" data-animate>';
+    $out = '<div class="block block-events' . $bgClass . '"' . block_anchor_attr($block) . ' data-animate>';
     if ($heading !== '') {
         $out .= '<h2>' . e($heading) . '</h2>';
     }
@@ -1274,7 +1299,7 @@ function render_events_block(array $block, mysqli $mysqli): string
 
         $out .= '<article class="event-card">';
         $out .= '<h3>' . e($event['title']) . '</h3>';
-        $out .= '<p class="event-description">' . nl2br(e($event['description'])) . '</p>';
+        $out .= '<div class="event-description">' . render_text_paragraphs($event['description']) . '</div>';
 
         $out .= '<div class="event-practical">';
         if (!empty($sessions) || !empty($event['location'])) {

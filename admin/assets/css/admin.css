@@ -207,6 +207,19 @@ a { color: var(--color-accent); }
     .page-form-sidebar { position: static; }
 }
 
+/* Sub-nav for the Instellingen section (settings.php/settings-seo.php/...),
+   split across pages instead of one long form — see settings-tabs.php. */
+.settings-tabs {
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
+    margin: 0 0 1.5rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--color-border);
+}
+.settings-tabs a {
+    padding: 0.45rem 0.9rem; border-radius: 100px; font-size: 0.9rem; font-weight: 600;
+    color: var(--color-muted); text-decoration: none; transition: background 0.15s, color 0.15s;
+}
+.settings-tabs a:hover { background: #eaf3ee; color: var(--color-accent); }
+.settings-tabs a.is-active { background: var(--color-accent); color: #fff; }
+
 .block-editor { display: flex; flex-direction: column; gap: 0.9rem; margin-top: 0.25rem; }
 .block-editor-empty { color: var(--color-muted); font-size: 0.9rem; margin: 0.5rem 0; }
 
