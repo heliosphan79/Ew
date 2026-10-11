@@ -4,9 +4,14 @@ require __DIR__ . '/../includes/bootstrap.php';
 require_login();
 
 $events = $mysqli->query(
-    'SELECT e.*, (SELECT COUNT(*) FROM event_registrations r WHERE r.event_id = e.id) AS registered_count
+    'SELECT e.*, (SELECT COUNT(*) FROM event_registrations r WHERE r.event_id = e.id) AS registered_count,
+        (SELECT COUNT(*) FROM event_sessions s WHERE s.event_id = e.id) AS session_count,
+        COALESCE(
+            (SELECT MIN(s.session_date) FROM event_sessions s WHERE s.event_id = e.id AND s.session_date >= CURDATE()),
+            (SELECT MIN(s.session_date) FROM event_sessions s WHERE s.event_id = e.id)
+        ) AS display_date
      FROM events e
-     ORDER BY e.event_date DESC, e.event_time DESC'
+     ORDER BY display_date DESC'
 )->fetch_all(MYSQLI_ASSOC);
 
 $pageTitle = 'Evenementen';
@@ -37,9 +42,11 @@ require __DIR__ . '/includes/header.php';
             <tr>
                 <td><?= e($event['title']) ?></td>
                 <td>
-                    <?= e(date('d/m/Y', strtotime($event['event_date']))) ?>
-                    <?php if (!empty($event['event_time'])): ?>
-                        <?= e(substr($event['event_time'], 0, 5)) ?>
+                    <?php if ($event['display_date'] !== null): ?>
+                        <?= e(date('d/m/Y', strtotime($event['display_date']))) ?>
+                    <?php endif; ?>
+                    <?php if ((int) $event['session_count'] > 1): ?>
+                        <span class="field-hint">(<?= (int) $event['session_count'] ?> sessies)</span>
                     <?php endif; ?>
                 </td>
                 <td>

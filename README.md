@@ -264,24 +264,43 @@ zelf een afspraak inplannen, zonder heen-en-weer e-mailen.
 - **Nog niet ingebouwd**: e-mailbevestiging naar de bezoeker of Wendy bij
   een nieuwe boeking (zie "Mogelijke volgende stappen").
 
-## Evenementenblok (lezingen/workshops aankondigen)
+## Evenementenblok (lezingen/workshops/reeksen aankondigen)
 
-Een zevende bloktype, los van het kalenderblok: voor eenmalige evenementen
-(lezingen, workshops, infosessies) met optionele, capaciteit-beperkte
-inschrijving — geen individuele tijdsloten zoals bij een afspraak, gewoon
-één datum en (optioneel) een maximum aantal plaatsen.
+Een zevende bloktype, los van het kalenderblok: voor evenementen (lezingen,
+workshops, infosessies) met optionele, capaciteit-beperkte interesse-opgave
+— geen individuele tijdsloten zoals bij een afspraak, maar één of meerdere
+sessiedatums en (optioneel) een maximum aantal plaatsen.
 
 - **Evenementen beheer je los van paginainhoud** via "Evenementen" in het
-  beheerpaneel: titel, beschrijving, datum, optionele tijd/locatie, en een
-  optioneel maximum aantal plaatsen (leeg = onbeperkt). Per evenement zie
-  je wie ingeschreven is, met de mogelijkheid een inschrijving te
-  verwijderen (bv. na een telefonische afmelding) — dat maakt meteen weer
-  een plaats vrij.
+  beheerpaneel: titel, beschrijving, sessiedatums, optionele locatie,
+  prijs, maximum aantal plaatsen en inschrijvingsdeadline. Per evenement
+  zie je wie interesse doorgaf, met de mogelijkheid dat te verwijderen (bv.
+  na een telefonische afmelding) — dat maakt meteen weer een plaats vrij.
+- **Sessiedatums**: een evenement heeft altijd minstens één sessie
+  (`event_sessions`-tabel — één eenmalig evenement = één sessie, een
+  meerdere-weken-reeks = één rij per sessie), ingevoerd als platte tekst,
+  één sessie per regel ("JJJJ-MM-DD" of "JJJJ-MM-DD UU:MM" — tijd
+  optioneel), zelfde lichte conventie als de FAQ-blok's "V: vraag" of de
+  knoppenblok's "Label | URL". **Eén inschrijving/interesse-opgave geldt
+  voor de volledige reeks** — de capaciteit en prijs gelden dus ook voor de
+  reeks als geheel, niet per individuele sessie.
+- **Prijs** (optioneel, vrije tekst — bv. "€60", "Gratis", "€180 voor de
+  volledige reeks"): puur informatief, geen betaalverwerking.
+- **Inschrijven ten laatste op** (optioneel): een deadline waarna de
+  interesse-opgave automatisch sluit (inclusief die datum zelf), ook als
+  er nog plaatsen vrij zijn of de eerste sessie nog niet geweest is — toont
+  dan een "Inschrijvingen gesloten"-label in plaats van het formulier. Leeg
+  = open zolang er nog een sessie moet plaatsvinden.
 - **Op de site** toont het evenementenblok automatisch de eerstkomende
-  6 gepubliceerde evenementen, elk met een "Schrijf je in"-uitklapper
-  (`<details>`/`<summary>`, geen JavaScript nodig) met een naam/e-mailveld.
-  Is een evenement volzet, dan verschijnt een "Volzet"-label in plaats van
-  het formulier.
+  6 gepubliceerde evenementen met nog minstens één aankomende sessie, elk
+  met een "Ik heb interesse"-uitklapper (`<details>`/`<summary>`, geen
+  JavaScript nodig) met een naam/e-mailveld en een vinkje "Hou me op de
+  hoogte van een volgende reeks" (apart van het nieuwsbrief-opt-in-vinkje,
+  zichtbaar voor de beheerder via de inschrijvingenlijst). Bewust niet
+  "Schrijf je in" genoemd — minder verplichtend, want het is een vrijblijvende
+  interesse-opgave, geen bevestigde boeking. Eén sessie toont de datum
+  zoals voorheen; een reeks toont elke sessiedatum apart (tijden kunnen
+  per sessie verschillen) onder een "N sessies"-label.
 - **Aantal vrije plaatsen pas zichtbaar bij oplopende bezetting**
   (`event_capacity_status()` in `functions.php`, gedeeld door het
   website-evenementenblok en het compacte nieuwsbriefblok hieronder): bij
@@ -297,8 +316,10 @@ inschrijving — geen individuele tijdsloten zoals bij een afspraak, gewoon
   CSRF-token, honeypot-veld, serverside validatie — inclusief een check dat
   de "terug naar de pagina"-redirect na het inschrijven altijd een eigen,
   relatieve pagina is (nooit een externe URL).
-- **Nog niet ingebouwd**: e-mailbevestiging bij inschrijving (zie
-  "Mogelijke volgende stappen").
+- **Nog niet ingebouwd**: e-mailbevestiging bij inschrijving, en een
+  geautomatiseerde melding naar wie "hou me op de hoogte van een volgende
+  reeks" aanvinkte zodra er een nieuwe reeks gepubliceerd wordt — dat blijft
+  voorlopig een handmatige actie (zie "Mogelijke volgende stappen").
 
 ## Nieuwsbrief
 
@@ -739,6 +760,10 @@ bovenop, nooit een voorwaarde om het bericht te bewaren.
 - E-mailnotificatie bij een nieuwe kalenderboeking of evenementinschrijving
   (het contactformulier mailt al — zie "Spambeveiliging &
   e-mailnotificatie"; dezelfde `includes/mailer.php` is herbruikbaar).
+- Automatisch mailen van wie "hou me op de hoogte van een volgende reeks"
+  aanvinkte zodra zo'n reeks gepubliceerd wordt — die intentie wordt al wel
+  per inschrijving bijgehouden (`notify_next_series`, zichtbaar in de
+  inschrijvingenlijst), het versturen zelf is voorlopig handmatig.
 - Meerdere beheerders met rollen, wachtwoord-reset via e-mail.
 - Paginering als het aantal pagina's/berichten groot wordt.
 - Zelf gehoste webfonts voor pixel-exacte typografie (zie "Functionaliteit").

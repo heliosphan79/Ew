@@ -1125,6 +1125,51 @@ function format_event_date(string $date, ?string $time): string
     return $formatted;
 }
 
+// Every event has at least one row here (a single talk = one session, a
+// multi-week series = one row per session) — see event_sessions in
+// schema.sql. $upcomingOnly restricts to session_date >= today, used on
+// public-facing displays; the admin side always wants every session,
+// past included, so it can show/edit the whole series.
+function get_event_sessions(mysqli $mysqli, int $eventId, bool $upcomingOnly = false): array
+{
+    $sql = 'SELECT session_date, session_time FROM event_sessions WHERE event_id = ?'
+        . ($upcomingOnly ? ' AND session_date >= CURDATE()' : '')
+        . ' ORDER BY session_date ASC, session_time ASC';
+    $stmt = $mysqli->prepare($sql);
+    $stmt->bind_param('i', $eventId);
+    $stmt->execute();
+    $sessions = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $sessions;
+}
+
+// Compact one-line summary for contexts with no room for a full list (the
+// newsletter block, admin listings): a single session reads exactly like
+// before ("14 januari 2026 om 19:00"); a series collapses to a count +
+// its first date, since listing every date wouldn't fit there anyway.
+function format_event_sessions_summary(array $sessions): string
+{
+    if (empty($sessions)) {
+        return '';
+    }
+    if (count($sessions) === 1) {
+        return format_event_date($sessions[0]['session_date'], $sessions[0]['session_time']);
+    }
+    return count($sessions) . ' sessies, vanaf ' . format_event_date($sessions[0]['session_date'], $sessions[0]['session_time']);
+}
+
+// "Inschrijven ten laatste op" is inclusive — a visitor can still register
+// on the deadline date itself. No deadline set = always open (until the
+// event has no upcoming sessions left at all, which the listing query
+// already filters on before this is ever checked).
+function is_event_registration_open(?string $registrationDeadline): bool
+{
+    if ($registrationDeadline === null || $registrationDeadline === '') {
+        return true;
+    }
+    return $registrationDeadline >= date('Y-m-d');
+}
+
 // Only a same-site, relative path is accepted as a post-registration
 // redirect target — never a scheme or protocol-relative ("//host/...")
 // URL, so event-register.php can't be used as an open redirect.
@@ -1162,10 +1207,12 @@ function render_events_block(array $block, mysqli $mysqli): string
     $heading = trim((string) ($block['heading'] ?? ''));
 
     $stmt = $mysqli->prepare(
-        'SELECT e.*, (SELECT COUNT(*) FROM event_registrations r WHERE r.event_id = e.id) AS registered_count
+        'SELECT e.*, (SELECT COUNT(*) FROM event_registrations r WHERE r.event_id = e.id) AS registered_count,
+            (SELECT MIN(s.session_date) FROM event_sessions s WHERE s.event_id = e.id AND s.session_date >= CURDATE()) AS next_session_date
          FROM events e
-         WHERE e.published = 1 AND e.event_date >= CURDATE()
-         ORDER BY e.event_date ASC, e.event_time ASC
+         WHERE e.published = 1
+           AND EXISTS (SELECT 1 FROM event_sessions s WHERE s.event_id = e.id AND s.session_date >= CURDATE())
+         ORDER BY next_session_date ASC
          LIMIT 6'
     );
     $stmt->execute();
@@ -1194,14 +1241,29 @@ function render_events_block(array $block, mysqli $mysqli): string
         $registered = (int) $event['registered_count'];
         $spotsLeft = $capacity !== null ? max(0, $capacity - $registered) : null;
         $isFull = $capacity !== null && $spotsLeft <= 0;
+        $price = trim((string) ($event['price'] ?? ''));
+        $sessions = get_event_sessions($mysqli, $eventId, true);
+        $registrationOpen = is_event_registration_open($event['registration_deadline'] ?? null);
 
         $out .= '<article class="event-card">';
-        $out .= '<span class="eyebrow">' . e(format_event_date($event['event_date'], $event['event_time'])) . '</span>';
+        if (count($sessions) > 1) {
+            $out .= '<span class="eyebrow">' . count($sessions) . ' sessies</span>';
+            $out .= '<ul class="event-sessions-list">';
+            foreach ($sessions as $session) {
+                $out .= '<li>' . e(format_event_date($session['session_date'], $session['session_time'])) . '</li>';
+            }
+            $out .= '</ul>';
+        } elseif (count($sessions) === 1) {
+            $out .= '<span class="eyebrow">' . e(format_event_date($sessions[0]['session_date'], $sessions[0]['session_time'])) . '</span>';
+        }
         $out .= '<h3>' . e($event['title']) . '</h3>';
         if (!empty($event['location'])) {
             $out .= '<p class="event-location">' . e($event['location']) . '</p>';
         }
         $out .= '<p class="event-description">' . nl2br(e($event['description'])) . '</p>';
+        if ($price !== '') {
+            $out .= '<p class="event-price">' . e($price) . '</p>';
+        }
 
         if ($capacity !== null) {
             $status = event_capacity_status($capacity, $registered);
@@ -1209,10 +1271,13 @@ function render_events_block(array $block, mysqli $mysqli): string
                 $out .= '<span class="event-badge ' . ($isFull ? 'badge-full' : 'badge-spots') . '">' . e($status) . '</span>';
             }
         }
+        if (!$isFull && !$registrationOpen) {
+            $out .= '<span class="event-badge badge-full">Inschrijvingen gesloten</span>';
+        }
 
-        if (!$isFull) {
+        if (!$isFull && $registrationOpen) {
             $out .= '<details class="event-register">';
-            $out .= '<summary>Schrijf je in</summary>';
+            $out .= '<summary>Ik heb interesse</summary>';
             $out .= '<form method="post" action="/event-register.php">';
             $out .= csrf_field();
             $out .= '<input type="hidden" name="event_id" value="' . $eventId . '">';
@@ -1229,13 +1294,17 @@ function render_events_block(array $block, mysqli $mysqli): string
             $out .= '<input type="checkbox" id="event-newsletter-' . $eventId . '" name="newsletter_optin" value="1">';
             $out .= '<span>Ja, ik wil graag de nieuwsbrief ontvangen.</span>';
             $out .= '</label>';
+            $out .= '<label class="form-checkbox-row" for="event-notify-next-' . $eventId . '">';
+            $out .= '<input type="checkbox" id="event-notify-next-' . $eventId . '" name="notify_next_series" value="1">';
+            $out .= '<span>Hou me op de hoogte van een volgende reeks.</span>';
+            $out .= '</label>';
             $out .= render_privacy_note($mysqli);
-            $out .= '<button type="submit">Inschrijven</button>';
+            $out .= '<button type="submit">Interesse doorgeven</button>';
             $out .= '</form>';
             $out .= '</details>';
         }
 
-        $eventJsonLd = event_schema($event);
+        $eventJsonLd = event_schema($event, $sessions);
         if ($eventJsonLd !== null) {
             $out .= '<script type="application/ld+json">' . json_encode($eventJsonLd, JSON_UNESCAPED_SLASHES) . '</script>';
         }
@@ -1703,18 +1772,23 @@ function webpage_schema(string $name, ?string $description, ?string $url): array
 
 // schema.org/Event requires a location, so an event without one (not yet
 // filled in by the site owner) gets no JSON-LD rather than a fabricated address.
-function event_schema(array $event): ?array
+// $sessions must be sorted ascending (get_event_sessions() already does
+// this) — startDate is its first entry, and a series (2+ sessions) also
+// gets an endDate from the last one. Price is deliberately left out of
+// this schema: it's a free-text field ("Gratis", "€180 voor de volledige
+// reeks", ...), not a clean number+currency, so stuffing it into a
+// schema.org Offer would risk invalid markup rather than help anything.
+function event_schema(array $event, array $sessions): ?array
 {
     $location = trim((string) ($event['location'] ?? ''));
-    if ($location === '') {
+    if ($location === '' || empty($sessions)) {
         return null;
     }
 
-    $date = (string) ($event['event_date'] ?? '');
-    $time = trim((string) ($event['event_time'] ?? ''));
-    $startDate = $time !== '' ? $date . 'T' . substr($time, 0, 5) . ':00' : $date;
+    $first = $sessions[0];
+    $startDate = sessionToDateTime($first);
 
-    return [
+    $schema = [
         '@context' => 'https://schema.org',
         '@type' => 'Event',
         'name' => (string) ($event['title'] ?? ''),
@@ -1727,6 +1801,19 @@ function event_schema(array $event): ?array
             'name' => $location,
         ],
     ];
+
+    if (count($sessions) > 1) {
+        $schema['endDate'] = sessionToDateTime($sessions[count($sessions) - 1]);
+    }
+
+    return $schema;
+}
+
+function sessionToDateTime(array $session): string
+{
+    $date = (string) ($session['session_date'] ?? '');
+    $time = trim((string) ($session['session_time'] ?? ''));
+    return $time !== '' ? $date . 'T' . substr($time, 0, 5) . ':00' : $date;
 }
 
 // ---------------------------------------------------------------------
@@ -1922,10 +2009,12 @@ function render_newsletter_buttons_block(array $block): string
 function render_newsletter_events_block(array $block, mysqli $mysqli): string
 {
     $stmt = $mysqli->prepare(
-        'SELECT e.*, (SELECT COUNT(*) FROM event_registrations r WHERE r.event_id = e.id) AS registered_count
+        'SELECT e.*, (SELECT COUNT(*) FROM event_registrations r WHERE r.event_id = e.id) AS registered_count,
+            (SELECT MIN(s.session_date) FROM event_sessions s WHERE s.event_id = e.id AND s.session_date >= CURDATE()) AS next_session_date
          FROM events e
-         WHERE e.published = 1 AND e.event_date >= CURDATE()
-         ORDER BY e.event_date ASC, e.event_time ASC
+         WHERE e.published = 1
+           AND EXISTS (SELECT 1 FROM event_sessions s WHERE s.event_id = e.id AND s.session_date >= CURDATE())
+         ORDER BY next_session_date ASC
          LIMIT 5'
     );
     $stmt->execute();
@@ -1951,13 +2040,18 @@ function render_newsletter_events_block(array $block, mysqli $mysqli): string
     foreach ($events as $i => $event) {
         $capacity = $event['capacity'] !== null ? (int) $event['capacity'] : null;
         $registered = (int) $event['registered_count'];
+        $price = trim((string) ($event['price'] ?? ''));
+        $sessions = get_event_sessions($mysqli, (int) $event['id'], true);
         $rowStyle = 'padding:12px 0;' . ($i < $count - 1 ? 'border-bottom:' . $rowBorder : '');
 
         $out .= '<div style="' . $rowStyle . '">';
-        $out .= '<p style="margin:0 0 2px;font-size:0.85rem;font-weight:600;color:inherit;opacity:0.75;">' . e(format_event_date($event['event_date'], $event['event_time'])) . '</p>';
+        $out .= '<p style="margin:0 0 2px;font-size:0.85rem;font-weight:600;color:inherit;opacity:0.75;">' . e(format_event_sessions_summary($sessions)) . '</p>';
         $out .= '<p style="margin:0 0 4px;font-size:1.05rem;font-weight:600;color:inherit;">' . e($event['title']) . '</p>';
         if (!empty($event['location'])) {
             $out .= '<p style="margin:0;font-size:0.9rem;color:inherit;opacity:0.85;">' . e($event['location']) . '</p>';
+        }
+        if ($price !== '') {
+            $out .= '<p style="margin:2px 0 0;font-size:0.9rem;color:inherit;opacity:0.85;">' . e($price) . '</p>';
         }
         if ($capacity !== null) {
             $status = event_capacity_status($capacity, $registered);

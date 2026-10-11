@@ -34,6 +34,8 @@ $registrations->bind_param('i', $eventId);
 $registrations->execute();
 $registrations = $registrations->get_result()->fetch_all(MYSQLI_ASSOC);
 
+$sessions = get_event_sessions($mysqli, $eventId);
+
 $pageTitle = 'Inschrijvingen — ' . $event['title'];
 require __DIR__ . '/includes/header.php';
 ?>
@@ -41,7 +43,7 @@ require __DIR__ . '/includes/header.php';
 <p><a href="events.php"><?= admin_icon('chevron-right', 'admin-icon-back') ?> Terug naar evenementen</a></p>
 <h1>Inschrijvingen — <?= e($event['title']) ?></h1>
 <p class="field-hint">
-    <?= e(date('d/m/Y', strtotime($event['event_date']))) ?>
+    <?= e(format_event_sessions_summary($sessions)) ?> —
     <?= count($registrations) ?> ingeschreven<?= $event['capacity'] !== null ? ' van de ' . (int) $event['capacity'] . ' plaatsen' : '' ?>.
 </p>
 
@@ -51,7 +53,7 @@ require __DIR__ . '/includes/header.php';
     <div class="table-scroll">
     <table class="admin-table">
         <thead>
-        <tr><th>Naam</th><th>E-mail</th><th>Ingeschreven op</th><th></th></tr>
+        <tr><th>Naam</th><th>E-mail</th><th>Ingeschreven op</th><th>Volgende reeks?</th><th></th></tr>
         </thead>
         <tbody>
         <?php foreach ($registrations as $registration): ?>
@@ -59,6 +61,7 @@ require __DIR__ . '/includes/header.php';
                 <td><?= e($registration['name']) ?></td>
                 <td><a href="mailto:<?= e($registration['email']) ?>"><?= e($registration['email']) ?></a></td>
                 <td><?= e(date('d/m/Y H:i', strtotime($registration['registered_at']))) ?></td>
+                <td><?= $registration['notify_next_series'] ? 'Ja' : '' ?></td>
                 <td class="admin-table-actions">
                     <form method="post" action="event-registrations.php?event_id=<?= (int) $eventId ?>" onsubmit="return confirm('Deze inschrijving verwijderen?');">
                         <?= csrf_field() ?>

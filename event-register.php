@@ -39,14 +39,17 @@ try {
     // Row-lock the event for the duration of the transaction so two
     // concurrent registrations can never both squeeze into the last spot.
     $stmt = $mysqli->prepare(
-        'SELECT title, capacity, published, event_date FROM events WHERE id = ? FOR UPDATE'
+        'SELECT title, capacity, published, registration_deadline,
+            (SELECT COUNT(*) FROM event_sessions s WHERE s.event_id = events.id AND s.session_date >= CURDATE()) AS upcoming_session_count
+         FROM events WHERE id = ? FOR UPDATE'
     );
     $stmt->bind_param('i', $eventId);
     $stmt->execute();
     $event = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    if (!$event || !$event['published'] || $event['event_date'] < date('Y-m-d')) {
+    if (!$event || !$event['published'] || (int) $event['upcoming_session_count'] === 0
+        || !is_event_registration_open($event['registration_deadline'])) {
         $mysqli->rollback();
         set_flash('error', 'Dit evenement is niet (meer) beschikbaar.');
         redirect($redirectTarget);
@@ -67,10 +70,11 @@ try {
     }
 
     $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+    $notifyNextSeries = !empty($_POST['notify_next_series']) ? 1 : 0;
     $stmt = $mysqli->prepare(
-        'INSERT INTO event_registrations (event_id, name, email, ip_address) VALUES (?, ?, ?, ?)'
+        'INSERT INTO event_registrations (event_id, name, email, notify_next_series, ip_address) VALUES (?, ?, ?, ?, ?)'
     );
-    $stmt->bind_param('isss', $eventId, $name, $email, $ip);
+    $stmt->bind_param('issis', $eventId, $name, $email, $notifyNextSeries, $ip);
     $stmt->execute();
     $stmt->close();
 
@@ -84,5 +88,5 @@ try {
     throw $e;
 }
 
-set_flash('success', 'Je bent ingeschreven voor "' . $event['title'] . '" — tot dan!');
+set_flash('success', 'Je interesse voor "' . $event['title'] . '" is doorgegeven!');
 redirect($redirectTarget);
