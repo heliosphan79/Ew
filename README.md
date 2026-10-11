@@ -173,6 +173,17 @@ laten uploaden via FTP, zonder zelf een FTP-client te gebruiken
     krijgen in plaats van de standaard, transparante achtergrond. Beide
     gebruiken de kleurtokens van de actieve frontend-variant, dus ze passen
     automatisch mee met A/B/C.
+  - **Anker-ID (CTA naar een ander blok)** — elk blok (behalve het
+    nieuwsbrief-only evenementenblok) kan een optioneel anker-ID krijgen
+    (zelfde slug-regels als een paginaslug). Een knop in een Knoppenblok
+    elders op dezelfde pagina kan daar dan rechtstreeks naar springen door
+    als link `#` + dat anker-ID in te vullen (bv. `#evenementen`) in
+    plaats van een gewone URL — handig voor bv. een "Bekijk onze
+    evenementen"-knop bovenaan de pagina die naar het evenementenblok
+    verderop springt. De sticky header dekt het doelblok daarbij nooit af
+    (`scroll-margin-top`), en het springen verloopt soepel i.p.v. abrupt
+    (`scroll-behavior: smooth`, uitgeschakeld bij
+    `prefers-reduced-motion: reduce`).
   - Links/afbeeldings-URL's worden serverside gevalideerd (enkel `/...`,
     `http(s)://`, `mailto:` of `tel:` — geen `javascript:`-injectie
     mogelijk).

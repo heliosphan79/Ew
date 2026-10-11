@@ -159,18 +159,18 @@
 
     function newBlock(type) {
         switch (type) {
-            case 'text': return { type: 'text', eyebrow: '', heading: '', body: '', background: 'none' };
-            case 'image': return { type: 'image', url: '', alt: '', caption: '', background: 'none' };
-            case 'quote': return { type: 'quote', text: '', source: '', background: 'none' };
-            case 'list': return { type: 'list', heading: '', style: 'bullet', itemsText: '', background: 'none' };
-            case 'buttons': return { type: 'buttons', buttonsText: '', align: 'left', background: 'none' };
-            case 'calendar': return { type: 'calendar', heading: '', background: 'none' };
-            case 'events': return { type: 'events', heading: '', background: 'none' };
+            case 'text': return { type: 'text', eyebrow: '', heading: '', body: '', background: 'none', anchor: '' };
+            case 'image': return { type: 'image', url: '', alt: '', caption: '', background: 'none', anchor: '' };
+            case 'quote': return { type: 'quote', text: '', source: '', background: 'none', anchor: '' };
+            case 'list': return { type: 'list', heading: '', style: 'bullet', itemsText: '', background: 'none', anchor: '' };
+            case 'buttons': return { type: 'buttons', buttonsText: '', align: 'left', background: 'none', anchor: '' };
+            case 'calendar': return { type: 'calendar', heading: '', background: 'none', anchor: '' };
+            case 'events': return { type: 'events', heading: '', background: 'none', anchor: '' };
             case 'newsletter_events': return { type: 'newsletter_events', heading: '', link_label: '', link_url: '', background: 'none' };
-            case 'map': return { type: 'map', address: '', heading: '', layout: 'box', background: 'none' };
-            case 'media_text': return { type: 'media_text', url: '', alt: '', caption: '', heading: '', body: '', image_position: 'left', background: 'none' };
-            case 'columns': return { type: 'columns', column_count: 2, columns: [[], []], column_backgrounds: ['none', 'none'], background: 'none' };
-            case 'faq': return { type: 'faq', heading: '', itemsText: '', background: 'none' };
+            case 'map': return { type: 'map', address: '', heading: '', layout: 'box', background: 'none', anchor: '' };
+            case 'media_text': return { type: 'media_text', url: '', alt: '', caption: '', heading: '', body: '', image_position: 'left', background: 'none', anchor: '' };
+            case 'columns': return { type: 'columns', column_count: 2, columns: [[], []], column_backgrounds: ['none', 'none'], background: 'none', anchor: '' };
+            case 'faq': return { type: 'faq', heading: '', itemsText: '', background: 'none', anchor: '' };
             default: return null;
         }
     }
@@ -181,11 +181,11 @@
     // per-block conversion, since a column can hold list/buttons blocks too.
     function toEditorBlock(b) {
         if (b.type === 'list') {
-            return { type: 'list', heading: b.heading || '', style: b.style || 'bullet', itemsText: (b.items || []).join('\n'), background: b.background || 'none' };
+            return { type: 'list', heading: b.heading || '', style: b.style || 'bullet', itemsText: (b.items || []).join('\n'), background: b.background || 'none', anchor: b.anchor || '' };
         }
         if (b.type === 'buttons') {
             var lines = (b.buttons || []).map(function (btn) { return (btn.label || '') + ' | ' + (btn.url || ''); });
-            return { type: 'buttons', buttonsText: lines.join('\n'), align: b.align || 'left', background: b.background || 'none' };
+            return { type: 'buttons', buttonsText: lines.join('\n'), align: b.align || 'left', background: b.background || 'none', anchor: b.anchor || '' };
         }
         if (b.type === 'columns') {
             return {
@@ -193,12 +193,13 @@
                 column_count: b.column_count || 2,
                 columns: (b.columns || []).map(function (children) { return (children || []).map(toEditorBlock); }),
                 column_backgrounds: (b.column_backgrounds || []).slice(),
-                background: b.background || 'none'
+                background: b.background || 'none',
+                anchor: b.anchor || ''
             };
         }
         if (b.type === 'faq') {
             var faqLines = (b.items || []).map(function (item) { return 'V: ' + (item.question || '') + '\n' + (item.answer || ''); });
-            return { type: 'faq', heading: b.heading || '', itemsText: faqLines.join('\n\n'), background: b.background || 'none' };
+            return { type: 'faq', heading: b.heading || '', itemsText: faqLines.join('\n\n'), background: b.background || 'none', anchor: b.anchor || '' };
         }
         return Object.assign({}, b);
     }
@@ -206,14 +207,14 @@
     function toCanonicalBlock(b) {
         if (b.type === 'list') {
             var items = (b.itemsText || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 20);
-            return { type: 'list', heading: b.heading || '', style: b.style || 'bullet', items: items, background: b.background || 'none' };
+            return { type: 'list', heading: b.heading || '', style: b.style || 'bullet', items: items, background: b.background || 'none', anchor: b.anchor || '' };
         }
         if (b.type === 'buttons') {
             var buttons = (b.buttonsText || '').split('\n').map(function (line) {
                 var parts = line.split('|');
                 return { label: (parts[0] || '').trim(), url: (parts.slice(1).join('|') || '').trim() };
             }).filter(function (btn) { return btn.label && btn.url; }).slice(0, 3);
-            return { type: 'buttons', buttons: buttons, align: b.align || 'left', background: b.background || 'none' };
+            return { type: 'buttons', buttons: buttons, align: b.align || 'left', background: b.background || 'none', anchor: b.anchor || '' };
         }
         if (b.type === 'columns') {
             return {
@@ -221,7 +222,8 @@
                 column_count: b.column_count || 2,
                 columns: (b.columns || []).map(function (children) { return (children || []).map(toCanonicalBlock); }),
                 column_backgrounds: (b.column_backgrounds || []).slice(),
-                background: b.background || 'none'
+                background: b.background || 'none',
+                anchor: b.anchor || ''
             };
         }
         if (b.type === 'faq') {
@@ -234,7 +236,7 @@
                 if (!question || !answer) return null;
                 return { question: question, answer: answer };
             }).filter(Boolean).slice(0, 20);
-            return { type: 'faq', heading: b.heading || '', items: faqItems, background: b.background || 'none' };
+            return { type: 'faq', heading: b.heading || '', items: faqItems, background: b.background || 'none', anchor: b.anchor || '' };
         }
         return Object.assign({}, b);
     }
@@ -281,6 +283,17 @@
                 '<option value="surface"' + (value === 'surface' ? ' selected' : '') + '>Zachte kaart</option>' +
             '</select>'
         ));
+    }
+
+    // Optional anchor id so a Knoppenblok elsewhere on the page can jump
+    // straight to this block via a "#anker-id" link — same slug rules as
+    // a page slug (letters, cijfers, koppeltekens), sanitized again
+    // server-side (sanitize_block_anchor() in functions.php).
+    function anchorFieldRow(value) {
+        return (
+            fieldRow('Anker-ID (optioneel)', '<input type="text" data-field="anchor" value="' + escapeAttr(value || '') + '" placeholder="bv. evenementen" maxlength="60">') +
+            '<p class="field-hint">Laat een knop hierheen springen: vul bij een Knoppenblok elders op de pagina als link "#" + dit anker-ID in (bv. "#evenementen").</p>'
+        );
     }
 
     // A small toolbar that wraps the current textarea selection in simple,
@@ -347,6 +360,7 @@
                         'Knoppen — één per regel, als "Tekst | link" (max 3)',
                         '<textarea data-field="buttonsText" rows="3" placeholder="Contact opnemen | /contact.php">' + escapeHtml(block.buttonsText) + '</textarea>'
                     ) +
+                    '<p class="field-hint">Gebruik "#anker-id" als link om naar een ander blok op dezelfde pagina te springen in plaats van een URL (zie "Anker-ID" bij het blok waar de knop heen moet).</p>' +
                     fieldRow('Uitlijning', (
                         '<select data-field="align">' +
                             '<option value="left"' + (block.align !== 'center' && block.align !== 'right' ? ' selected' : '') + '>Links</option>' +
@@ -428,7 +442,17 @@
             default:
                 return '';
         }
-        return isNested ? out : out + backgroundFieldRow(block.background);
+        if (isNested) {
+            return out;
+        }
+        out += backgroundFieldRow(block.background);
+        // Not for newsletter_events: that block is e-mail-only (see
+        // NEWSLETTER_BLOCK_TYPES in functions.php), and an in-page
+        // "#anchor" jump target makes no sense inside an e-mail.
+        if (block.type !== 'newsletter_events') {
+            out += anchorFieldRow(block.anchor);
+        }
+        return out;
     }
 
     function columnsFieldsFor(block, path) {
@@ -469,7 +493,7 @@
             );
         }).join('');
 
-        return countField + '<div class="columns-editor">' + columnsHtml + '</div>' + backgroundFieldRow(block.background);
+        return countField + '<div class="columns-editor">' + columnsHtml + '</div>' + backgroundFieldRow(block.background) + anchorFieldRow(block.anchor);
     }
 
     function escapeHtml(value) {

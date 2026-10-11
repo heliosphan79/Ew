@@ -84,7 +84,10 @@ body[data-theme="c"] {
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+}
 
 body {
     margin: 0;
@@ -498,7 +501,10 @@ main.wrap {
    custom-property tokens (and a few per-variant touches below) differ.
    ========================================================================== */
 
-.block { margin-bottom: clamp(2rem, 6vw, 3.25rem); }
+/* scroll-margin-top keeps a #anchor jump (e.g. a CTA button linking to a
+   block's anchor id) from landing flush under the sticky header, which
+   would otherwise hide the first line of the target block. */
+.block { margin-bottom: clamp(2rem, 6vw, 3.25rem); scroll-margin-top: 90px; }
 .block:last-child { margin-bottom: 0; }
 
 .block-text h2 { font-size: 1.4rem; margin-bottom: 0.75rem; }
