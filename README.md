@@ -276,6 +276,12 @@ sessiedatums en (optioneel) een maximum aantal plaatsen.
   prijs, maximum aantal plaatsen en inschrijvingsdeadline. Per evenement
   zie je wie interesse doorgaf, met de mogelijkheid dat te verwijderen (bv.
   na een telefonische afmelding) — dat maakt meteen weer een plaats vrij.
+- **Beschrijving ondersteunt dezelfde lichte opmaak** als een gewoon
+  Tekst-blok: **vet**, *cursief*, [linktekst](url) en een regel die begint
+  met "- " voor een opsomming (met dezelfde kompasnaald-bullet als
+  elders) — via de knoppen boven het veld of door de opmaak gewoon zelf te
+  typen (`render_text_paragraphs()`/`render_inline_markup()` in
+  `functions.php`).
 - **Sessiedatums**: een evenement heeft altijd minstens één sessie
   (`event_sessions`-tabel — één eenmalig evenement = één sessie, een
   meerdere-weken-reeks = één rij per sessie), ingevoerd als platte tekst,

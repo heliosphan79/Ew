@@ -1274,7 +1274,7 @@ function render_events_block(array $block, mysqli $mysqli): string
 
         $out .= '<article class="event-card">';
         $out .= '<h3>' . e($event['title']) . '</h3>';
-        $out .= '<p class="event-description">' . nl2br(e($event['description'])) . '</p>';
+        $out .= '<div class="event-description">' . render_text_paragraphs($event['description']) . '</div>';
 
         $out .= '<div class="event-practical">';
         if (!empty($sessions) || !empty($event['location'])) {

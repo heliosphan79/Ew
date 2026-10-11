@@ -209,7 +209,14 @@ require __DIR__ . '/includes/header.php';
     <input type="text" id="title" name="title" value="<?= e($form['title']) ?>" required>
 
     <label for="description">Beschrijving</label>
+    <div class="richtext-toolbar" data-richtext-toolbar="description">
+        <button type="button" data-format="bold" title="Vet"><strong>V</strong></button>
+        <button type="button" data-format="italic" title="Cursief"><em>C</em></button>
+        <button type="button" data-format="link" title="Link">Link</button>
+        <button type="button" data-format="list" title="Opsomming">&bull;</button>
+    </div>
     <textarea id="description" name="description" rows="5" required><?= e($form['description']) ?></textarea>
+    <p class="field-hint">Opmaak: **vet**, *cursief*, [linktekst](url), of een regel die begint met "- " voor een opsomming — of gebruik de knoppen hierboven.</p>
 
     <label for="sessions_text">Sessiedatums (één per regel)</label>
     <textarea id="sessions_text" name="sessions_text" rows="5" placeholder="2026-01-14 19:00&#10;2026-01-21 19:00&#10;2026-01-28 19:00" required><?= e($form['sessions_text']) ?></textarea>

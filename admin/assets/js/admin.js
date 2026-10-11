@@ -44,6 +44,74 @@
     });
 })();
 
+// Richtext toolbar for a plain, static textarea outside the block editor
+// (e.g. an event's description on event-edit.php) — same safe inline
+// markup and syntax as the block editor's toolbar below (**vet**,
+// *cursief*, [label](url), "- " bullets), rendered the same way
+// server-side via render_text_paragraphs()/render_inline_markup() in
+// functions.php. Kept separate from initBlockEditor()'s version because
+// that one targets textareas inside a re-rendered .block-card by
+// data-field, while this one targets a single, never-re-rendered
+// textarea by id — simpler to just look it up directly.
+(function initPlainRichTextToolbars() {
+    var toolbars = document.querySelectorAll('[data-richtext-toolbar]');
+    if (!toolbars.length) return;
+
+    function wrapSelection(textarea, before, after) {
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        var value = textarea.value;
+        var selected = value.slice(start, end) || 'tekst';
+        textarea.value = value.slice(0, start) + before + selected + after + value.slice(end);
+        textarea.focus();
+        textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+    }
+
+    function insertLink(textarea) {
+        var url = window.prompt('Link naar (bv. /contact, https://..., mailto:...)');
+        if (!url) return;
+        wrapSelection(textarea, '[', '](' + url.trim() + ')');
+    }
+
+    function insertBulletLines(textarea) {
+        var start = textarea.selectionStart;
+        var end = textarea.selectionEnd;
+        var value = textarea.value;
+
+        var lineStart = value.lastIndexOf('\n', start - 1) + 1;
+        var lineEnd = value.indexOf('\n', end);
+        if (lineEnd === -1) lineEnd = value.length;
+
+        var lines = value.slice(lineStart, lineEnd).split('\n');
+        var newLines = lines.map(function (line) {
+            if (line.indexOf('- ') === 0) return line;
+            if (line.trim() === '') return lines.length === 1 ? '- ' : line;
+            return '- ' + line;
+        });
+        var newSegment = newLines.join('\n');
+
+        textarea.value = value.slice(0, lineStart) + newSegment + value.slice(lineEnd);
+        textarea.focus();
+        var caret = lineStart + newSegment.length;
+        textarea.setSelectionRange(caret, caret);
+    }
+
+    toolbars.forEach(function (toolbar) {
+        var textarea = document.getElementById(toolbar.getAttribute('data-richtext-toolbar'));
+        if (!textarea) return;
+
+        toolbar.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-format]');
+            if (!btn) return;
+            var format = btn.getAttribute('data-format');
+            if (format === 'bold') wrapSelection(textarea, '**', '**');
+            else if (format === 'italic') wrapSelection(textarea, '*', '*');
+            else if (format === 'link') insertLink(textarea);
+            else if (format === 'list') insertBulletLines(textarea);
+        });
+    });
+})();
+
 (function initBlockEditor() {
     var container = document.getElementById('block-editor');
     var hiddenInput = document.getElementById('blocks_json');

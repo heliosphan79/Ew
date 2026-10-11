@@ -506,11 +506,12 @@ main.wrap {
 .block-text p:last-child { margin-bottom: 0; }
 
 /* Inline markup (**vet**, *cursief*, [link](url)) inside free-text fields
-   — text/list/media-text bodies and column text rows. */
+   — text/list/media-text bodies, column text rows, and event descriptions. */
 .block-text a:not(.btn),
 .block-list a:not(.btn),
 .block-media-text a:not(.btn),
-.col-row a:not(.btn) {
+.col-row a:not(.btn),
+.event-description a:not(.btn) {
     color: var(--accent);
     text-decoration: underline;
     text-underline-offset: 0.15em;
@@ -518,7 +519,8 @@ main.wrap {
 .block-text a:hover:not(.btn),
 .block-list a:hover:not(.btn),
 .block-media-text a:hover:not(.btn),
-.col-row a:hover:not(.btn) { color: var(--accent-hover); }
+.col-row a:hover:not(.btn),
+.event-description a:hover:not(.btn) { color: var(--accent-hover); }
 
 /* Fixed aspect-ratio + object-fit:cover (rather than the photo's own,
    uncontrolled ratio) keeps block heights predictable regardless of what
@@ -928,8 +930,13 @@ main.wrap {
    specificity so hovering still works after the reveal has run. */
 html.js .block-events[data-animate].is-visible .event-card:hover { transform: translateY(-3px); }
 .event-card h3 { font-family: var(--font-heading); font-size: 1.2rem; margin: 0 0 0.5rem; }
+/* Now rendered via render_text_paragraphs() (same lichte opmaak as the
+   Tekst block: **vet**, *cursief*, [link](url), "- " bullets), so this
+   wraps one or more <p>/<ul> children instead of being a single <p>. */
 .event-description { margin: 0 0 1rem; }
 .event-description:last-child { margin-bottom: 0; }
+.event-description p { margin: 0 0 1rem; }
+.event-description p:last-child { margin-bottom: 0; }
 
 /* Groups the "practical info" (session date(s), location, price) —
    deliberately placed after the title/description, not before: a visitor
