@@ -172,138 +172,152 @@ require __DIR__ . '/includes/header.php';
     </ul>
 <?php endif; ?>
 
-<form method="post" class="page-form page-form-wide">
+<form method="post" class="page-form" style="max-width: 760px;">
     <?= csrf_field() ?>
 
-    <div class="page-form-columns">
-        <div class="page-form-main">
-            <label>Inhoud contactpagina</label>
-            <p class="field-hint">
-                Deze blokken verschijnen op de contactpagina, boven het vaste
-                contactformulier (dat blijft ongewijzigd). Handig voor een korte
-                intro, een kaart met de praktijklocatie, openingsuren, ... Leeg =
-                enkel het formulier, zoals vandaag.
-            </p>
-            <div id="block-editor" class="block-editor"></div>
-            <div id="block-toolbar" class="block-toolbar"></div>
-            <script type="application/json" id="initial-blocks"><?= json_encode($blocksForEditor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
-            <input type="hidden" id="blocks_json" name="blocks_json">
-        </div>
-
-        <div class="page-form-sidebar">
-            <label for="street_address">Straat en nummer (optioneel)</label>
+    <h2>Contactgegevens</h2>
+    <div class="page-form-row">
+        <label for="street_address">Straat en nummer (optioneel)
             <input type="text" id="street_address" name="street_address" value="<?= e($form['street_address']) ?>">
-
-            <label for="postal_code">Postcode (optioneel)</label>
+        </label>
+        <label for="postal_code">Postcode (optioneel)
             <input type="text" id="postal_code" name="postal_code" value="<?= e($form['postal_code']) ?>" style="width:8rem;">
-
-            <label for="city">Gemeente (optioneel)</label>
+        </label>
+        <label for="city">Gemeente (optioneel)
             <input type="text" id="city" name="city" value="<?= e($form['city']) ?>">
+        </label>
+    </div>
 
-            <label for="phone">Telefoonnummer (optioneel)</label>
+    <div class="page-form-row">
+        <label for="phone">Telefoonnummer (optioneel)
             <input type="text" id="phone" name="phone" value="<?= e($form['phone']) ?>" placeholder="+32 471 23 45 67">
-            <p class="field-hint">Bij voorkeur in internationaal formaat (+32...) — dat gebruikt ook het schema.org-structuurdata hieronder.</p>
-
-            <label for="email">E-mailadres (optioneel)</label>
+        </label>
+        <label for="email">E-mailadres (optioneel)
             <input type="email" id="email" name="email" value="<?= e($form['email']) ?>">
+        </label>
+    </div>
+    <p class="field-hint">Telefoonnummer bij voorkeur in internationaal formaat (+32...) — dat gebruikt ook het schema.org-structuurdata hieronder. Een leeg veld wordt nergens getoond.</p>
 
-            <label for="contact_meta_title">Titel contactpagina (SEO, optioneel)</label>
-            <input type="text" id="contact_meta_title" name="contact_meta_title" value="<?= e($form['contact_meta_title']) ?>" maxlength="200" placeholder="Contact">
-            <p class="field-hint">Leeg = standaardtitel "Contact" blijft gebruikt.</p>
+    <hr>
+    <h2>Inhoud contactpagina</h2>
+    <p class="field-hint">
+        Deze blokken verschijnen op de contactpagina, boven het vaste
+        contactformulier (dat blijft ongewijzigd). Handig voor een korte
+        intro, een kaart met de praktijklocatie, openingsuren, ... Leeg =
+        enkel het formulier, zoals vandaag.
+    </p>
+    <div id="block-editor" class="block-editor"></div>
+    <div id="block-toolbar" class="block-toolbar"></div>
+    <script type="application/json" id="initial-blocks"><?= json_encode($blocksForEditor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?></script>
+    <input type="hidden" id="blocks_json" name="blocks_json">
 
-            <label for="contact_meta_description">Meta-omschrijving contactpagina (SEO, optioneel)</label>
-            <input type="text" id="contact_meta_description" name="contact_meta_description" value="<?= e($form['contact_meta_description']) ?>" maxlength="300" data-meta-description-input>
-            <p class="field-hint" data-meta-description-hint></p>
+    <hr>
+    <h2>Weergave &amp; SEO contactpagina</h2>
 
-            <label for="contact_form_background">Achtergrond contactformulier</label>
-            <select id="contact_form_background" name="contact_form_background">
-                <option value="none"<?= $form['contact_form_background'] !== 'accent' && $form['contact_form_background'] !== 'surface' ? ' selected' : '' ?>>Geen</option>
-                <option value="accent"<?= $form['contact_form_background'] === 'accent' ? ' selected' : '' ?>>Accentkleur</option>
-                <option value="surface"<?= $form['contact_form_background'] === 'surface' ? ' selected' : '' ?>>Zachte kaart</option>
-            </select>
+    <label for="contact_meta_title">Titel contactpagina (SEO, optioneel)</label>
+    <input type="text" id="contact_meta_title" name="contact_meta_title" value="<?= e($form['contact_meta_title']) ?>" maxlength="200" placeholder="Contact">
+    <p class="field-hint">Leeg = standaardtitel "Contact" blijft gebruikt.</p>
 
-            <label for="submission_retention_days">Bewaartermijn contactberichten &amp; inschrijvingen</label>
-            <select id="submission_retention_days" name="submission_retention_days">
-                <option value=""<?= $form['submission_retention_days'] === null ? ' selected' : '' ?>>Voor altijd</option>
-                <option value="90"<?= $form['submission_retention_days'] === 90 ? ' selected' : '' ?>>90 dagen</option>
-                <option value="180"<?= $form['submission_retention_days'] === 180 ? ' selected' : '' ?>>180 dagen</option>
-                <option value="365"<?= $form['submission_retention_days'] === 365 ? ' selected' : '' ?>>1 jaar</option>
-                <option value="730"<?= $form['submission_retention_days'] === 730 ? ' selected' : '' ?>>2 jaar</option>
-            </select>
-            <p class="field-hint">
-                Contactberichten en evenement-inschrijvingen ouder dan deze termijn
-                worden automatisch verwijderd (naam, e-mailadres, bericht, IP-adres).
-                Wordt opgeruimd bij het openen van het Dashboard, niet onmiddellijk.
-            </p>
+    <label for="contact_meta_description">Meta-omschrijving contactpagina (SEO, optioneel)</label>
+    <input type="text" id="contact_meta_description" name="contact_meta_description" value="<?= e($form['contact_meta_description']) ?>" maxlength="300" data-meta-description-input>
+    <p class="field-hint" data-meta-description-hint></p>
 
-            <label for="ai_summary">AI-samenvatting van de praktijk (optioneel)</label>
-            <textarea id="ai_summary" name="ai_summary" rows="5" maxlength="2000"><?= e($form['ai_summary']) ?></textarea>
-            <p class="field-hint">
-                Een uitgebreidere, eigen samenvatting van de praktijk voor AI-zoeksystemen
-                (llms.txt) — los van de korte meta-omschrijving hierboven. Mag een paar
-                zinnen tot een korte paragraaf zijn. Leeg = deze sectie verschijnt niet in llms.txt.
-            </p>
+    <label for="contact_form_background">Achtergrond contactformulier</label>
+    <select id="contact_form_background" name="contact_form_background">
+        <option value="none"<?= $form['contact_form_background'] !== 'accent' && $form['contact_form_background'] !== 'surface' ? ' selected' : '' ?>>Geen</option>
+        <option value="accent"<?= $form['contact_form_background'] === 'accent' ? ' selected' : '' ?>>Accentkleur</option>
+        <option value="surface"<?= $form['contact_form_background'] === 'surface' ? ' selected' : '' ?>>Zachte kaart</option>
+    </select>
 
-            <hr>
-            <h2>Bevestigingsberichten</h2>
-            <p class="field-hint">
-                Wat de bezoeker zelf te zien krijgt na het versturen van het
-                contactformulier, het doorgeven van interesse voor een
-                evenement, het bevestigen van een afspraak, of het uitschrijven
-                voor de nieuwsbrief. Leeg = de standaardtekst blijft gebruikt.
-            </p>
+    <label for="submission_retention_days">Bewaartermijn contactberichten &amp; inschrijvingen</label>
+    <select id="submission_retention_days" name="submission_retention_days">
+        <option value=""<?= $form['submission_retention_days'] === null ? ' selected' : '' ?>>Voor altijd</option>
+        <option value="90"<?= $form['submission_retention_days'] === 90 ? ' selected' : '' ?>>90 dagen</option>
+        <option value="180"<?= $form['submission_retention_days'] === 180 ? ' selected' : '' ?>>180 dagen</option>
+        <option value="365"<?= $form['submission_retention_days'] === 365 ? ' selected' : '' ?>>1 jaar</option>
+        <option value="730"<?= $form['submission_retention_days'] === 730 ? ' selected' : '' ?>>2 jaar</option>
+    </select>
+    <p class="field-hint">
+        Contactberichten en evenement-inschrijvingen ouder dan deze termijn
+        worden automatisch verwijderd (naam, e-mailadres, bericht, IP-adres).
+        Wordt opgeruimd bij het openen van het Dashboard, niet onmiddellijk.
+    </p>
 
-            <label for="contact_success_message">Na het contactformulier (optioneel)</label>
-            <textarea id="contact_success_message" name="contact_success_message" rows="2" maxlength="500" placeholder="Bedankt, je bericht is verzonden. We nemen zo snel mogelijk contact op."><?= e($form['contact_success_message']) ?></textarea>
+    <label for="ai_summary">AI-samenvatting van de praktijk (optioneel)</label>
+    <textarea id="ai_summary" name="ai_summary" rows="5" maxlength="2000"><?= e($form['ai_summary']) ?></textarea>
+    <p class="field-hint">
+        Een uitgebreidere, eigen samenvatting van de praktijk voor AI-zoeksystemen
+        (llms.txt) — los van de korte meta-omschrijving hierboven. Mag een paar
+        zinnen tot een korte paragraaf zijn. Leeg = deze sectie verschijnt niet in llms.txt.
+    </p>
 
-            <label for="event_registration_success_message">Na een evenement-interesse-opgave (optioneel)</label>
-            <textarea id="event_registration_success_message" name="event_registration_success_message" rows="2" maxlength="500" placeholder='Je interesse voor "{{titel}}" is doorgegeven!'><?= e($form['event_registration_success_message']) ?></textarea>
-            <p class="field-hint">Gebruik <code>{{titel}}</code> om de naam van het evenement in te voegen.</p>
+    <hr>
+    <h2>Bevestigingsberichten</h2>
+    <p class="field-hint">
+        Wat de bezoeker zelf te zien krijgt na het versturen van het
+        contactformulier, het doorgeven van interesse voor een
+        evenement, het bevestigen van een afspraak, of het uitschrijven
+        voor de nieuwsbrief. Leeg = de standaardtekst blijft gebruikt.
+    </p>
 
-            <label for="booking_success_message">Na het bevestigen van een afspraak (optioneel)</label>
-            <textarea id="booking_success_message" name="booking_success_message" rows="2" maxlength="500" placeholder="Afspraak bevestigd — tot dan!"><?= e($form['booking_success_message']) ?></textarea>
+    <label for="contact_success_message">Na het contactformulier (optioneel)</label>
+    <textarea id="contact_success_message" name="contact_success_message" rows="2" maxlength="500" placeholder="Bedankt, je bericht is verzonden. We nemen zo snel mogelijk contact op."><?= e($form['contact_success_message']) ?></textarea>
 
-            <label for="newsletter_unsubscribe_message">Na het uitschrijven voor de nieuwsbrief (optioneel)</label>
-            <textarea id="newsletter_unsubscribe_message" name="newsletter_unsubscribe_message" rows="2" maxlength="500" placeholder="Je bent uitgeschreven. Je ontvangt geen nieuwsbrief meer van {{site}}."><?= e($form['newsletter_unsubscribe_message']) ?></textarea>
-            <p class="field-hint">Gebruik <code>{{site}}</code> om de sitenaam in te voegen.</p>
+    <label for="event_registration_success_message">Na een evenement-interesse-opgave (optioneel)</label>
+    <textarea id="event_registration_success_message" name="event_registration_success_message" rows="2" maxlength="500" placeholder='Je interesse voor "{{titel}}" is doorgegeven!'><?= e($form['event_registration_success_message']) ?></textarea>
+    <p class="field-hint">Gebruik <code>{{titel}}</code> om de naam van het evenement in te voegen.</p>
 
-            <hr>
-            <h2>Structuurdata (schema.org)</h2>
-            <p class="field-hint">
-                Onzichtbare informatie voor zoekmachines en AI — verschijnt nergens
-                letterlijk op de site zelf. Elk veld hieronder is optioneel: leeg =
-                weggelaten uit het schema, net als adres/telefoon hierboven.
-            </p>
+    <label for="booking_success_message">Na het bevestigen van een afspraak (optioneel)</label>
+    <textarea id="booking_success_message" name="booking_success_message" rows="2" maxlength="500" placeholder="Afspraak bevestigd — tot dan!"><?= e($form['booking_success_message']) ?></textarea>
 
-            <label for="price_range">Prijsklasse (optioneel)</label>
+    <label for="newsletter_unsubscribe_message">Na het uitschrijven voor de nieuwsbrief (optioneel)</label>
+    <textarea id="newsletter_unsubscribe_message" name="newsletter_unsubscribe_message" rows="2" maxlength="500" placeholder="Je bent uitgeschreven. Je ontvangt geen nieuwsbrief meer van {{site}}."><?= e($form['newsletter_unsubscribe_message']) ?></textarea>
+    <p class="field-hint">Gebruik <code>{{site}}</code> om de sitenaam in te voegen.</p>
+
+    <hr>
+    <h2>Structuurdata (schema.org)</h2>
+    <p class="field-hint">
+        Onzichtbare informatie voor zoekmachines en AI — verschijnt nergens
+        letterlijk op de site zelf. Elk veld hieronder is optioneel: leeg =
+        weggelaten uit het schema, net als adres/telefoon hierboven.
+    </p>
+
+    <div class="page-form-row">
+        <label for="price_range">Prijsklasse (optioneel)
             <input type="text" id="price_range" name="price_range" value="<?= e($form['price_range']) ?>" maxlength="50" placeholder="bv. €€ of vanaf €60">
-
-            <label for="area_served">Werkgebied (optioneel)</label>
+        </label>
+        <label for="area_served">Werkgebied (optioneel)
             <input type="text" id="area_served" name="area_served" value="<?= e($form['area_served']) ?>" maxlength="200" placeholder="bv. Antwerpen en omgeving">
+        </label>
+    </div>
 
-            <label for="linkedin_url">LinkedIn-profiel (optioneel)</label>
+    <div class="page-form-row">
+        <label for="linkedin_url">LinkedIn-profiel (optioneel)
             <input type="url" id="linkedin_url" name="linkedin_url" value="<?= e($form['linkedin_url']) ?>" maxlength="300" placeholder="https://www.linkedin.com/in/...">
-
-            <label for="google_business_url">Google Business-profiel (optioneel)</label>
+        </label>
+        <label for="google_business_url">Google Business-profiel (optioneel)
             <input type="url" id="google_business_url" name="google_business_url" value="<?= e($form['google_business_url']) ?>" maxlength="300" placeholder="https://g.page/...">
+        </label>
+    </div>
 
-            <label for="person_name">Naam behandelaar (optioneel)</label>
-            <input type="text" id="person_name" name="person_name" value="<?= e($form['person_name']) ?>" maxlength="150" placeholder="bv. Wendy Tulkens">
-            <p class="field-hint">Vereist om als persoon in het schema te verschijnen — de velden hieronder worden pas gebruikt als dit is ingevuld.</p>
+    <label for="person_name">Naam behandelaar (optioneel)</label>
+    <input type="text" id="person_name" name="person_name" value="<?= e($form['person_name']) ?>" maxlength="150" placeholder="bv. Wendy Tulkens">
+    <p class="field-hint">Vereist om als persoon in het schema te verschijnen — de velden hieronder worden pas gebruikt als dit is ingevuld.</p>
 
-            <label for="person_job_title">Functietitel (optioneel)</label>
+    <div class="page-form-row">
+        <label for="person_job_title">Functietitel (optioneel)
             <input type="text" id="person_job_title" name="person_job_title" value="<?= e($form['person_job_title']) ?>" maxlength="150" placeholder="bv. Psychotherapeut">
-
-            <label for="person_expertise">Expertise (optioneel, kommagescheiden)</label>
+        </label>
+        <label for="person_expertise">Expertise (optioneel, kommagescheiden)
             <input type="text" id="person_expertise" name="person_expertise" value="<?= e($form['person_expertise']) ?>" maxlength="500" placeholder="bv. Stressmanagement, Rouwverwerking, Ouderschap">
+        </label>
+    </div>
 
-            <label for="person_bio">Korte bio (optioneel)</label>
-            <textarea id="person_bio" name="person_bio" rows="3" maxlength="1000"><?= e($form['person_bio']) ?></textarea>
+    <label for="person_bio">Korte bio (optioneel)</label>
+    <textarea id="person_bio" name="person_bio" rows="3" maxlength="1000"><?= e($form['person_bio']) ?></textarea>
 
-            <div class="page-form-actions">
-                <button type="submit">Opslaan</button>
-            </div>
-        </div>
+    <div class="page-form-actions">
+        <button type="submit">Opslaan</button>
     </div>
 </form>
 
