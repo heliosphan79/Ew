@@ -65,4 +65,4 @@ if (!$booked) {
     booking_fail('Dit moment is net ingenomen. Kies een ander moment.', 409);
 }
 
-echo json_encode(['ok' => true]);
+echo json_encode(['ok' => true, 'message' => resolve_booking_success_message(get_site_settings($mysqli))]);

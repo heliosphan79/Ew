@@ -1554,7 +1554,8 @@ function get_site_settings(mysqli $mysqli): array
                 contact_meta_description, ai_summary, contact_form_background, submission_retention_days,
                 price_range, area_served, linkedin_url, google_business_url,
                 person_name, person_job_title, person_expertise, person_bio,
-                contact_success_message, event_registration_success_message
+                contact_success_message, event_registration_success_message,
+                booking_success_message, newsletter_unsubscribe_message
              FROM site_settings WHERE id = 1'
         )->fetch_assoc();
         $settings = [
@@ -1579,6 +1580,8 @@ function get_site_settings(mysqli $mysqli): array
             'person_bio' => $row['person_bio'] ?? '',
             'contact_success_message' => $row['contact_success_message'] ?? '',
             'event_registration_success_message' => $row['event_registration_success_message'] ?? '',
+            'booking_success_message' => $row['booking_success_message'] ?? '',
+            'newsletter_unsubscribe_message' => $row['newsletter_unsubscribe_message'] ?? '',
         ];
     }
     return $settings;
@@ -1602,6 +1605,25 @@ function resolve_event_registration_success_message(array $siteSettings, string 
         $message = 'Je interesse voor "{{titel}}" is doorgegeven!';
     }
     return str_replace('{{titel}}', $eventTitle, $message);
+}
+
+// Same fallback idea for the calendar-booking confirmation, returned as JSON
+// from book-slot.php and rendered client-side (assets/js/calendar-block.js).
+function resolve_booking_success_message(array $siteSettings): string
+{
+    $message = trim((string) ($siteSettings['booking_success_message'] ?? ''));
+    return $message !== '' ? $message : 'Afspraak bevestigd — tot dan!';
+}
+
+// Same fallback idea, plus a {{site}}-merge-tag for the site name — same
+// pattern as {{titel}} above.
+function resolve_newsletter_unsubscribe_message(array $siteSettings, string $siteName): string
+{
+    $message = trim((string) ($siteSettings['newsletter_unsubscribe_message'] ?? ''));
+    if ($message === '') {
+        $message = 'Je bent uitgeschreven. Je ontvangt geen nieuwsbrief meer van {{site}}.';
+    }
+    return str_replace('{{site}}', $siteName, $message);
 }
 
 // Composes the footer's single-line address display from the structured

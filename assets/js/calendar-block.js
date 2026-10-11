@@ -172,7 +172,11 @@
                         }
                         return;
                     }
-                    root.innerHTML = '<p class="cal-confirmed">Afspraak bevestigd — tot dan!</p>';
+                    root.innerHTML = '';
+                    var confirmed = document.createElement('p');
+                    confirmed.className = 'cal-confirmed';
+                    confirmed.textContent = data.message || 'Afspraak bevestigd — tot dan!';
+                    root.appendChild(confirmed);
                 })
                 .catch(function () {
                     status.textContent = 'Boeken is mislukt door een netwerk- of serverfout.';

@@ -173,6 +173,12 @@ CREATE TABLE IF NOT EXISTS site_settings (
     -- {{voornaam}}-tag in de nieuwsbrief.
     contact_success_message             VARCHAR(500) DEFAULT NULL,
     event_registration_success_message  VARCHAR(500) DEFAULT NULL,
+    -- Zelfde idee voor de afspraakbevestiging (kalenderblok, book-slot.php)
+    -- en het uitschrijfbericht (nieuwsbrief-afmelden.php).
+    -- newsletter_unsubscribe_message ondersteunt een {{site}}-merge-tag
+    -- voor de sitenaam.
+    booking_success_message             VARCHAR(500) DEFAULT NULL,
+    newsletter_unsubscribe_message      VARCHAR(500) DEFAULT NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

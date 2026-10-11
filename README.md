@@ -527,15 +527,18 @@ Verder staan er twee eigen SEO/AI-velden op die pagina:
   (`database/migrations/010_ai_summary.sql`).
 
 Nog verder op diezelfde pagina staat "Bevestigingsberichten": de tekst die
-de bezoeker zelf te zien krijgt nadat die het contactformulier verstuurt
-of interesse doorgeeft voor een evenement (zie
+de bezoeker zelf te zien krijgt nadat die het contactformulier verstuurt,
+interesse doorgeeft voor een evenement (zie
 [Evenementenblok](#evenementenblok-lezingenworkshopsreeksen-aankondigen)
-hieronder). Twee apart instelbare velden, elk optioneel — leeg = de
+hieronder), een afspraak bevestigt via het
+[kalenderblok](#kalenderblok-afspraken-boeken), of zich uitschrijft voor
+de nieuwsbrief. Vier apart instelbare velden, elk optioneel — leeg = de
 bestaande vaste standaardtekst blijft gebruikt. Bij het bericht na een
-evenement-inschrijving kan je `{{titel}}` gebruiken, dat wordt automatisch
-vervangen door de naam van het evenement (zelfde idee als `{{voornaam}}`
-in de nieuwsbrief). Opgeslagen in `site_settings`
-(`database/migrations/022_success_messages.sql`).
+evenement-inschrijving kan je `{{titel}}` gebruiken (vervangen door de
+naam van het evenement), bij het uitschrijfbericht `{{site}}` (vervangen
+door de sitenaam) — zelfde idee als `{{voornaam}}` in de nieuwsbrief.
+Opgeslagen in `site_settings` (`database/migrations/022_success_messages.sql`,
+uitgebreid in `023_more_success_messages.sql`).
 
 ## Privacypagina
 
