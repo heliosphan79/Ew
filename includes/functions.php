@@ -44,6 +44,17 @@ function render_needle_icon(): string
         . '</svg>';
 }
 
+// Small map-pin icon for the event location chip (events block) — a
+// widely recognized "location" glyph, used to give the location its own
+// Google-Maps-style look next to the session dates.
+function render_pin_icon(): string
+{
+    return '<svg class="event-pin-icon" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+        . '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>'
+        . '<circle cx="12" cy="10" r="3"></circle>'
+        . '</svg>';
+}
+
 // Small outline icons for the public footer's contact details (address/
 // phone/email) — same minimal line-icon style as the admin set below, kept
 // as its own constant since the two icon sets serve different pages and
@@ -1266,17 +1277,23 @@ function render_events_block(array $block, mysqli $mysqli): string
         $out .= '<p class="event-description">' . nl2br(e($event['description'])) . '</p>';
 
         $out .= '<div class="event-practical">';
-        if (count($sessions) > 1) {
-            $out .= '<ul class="event-sessions-list">';
-            foreach ($sessions as $session) {
-                $out .= '<li>' . e(format_event_date($session['session_date'], $session['session_time'])) . '</li>';
+        if (!empty($sessions) || !empty($event['location'])) {
+            $out .= '<div class="event-dates-location">';
+            if (!empty($sessions)) {
+                // Always a bulleted list, even for a single session — a lone
+                // <p> right next to a bulleted list (for series) looked
+                // inconsistent, so both now share the same compass-bullet
+                // look used elsewhere on the site (.list-bullet).
+                $out .= '<ul class="event-sessions-list list-bullet">';
+                foreach ($sessions as $session) {
+                    $out .= '<li>' . render_needle_icon() . '<span>' . e(format_event_date($session['session_date'], $session['session_time'])) . '</span></li>';
+                }
+                $out .= '</ul>';
             }
-            $out .= '</ul>';
-        } elseif (count($sessions) === 1) {
-            $out .= '<p class="event-session">' . e(format_event_date($sessions[0]['session_date'], $sessions[0]['session_time'])) . '</p>';
-        }
-        if (!empty($event['location'])) {
-            $out .= '<p class="event-location">' . e($event['location']) . '</p>';
+            if (!empty($event['location'])) {
+                $out .= '<p class="event-location">' . render_pin_icon() . '<span>' . e($event['location']) . '</span></p>';
+            }
+            $out .= '</div>';
         }
         if ($price !== '') {
             $out .= '<p class="event-price">' . e(format_event_price($price)) . '</p>';

@@ -306,7 +306,13 @@ sessiedatums en (optioneel) een maximum aantal plaatsen.
   genoemd — minder verplichtend, want het is een vrijblijvende
   interesse-opgave, geen bevestigde boeking. Eén sessie toont gewoon die
   datum; een reeks toont elke sessiedatum apart (tijden kunnen per sessie
-  verschillen), zonder expliciet "N sessies" te vermelden.
+  verschillen), zonder expliciet "N sessies" te vermelden. De sessiedatums
+  krijgen dezelfde kompasnaald-bullet als een gewoon bullet-lijstje elders
+  op de site (`.list-bullet`, `render_needle_icon()`), in het normale
+  lettertype — niet verkleind/grijs zoals voorheen. De locatie staat ernaast
+  (rechts, of eronder op een smal scherm) als een los "chip"-labeltje met
+  een pin-icoontje, Google Maps-achtig. De prijs staat als een subtiel
+  label onder de datums/locatie: duidelijk leesbaar maar niet nadrukkelijk.
 - **Aantal vrije plaatsen pas zichtbaar bij oplopende bezetting**
   (`event_capacity_status()` in `functions.php`, gedeeld door het
   website-evenementenblok en het compacte nieuwsbriefblok hieronder): bij
