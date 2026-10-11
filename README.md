@@ -502,43 +502,41 @@ placeholder stonden — vul zelf aan via het beheerpaneel zodra je ze hebt:
 
 ## Site-instellingen (footer + contactpagina)
 
-Via "Instellingen" in het beheerpaneel (`admin/settings.php`) vul je adres
-(straat, postcode en gemeente als aparte velden — zie hieronder),
-telefoonnummer en e-mailadres in — die verschijnen dan automatisch in de
-voettekst van elke pagina (telefoon/e-mail als klikbare `tel:`/`mailto:`-
-links, adres samengevoegd tot één regel). Een leeg veld wordt gewoon niet
-getoond; er wordt nergens iets verzonnen. Opgeslagen in de eenrijige tabel
-`site_settings` (`database/migrations/006_site_settings.sql`,
+"Instellingen" in het beheerpaneel is verdeeld over vier tabbladen
+(`admin/settings.php`, `settings-seo.php`, `settings-messages.php`,
+`settings-schema.php`, elk met hun eigen `UPDATE`-query op dezelfde
+`site_settings`-rij) — was oorspronkelijk één lange pagina, opgesplitst
+omdat die met alle onderstaande velden samen te lang werd om nog
+overzichtelijk te zijn. Een gedeelde tab-balk (`settings-tabs.php`)
+bovenaan elke pagina springt tussen de vier.
+
+**Tabblad "Algemeen"**: adres (straat, postcode en gemeente als aparte
+velden), telefoonnummer en e-mailadres — die verschijnen dan automatisch
+in de voettekst van elke pagina (telefoon/e-mail als klikbare
+`tel:`/`mailto:`-links, adres samengevoegd tot één regel). Een leeg veld
+wordt gewoon niet getoond; er wordt nergens iets verzonnen. Opgeslagen in
+de eenrijige tabel `site_settings` (`database/migrations/006_site_settings.sql`,
 uitgebreid in `019_schema_privacy_faq.sql`).
 - Beschikbare tijdsloten voor het kalenderblok (anders toont dat blok niets).
 
-Verderop op diezelfde pagina staat "Structuurdata (schema.org)": prijsklasse,
-werkgebied, LinkedIn-/Google Business-link, en Wendy als persoon (naam,
-functietitel, expertise, korte bio) — allemaal onzichtbaar op de site zelf,
-enkel voor zoekmachines/AI, en elk veld apart optioneel. Zie
-[SEO & vindbaarheid voor AI-zoekfuncties](#seo--vindbaarheid-voor-ai-zoekfuncties)
-hieronder voor hoe dit precies in het JSON-LD terechtkomt.
-
-Op diezelfde pagina staat ook "Inhoud contactpagina": dezelfde
+Op datzelfde tabblad staat ook "Inhoud contactpagina": dezelfde
 blokkenbouwer als bij een gewone pagina (tekst, foto, kaart, ...), die op
 `/contact` verschijnt bóven het vaste contactformulier. Het formulier zelf
 (velden, validatie, opslag van inzendingen) blijft vast en is niet via
 blokken aanpasbaar — enkel de inhoud ervoor is vrij in te vullen. Leeg =
 enkel het formulier, zoals voorheen. Opgeslagen in dezelfde `site_settings`-
-rij, kolom `content` (`database/migrations/007_contact_content.sql`). Het
-formulier zelf kan wel een achtergrond krijgen ("Geen"/"Accentkleur"/
-"Zachte kaart", dezelfde opties als op een content-blok) via "Achtergrond
-contactformulier" op diezelfde pagina
-(`database/migrations/011_contact_form_background.sql`).
+rij, kolom `content` (`database/migrations/007_contact_content.sql`).
 
-Ook op die pagina: **bewaartermijn contactberichten & inschrijvingen**
-("Voor altijd"/90/180/365/730 dagen) — contactberichten en evenement-
-inschrijvingen ouder dan de gekozen termijn worden automatisch verwijderd
-(naam, e-mailadres, bericht, IP-adres). Gebeurt bij het openen van het
-Dashboard, niet onmiddellijk bij het wijzigen van de instelling
-(`database/migrations/012_submission_retention.sql`).
-
-Verder staan er twee eigen SEO/AI-velden op die pagina:
+**Tabblad "Weergave & SEO"**: achtergrond van het contactformulier zelf
+("Geen"/"Accentkleur"/"Zachte kaart", dezelfde opties als op een
+content-blok, `database/migrations/011_contact_form_background.sql`),
+**bewaartermijn contactberichten & inschrijvingen** ("Voor altijd"/90/180/
+365/730 dagen — contactberichten en evenement-inschrijvingen ouder dan de
+gekozen termijn worden automatisch verwijderd: naam, e-mailadres,
+bericht, IP-adres; gebeurt bij het openen van het Dashboard, niet
+onmiddellijk bij het wijzigen van de instelling,
+`database/migrations/012_submission_retention.sql`), en twee eigen
+SEO/AI-velden:
 - **Titel/meta-omschrijving contactpagina**: `/contact` had tot nu toe een
   vaste, hardcoded titel en omschrijving. Leeg = die vaste tekst blijft
   gebruikt (`database/migrations/009_contact_seo_fields.sql`).
@@ -549,9 +547,9 @@ Verder staan er twee eigen SEO/AI-velden op die pagina:
   hieronder. Leeg = die sectie verschijnt simpelweg niet
   (`database/migrations/010_ai_summary.sql`).
 
-Nog verder op diezelfde pagina staat "Bevestigingsberichten": de tekst die
-de bezoeker zelf te zien krijgt nadat die het contactformulier verstuurt,
-interesse doorgeeft voor een evenement (zie
+**Tabblad "Bevestigingsberichten"**: de tekst die de bezoeker zelf te zien
+krijgt nadat die het contactformulier verstuurt, interesse doorgeeft voor
+een evenement (zie
 [Evenementenblok](#evenementenblok-lezingenworkshopsreeksen-aankondigen)
 hieronder), een afspraak bevestigt via het
 [kalenderblok](#kalenderblok-afspraken-boeken), of zich uitschrijft voor
@@ -562,6 +560,13 @@ naam van het evenement), bij het uitschrijfbericht `{{site}}` (vervangen
 door de sitenaam) — zelfde idee als `{{voornaam}}` in de nieuwsbrief.
 Opgeslagen in `site_settings` (`database/migrations/022_success_messages.sql`,
 uitgebreid in `023_more_success_messages.sql`).
+
+**Tabblad "Structuurdata"**: prijsklasse, werkgebied, LinkedIn-/Google
+Business-link, en Wendy als persoon (naam, functietitel, expertise, korte
+bio) — allemaal onzichtbaar op de site zelf, enkel voor zoekmachines/AI,
+en elk veld apart optioneel. Zie
+[SEO & vindbaarheid voor AI-zoekfuncties](#seo--vindbaarheid-voor-ai-zoekfuncties)
+hieronder voor hoe dit precies in het JSON-LD terechtkomt.
 
 ## Privacypagina
 
