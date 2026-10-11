@@ -927,19 +927,28 @@ main.wrap {
    :hover above and silence the lift — this repeats it at matching
    specificity so hovering still works after the reveal has run. */
 html.js .block-events[data-animate].is-visible .event-card:hover { transform: translateY(-3px); }
-.event-card h3 { font-family: var(--font-heading); font-size: 1.2rem; margin: 0.35rem 0 0.5rem; }
-.event-location { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem; }
+.event-card h3 { font-family: var(--font-heading); font-size: 1.2rem; margin: 0 0 0.5rem; }
 .event-description { margin: 0 0 1rem; }
 .event-description:last-child { margin-bottom: 0; }
-.event-price { font-weight: 600; margin: 0 0 1rem; }
 
-/* Replaces the single eyebrow date for a multi-session series — each
-   session gets its own line, since sessions can have different times. */
+/* Groups the "practical info" lines (session date(s), location, price) —
+   deliberately placed after the title/description, not before: a visitor
+   reads what the event is about first, then the logistics. */
+.event-practical { margin: 0 0 1rem; }
+.event-practical:empty { margin: 0; }
+.event-session, .event-location, .event-price {
+    font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.3rem;
+}
+.event-price:last-child, .event-location:last-child, .event-session:last-child { margin-bottom: 0; }
+
+/* One line per session in a series — each can have its own time, so they
+   can't collapse into a single summary line the way a single date can. */
 .event-sessions-list {
-    list-style: none; margin: 0 0 0.5rem; padding: 0;
+    list-style: none; margin: 0 0 0.3rem; padding: 0;
     font-size: 0.85rem; color: var(--text-muted);
 }
 .event-sessions-list li { margin-bottom: 0.2rem; }
+.event-sessions-list:last-child { margin-bottom: 0; }
 
 .event-badge {
     display: inline-block; padding: 0.2rem 0.7rem; border-radius: 100px;

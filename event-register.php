@@ -21,6 +21,7 @@ if (!empty($_POST['website'])) {
 $eventId = (int) ($_POST['event_id'] ?? 0);
 $name = trim((string) ($_POST['name'] ?? ''));
 $email = trim((string) ($_POST['email'] ?? ''));
+$phone = trim((string) ($_POST['phone'] ?? ''));
 
 if ($eventId <= 0) {
     redirect($redirectTarget);
@@ -31,6 +32,10 @@ if ($name === '' || mb_strlen($name) > 150) {
 }
 if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190) {
     set_flash('error', 'Vul een geldig e-mailadres in.');
+    redirect($redirectTarget);
+}
+if (mb_strlen($phone) > 50) {
+    set_flash('error', 'Telefoonnummer is te lang.');
     redirect($redirectTarget);
 }
 
@@ -70,11 +75,12 @@ try {
     }
 
     $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+    $phoneValue = $phone !== '' ? $phone : null;
     $notifyNextSeries = !empty($_POST['notify_next_series']) ? 1 : 0;
     $stmt = $mysqli->prepare(
-        'INSERT INTO event_registrations (event_id, name, email, notify_next_series, ip_address) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO event_registrations (event_id, name, email, phone, notify_next_series, ip_address) VALUES (?, ?, ?, ?, ?, ?)'
     );
-    $stmt->bind_param('issis', $eventId, $name, $email, $notifyNextSeries, $ip);
+    $stmt->bind_param('isssis', $eventId, $name, $email, $phoneValue, $notifyNextSeries, $ip);
     $stmt->execute();
     $stmt->close();
 

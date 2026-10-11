@@ -53,13 +53,14 @@ require __DIR__ . '/includes/header.php';
     <div class="table-scroll">
     <table class="admin-table">
         <thead>
-        <tr><th>Naam</th><th>E-mail</th><th>Ingeschreven op</th><th>Volgende reeks?</th><th></th></tr>
+        <tr><th>Naam</th><th>E-mail</th><th>Telefoon</th><th>Ingeschreven op</th><th>Volgende reeks?</th><th></th></tr>
         </thead>
         <tbody>
         <?php foreach ($registrations as $registration): ?>
             <tr>
                 <td><?= e($registration['name']) ?></td>
                 <td><a href="mailto:<?= e($registration['email']) ?>"><?= e($registration['email']) ?></a></td>
+                <td><?= !empty($registration['phone']) ? '<a href="tel:' . e(preg_replace('/[^0-9+]/', '', $registration['phone'])) . '">' . e($registration['phone']) . '</a>' : '' ?></td>
                 <td><?= e(date('d/m/Y H:i', strtotime($registration['registered_at']))) ?></td>
                 <td><?= $registration['notify_next_series'] ? 'Ja' : '' ?></td>
                 <td class="admin-table-actions">

@@ -60,7 +60,7 @@ if (!empty($events)) {
         $price = trim((string) $event['price']);
         $description = trim((string) $event['description']);
 
-        $meta = array_filter([$when, $where, $price !== '' ? $price : null]);
+        $meta = array_filter([$when, $where, $price !== '' ? format_event_price($price) : null]);
         echo '- ' . $event['title'] . ' (' . implode(', ', $meta) . ')' .
             ($description !== '' ? ': ' . $description : '') . "\n";
     }

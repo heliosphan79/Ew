@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS event_registrations (
     event_id            INT UNSIGNED NOT NULL,
     name                VARCHAR(150) NOT NULL,
     email               VARCHAR(190) NOT NULL,
+    phone               VARCHAR(50) DEFAULT NULL,
     -- "Hou me op de hoogte van een volgende reeks" — a separate opt-in from
     -- the newsletter checkbox (which isn't stored here at all, see
     -- event-register.php): this is per-registration admin-visible intent,
