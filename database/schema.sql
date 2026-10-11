@@ -68,27 +68,53 @@ CREATE TABLE IF NOT EXISTS calendar_slots (
 -- Events (lectures, workshops, ...) for the "Evenementen" block. Registering
 -- is capacity-checked atomically in public/event-register.php (transaction +
 -- SELECT ... FOR UPDATE) so two visitors can never both take the last spot.
+-- One registration covers the whole event (all its sessions, see
+-- event_sessions below) — capacity is per event, not per session.
 CREATE TABLE IF NOT EXISTS events (
-    id                INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    title             VARCHAR(200) NOT NULL,
-    description       TEXT NOT NULL,
-    event_date        DATE NOT NULL,
-    event_time        TIME DEFAULT NULL,
-    location          VARCHAR(200) DEFAULT NULL,
+    id                   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    title                VARCHAR(200) NOT NULL,
+    description          TEXT NOT NULL,
+    location             VARCHAR(200) DEFAULT NULL,
     -- NULL = unlimited capacity.
-    capacity          INT UNSIGNED DEFAULT NULL,
-    published         TINYINT(1) NOT NULL DEFAULT 0,
-    created_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    capacity             INT UNSIGNED DEFAULT NULL,
+    -- Free text, not a decimal — matches price_range in site_settings:
+    -- allows "Gratis", "€60", "€180 voor de volledige reeks", ... No
+    -- payment processing happens anywhere in this app, this is info-only.
+    price                VARCHAR(50) DEFAULT NULL,
+    -- "Inschrijven ten laatste op" — inclusive (registration still allowed
+    -- on this date itself). NULL = no deadline, registration stays open
+    -- until the event's last session has passed.
+    registration_deadline DATE DEFAULT NULL,
+    published            TINYINT(1) NOT NULL DEFAULT 0,
+    created_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- One or more session dates per event — a single-date talk has exactly one
+-- row here, a multi-week series has one row per session. Always queried
+-- together with its event (see format_event_sessions()/render_events_block()
+-- in functions.php), never shown on its own.
+CREATE TABLE IF NOT EXISTS event_sessions (
+    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    event_id      INT UNSIGNED NOT NULL,
+    session_date  DATE NOT NULL,
+    session_time  TIME DEFAULT NULL,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    INDEX idx_event_sessions_event_date (event_id, session_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS event_registrations (
-    id            INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    event_id      INT UNSIGNED NOT NULL,
-    name          VARCHAR(150) NOT NULL,
-    email         VARCHAR(190) NOT NULL,
-    registered_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ip_address    VARCHAR(45) DEFAULT NULL,
+    id                  INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    event_id            INT UNSIGNED NOT NULL,
+    name                VARCHAR(150) NOT NULL,
+    email               VARCHAR(190) NOT NULL,
+    -- "Hou me op de hoogte van een volgende reeks" — a separate opt-in from
+    -- the newsletter checkbox (which isn't stored here at all, see
+    -- event-register.php): this is per-registration admin-visible intent,
+    -- not a mailing-list subscription.
+    notify_next_series  TINYINT(1) NOT NULL DEFAULT 0,
+    registered_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ip_address          VARCHAR(45) DEFAULT NULL,
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

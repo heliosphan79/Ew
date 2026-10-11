@@ -11,7 +11,7 @@ csrf_verify();
 
 $id = (int) ($_POST['id'] ?? 0);
 if ($id > 0) {
-    // ON DELETE CASCADE on event_registrations takes care of its rows.
+    // ON DELETE CASCADE on event_registrations/event_sessions takes care of their rows.
     $stmt = $mysqli->prepare('DELETE FROM events WHERE id = ?');
     $stmt->bind_param('i', $id);
     $stmt->execute();

@@ -931,6 +931,15 @@ html.js .block-events[data-animate].is-visible .event-card:hover { transform: tr
 .event-location { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 0.75rem; }
 .event-description { margin: 0 0 1rem; }
 .event-description:last-child { margin-bottom: 0; }
+.event-price { font-weight: 600; margin: 0 0 1rem; }
+
+/* Replaces the single eyebrow date for a multi-session series — each
+   session gets its own line, since sessions can have different times. */
+.event-sessions-list {
+    list-style: none; margin: 0 0 0.5rem; padding: 0;
+    font-size: 0.85rem; color: var(--text-muted);
+}
+.event-sessions-list li { margin-bottom: 0.2rem; }
 
 .event-badge {
     display: inline-block; padding: 0.2rem 0.7rem; border-radius: 100px;

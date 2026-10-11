@@ -20,10 +20,12 @@ $contactMetaDescription = trim((string) $siteSettings['contact_meta_description'
 $aiSummary = trim((string) $siteSettings['ai_summary']);
 
 $events = $mysqli->query(
-    'SELECT title, description, event_date, event_time, location
-     FROM events
-     WHERE published = 1 AND event_date >= CURDATE()
-     ORDER BY event_date ASC, event_time ASC
+    'SELECT e.id, e.title, e.description, e.location, e.price,
+        (SELECT MIN(s.session_date) FROM event_sessions s WHERE s.event_id = e.id AND s.session_date >= CURDATE()) AS next_session_date
+     FROM events e
+     WHERE e.published = 1
+       AND EXISTS (SELECT 1 FROM event_sessions s WHERE s.event_id = e.id AND s.session_date >= CURDATE())
+     ORDER BY next_session_date ASC
      LIMIT 10'
 )->fetch_all(MYSQLI_ASSOC);
 
@@ -53,11 +55,13 @@ echo '- [Contact](' . absolute_url($siteUrl, '/contact') . ')' .
 if (!empty($events)) {
     echo "\n## Evenementen\n\n";
     foreach ($events as $event) {
-        $when = format_event_date($event['event_date'], $event['event_time']);
+        $when = format_event_sessions_summary(get_event_sessions($mysqli, (int) $event['id'], true));
         $where = trim((string) $event['location']);
+        $price = trim((string) $event['price']);
         $description = trim((string) $event['description']);
 
-        echo '- ' . $event['title'] . ' (' . $when . ($where !== '' ? ', ' . $where : '') . ')' .
+        $meta = array_filter([$when, $where, $price !== '' ? $price : null]);
+        echo '- ' . $event['title'] . ' (' . implode(', ', $meta) . ')' .
             ($description !== '' ? ': ' . $description : '') . "\n";
     }
 }
