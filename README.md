@@ -284,8 +284,12 @@ sessiedatums en (optioneel) een maximum aantal plaatsen.
   knoppenblok's "Label | URL". **Eén inschrijving/interesse-opgave geldt
   voor de volledige reeks** — de capaciteit en prijs gelden dus ook voor de
   reeks als geheel, niet per individuele sessie.
-- **Prijs** (optioneel, vrije tekst — bv. "€60", "Gratis", "€180 voor de
-  volledige reeks"): puur informatief, geen betaalverwerking.
+- **Prijs** (optioneel, vrije tekst — bv. "140", "Gratis", "€180 voor de
+  volledige reeks"): puur informatief, geen betaalverwerking. Een kaal
+  getal wordt automatisch getoond als "Kostprijs: €140"
+  (`format_event_price()` in `functions.php`) — typ je zelf al een
+  €-teken of een woord als "Gratis", dan wordt dat niet nogmaals
+  voorafgegaan door een €-teken, enkel door het "Kostprijs: "-label.
 - **Inschrijven ten laatste op** (optioneel): een deadline waarna de
   interesse-opgave automatisch sluit (inclusief die datum zelf), ook als
   er nog plaatsen vrij zijn of de eerste sessie nog niet geweest is — toont
@@ -293,14 +297,16 @@ sessiedatums en (optioneel) een maximum aantal plaatsen.
   = open zolang er nog een sessie moet plaatsvinden.
 - **Op de site** toont het evenementenblok automatisch de eerstkomende
   6 gepubliceerde evenementen met nog minstens één aankomende sessie, elk
-  met een "Ik heb interesse"-uitklapper (`<details>`/`<summary>`, geen
-  JavaScript nodig) met een naam/e-mailveld en een vinkje "Hou me op de
-  hoogte van een volgende reeks" (apart van het nieuwsbrief-opt-in-vinkje,
-  zichtbaar voor de beheerder via de inschrijvingenlijst). Bewust niet
-  "Schrijf je in" genoemd — minder verplichtend, want het is een vrijblijvende
-  interesse-opgave, geen bevestigde boeking. Eén sessie toont de datum
-  zoals voorheen; een reeks toont elke sessiedatum apart (tijden kunnen
-  per sessie verschillen) onder een "N sessies"-label.
+  met titel en beschrijving eerst, dan de praktische info (sessiedatums,
+  locatie, prijs), en daaronder een "Ik heb interesse"-uitklapper
+  (`<details>`/`<summary>`, geen JavaScript nodig) met naam, e-mailadres,
+  telefoonnummer (optioneel) en een vinkje "Hou me op de hoogte van een
+  volgende reeks" (apart van het nieuwsbrief-opt-in-vinkje, zichtbaar voor
+  de beheerder via de inschrijvingenlijst). Bewust niet "Schrijf je in"
+  genoemd — minder verplichtend, want het is een vrijblijvende
+  interesse-opgave, geen bevestigde boeking. Eén sessie toont gewoon die
+  datum; een reeks toont elke sessiedatum apart (tijden kunnen per sessie
+  verschillen), zonder expliciet "N sessies" te vermelden.
 - **Aantal vrije plaatsen pas zichtbaar bij oplopende bezetting**
   (`event_capacity_status()` in `functions.php`, gedeeld door het
   website-evenementenblok en het compacte nieuwsbriefblok hieronder): bij
@@ -519,6 +525,20 @@ Verder staan er twee eigen SEO/AI-velden op die pagina:
   [SEO & vindbaarheid voor AI-zoekfuncties](#seo--vindbaarheid-voor-ai-zoekfuncties)
   hieronder. Leeg = die sectie verschijnt simpelweg niet
   (`database/migrations/010_ai_summary.sql`).
+
+Nog verder op diezelfde pagina staat "Bevestigingsberichten": de tekst die
+de bezoeker zelf te zien krijgt nadat die het contactformulier verstuurt,
+interesse doorgeeft voor een evenement (zie
+[Evenementenblok](#evenementenblok-lezingenworkshopsreeksen-aankondigen)
+hieronder), een afspraak bevestigt via het
+[kalenderblok](#kalenderblok-afspraken-boeken), of zich uitschrijft voor
+de nieuwsbrief. Vier apart instelbare velden, elk optioneel — leeg = de
+bestaande vaste standaardtekst blijft gebruikt. Bij het bericht na een
+evenement-inschrijving kan je `{{titel}}` gebruiken (vervangen door de
+naam van het evenement), bij het uitschrijfbericht `{{site}}` (vervangen
+door de sitenaam) — zelfde idee als `{{voornaam}}` in de nieuwsbrief.
+Opgeslagen in `site_settings` (`database/migrations/022_success_messages.sql`,
+uitgebreid in `023_more_success_messages.sql`).
 
 ## Privacypagina
 

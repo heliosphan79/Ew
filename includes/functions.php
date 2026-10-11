@@ -1158,6 +1158,22 @@ function format_event_sessions_summary(array $sessions): string
     return count($sessions) . ' sessies, vanaf ' . format_event_date($sessions[0]['session_date'], $sessions[0]['session_time']);
 }
 
+// The price field is free text (so "Gratis", "€60 per sessie", ... all
+// stay possible), but the common case is an admin just typing a bare
+// number ("140") — prefix that with "Kostprijs: €" automatically rather
+// than requiring the € sign and label to be typed in every time. A value
+// that isn't a plain number (already has its own wording/symbol) is only
+// prefixed with the "Kostprijs: " label, never a second € sign.
+function format_event_price(string $price): string
+{
+    $price = trim($price);
+    if ($price === '') {
+        return '';
+    }
+    $amount = is_numeric(str_replace(',', '.', $price)) ? '€' . $price : $price;
+    return 'Kostprijs: ' . $amount;
+}
+
 // "Inschrijven ten laatste op" is inclusive — a visitor can still register
 // on the deadline date itself. No deadline set = always open (until the
 // event has no upcoming sessions left at all, which the listing query
@@ -1246,24 +1262,26 @@ function render_events_block(array $block, mysqli $mysqli): string
         $registrationOpen = is_event_registration_open($event['registration_deadline'] ?? null);
 
         $out .= '<article class="event-card">';
+        $out .= '<h3>' . e($event['title']) . '</h3>';
+        $out .= '<p class="event-description">' . nl2br(e($event['description'])) . '</p>';
+
+        $out .= '<div class="event-practical">';
         if (count($sessions) > 1) {
-            $out .= '<span class="eyebrow">' . count($sessions) . ' sessies</span>';
             $out .= '<ul class="event-sessions-list">';
             foreach ($sessions as $session) {
                 $out .= '<li>' . e(format_event_date($session['session_date'], $session['session_time'])) . '</li>';
             }
             $out .= '</ul>';
         } elseif (count($sessions) === 1) {
-            $out .= '<span class="eyebrow">' . e(format_event_date($sessions[0]['session_date'], $sessions[0]['session_time'])) . '</span>';
+            $out .= '<p class="event-session">' . e(format_event_date($sessions[0]['session_date'], $sessions[0]['session_time'])) . '</p>';
         }
-        $out .= '<h3>' . e($event['title']) . '</h3>';
         if (!empty($event['location'])) {
             $out .= '<p class="event-location">' . e($event['location']) . '</p>';
         }
-        $out .= '<p class="event-description">' . nl2br(e($event['description'])) . '</p>';
         if ($price !== '') {
-            $out .= '<p class="event-price">' . e($price) . '</p>';
+            $out .= '<p class="event-price">' . e(format_event_price($price)) . '</p>';
         }
+        $out .= '</div>';
 
         if ($capacity !== null) {
             $status = event_capacity_status($capacity, $registered);
@@ -1290,6 +1308,8 @@ function render_events_block(array $block, mysqli $mysqli): string
             $out .= '<input type="text" id="event-name-' . $eventId . '" name="name" required>';
             $out .= '<label for="event-email-' . $eventId . '">E-mailadres</label>';
             $out .= '<input type="email" id="event-email-' . $eventId . '" name="email" required>';
+            $out .= '<label for="event-phone-' . $eventId . '">Telefoonnummer (optioneel)</label>';
+            $out .= '<input type="tel" id="event-phone-' . $eventId . '" name="phone">';
             $out .= '<label class="form-checkbox-row" for="event-newsletter-' . $eventId . '">';
             $out .= '<input type="checkbox" id="event-newsletter-' . $eventId . '" name="newsletter_optin" value="1">';
             $out .= '<span>Ja, ik wil graag de nieuwsbrief ontvangen.</span>';
@@ -1533,7 +1553,9 @@ function get_site_settings(mysqli $mysqli): array
             'SELECT street_address, postal_code, city, phone, email, content, contact_meta_title,
                 contact_meta_description, ai_summary, contact_form_background, submission_retention_days,
                 price_range, area_served, linkedin_url, google_business_url,
-                person_name, person_job_title, person_expertise, person_bio
+                person_name, person_job_title, person_expertise, person_bio,
+                contact_success_message, event_registration_success_message,
+                booking_success_message, newsletter_unsubscribe_message
              FROM site_settings WHERE id = 1'
         )->fetch_assoc();
         $settings = [
@@ -1556,9 +1578,52 @@ function get_site_settings(mysqli $mysqli): array
             'person_job_title' => $row['person_job_title'] ?? '',
             'person_expertise' => $row['person_expertise'] ?? '',
             'person_bio' => $row['person_bio'] ?? '',
+            'contact_success_message' => $row['contact_success_message'] ?? '',
+            'event_registration_success_message' => $row['event_registration_success_message'] ?? '',
+            'booking_success_message' => $row['booking_success_message'] ?? '',
+            'newsletter_unsubscribe_message' => $row['newsletter_unsubscribe_message'] ?? '',
         ];
     }
     return $settings;
+}
+
+// Admin-editable, with the original hardcoded copy as the fallback — never
+// leaves a visitor looking at a blank confirmation just because the field
+// was never filled in.
+function resolve_contact_success_message(array $siteSettings): string
+{
+    $message = trim((string) ($siteSettings['contact_success_message'] ?? ''));
+    return $message !== '' ? $message : 'Bedankt, je bericht is verzonden. We nemen zo snel mogelijk contact op.';
+}
+
+// Same fallback idea, plus a {{titel}}-merge-tag for the event name — same
+// pattern as {{voornaam}} in the newsletter (render_newsletter_merge_tags()).
+function resolve_event_registration_success_message(array $siteSettings, string $eventTitle): string
+{
+    $message = trim((string) ($siteSettings['event_registration_success_message'] ?? ''));
+    if ($message === '') {
+        $message = 'Je interesse voor "{{titel}}" is doorgegeven!';
+    }
+    return str_replace('{{titel}}', $eventTitle, $message);
+}
+
+// Same fallback idea for the calendar-booking confirmation, returned as JSON
+// from book-slot.php and rendered client-side (assets/js/calendar-block.js).
+function resolve_booking_success_message(array $siteSettings): string
+{
+    $message = trim((string) ($siteSettings['booking_success_message'] ?? ''));
+    return $message !== '' ? $message : 'Afspraak bevestigd — tot dan!';
+}
+
+// Same fallback idea, plus a {{site}}-merge-tag for the site name — same
+// pattern as {{titel}} above.
+function resolve_newsletter_unsubscribe_message(array $siteSettings, string $siteName): string
+{
+    $message = trim((string) ($siteSettings['newsletter_unsubscribe_message'] ?? ''));
+    if ($message === '') {
+        $message = 'Je bent uitgeschreven. Je ontvangt geen nieuwsbrief meer van {{site}}.';
+    }
+    return str_replace('{{site}}', $siteName, $message);
 }
 
 // Composes the footer's single-line address display from the structured
@@ -2045,13 +2110,13 @@ function render_newsletter_events_block(array $block, mysqli $mysqli): string
         $rowStyle = 'padding:12px 0;' . ($i < $count - 1 ? 'border-bottom:' . $rowBorder : '');
 
         $out .= '<div style="' . $rowStyle . '">';
-        $out .= '<p style="margin:0 0 2px;font-size:0.85rem;font-weight:600;color:inherit;opacity:0.75;">' . e(format_event_sessions_summary($sessions)) . '</p>';
         $out .= '<p style="margin:0 0 4px;font-size:1.05rem;font-weight:600;color:inherit;">' . e($event['title']) . '</p>';
+        $out .= '<p style="margin:0 0 2px;font-size:0.85rem;color:inherit;opacity:0.75;">' . e(format_event_sessions_summary($sessions)) . '</p>';
         if (!empty($event['location'])) {
             $out .= '<p style="margin:0;font-size:0.9rem;color:inherit;opacity:0.85;">' . e($event['location']) . '</p>';
         }
         if ($price !== '') {
-            $out .= '<p style="margin:2px 0 0;font-size:0.9rem;color:inherit;opacity:0.85;">' . e($price) . '</p>';
+            $out .= '<p style="margin:2px 0 0;font-size:0.9rem;color:inherit;opacity:0.85;">' . e(format_event_price($price)) . '</p>';
         }
         if ($capacity !== null) {
             $status = event_capacity_status($capacity, $registered);

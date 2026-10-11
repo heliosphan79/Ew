@@ -19,6 +19,8 @@ if ($token !== '') {
     $stmt->close();
 }
 
+$unsubscribeMessage = $done ? resolve_newsletter_unsubscribe_message(get_site_settings($mysqli), $siteName) : '';
+
 $pageTitle = 'Uitschrijven nieuwsbrief';
 $metaDescription = null;
 $canonicalUrl = null;
@@ -34,7 +36,7 @@ require __DIR__ . '/includes/header.php';
 <article class="page-content">
     <h1>Uitschrijven nieuwsbrief</h1>
     <?php if ($done): ?>
-        <p>Je bent uitgeschreven. Je ontvangt geen nieuwsbrief meer van <?= e($siteName) ?>.</p>
+        <p><?= e($unsubscribeMessage) ?></p>
     <?php else: ?>
         <p>Deze link is ongeldig of je was al uitgeschreven.</p>
     <?php endif; ?>

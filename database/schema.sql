@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS event_registrations (
     event_id            INT UNSIGNED NOT NULL,
     name                VARCHAR(150) NOT NULL,
     email               VARCHAR(190) NOT NULL,
+    phone               VARCHAR(50) DEFAULT NULL,
     -- "Hou me op de hoogte van een volgende reeks" — a separate opt-in from
     -- the newsletter checkbox (which isn't stored here at all, see
     -- event-register.php): this is per-registration admin-visible intent,
@@ -164,6 +165,20 @@ CREATE TABLE IF NOT EXISTS site_settings (
     -- Bewaartermijn (in dagen) voor contactberichten en evenement-
     -- inschrijvingen. NULL = voor altijd bewaren (de standaard).
     submission_retention_days SMALLINT UNSIGNED DEFAULT NULL,
+    -- Bevestigingsberichten die de bezoeker zelf te zien krijgt na het
+    -- versturen van het contactformulier / een evenement-interesse-opgave.
+    -- Leeg = de hardcoded standaardtekst blijft gebruikt (zie contact.php /
+    -- event-register.php). event_registration_success_message ondersteunt
+    -- een {{titel}}-merge-tag voor de evenementnaam, zelfde idee als de
+    -- {{voornaam}}-tag in de nieuwsbrief.
+    contact_success_message             VARCHAR(500) DEFAULT NULL,
+    event_registration_success_message  VARCHAR(500) DEFAULT NULL,
+    -- Zelfde idee voor de afspraakbevestiging (kalenderblok, book-slot.php)
+    -- en het uitschrijfbericht (nieuwsbrief-afmelden.php).
+    -- newsletter_unsubscribe_message ondersteunt een {{site}}-merge-tag
+    -- voor de sitenaam.
+    booking_success_message             VARCHAR(500) DEFAULT NULL,
+    newsletter_unsubscribe_message      VARCHAR(500) DEFAULT NULL,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
