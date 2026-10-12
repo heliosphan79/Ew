@@ -653,8 +653,10 @@ geïnstalleerd en kan je op elk moment activeren.
     opgehangen "kiekjes" die rechttrekken bij hover, een grote
     gecentreerde quote, pil-knoppen met pijl, eigen ringetjes als bullets
     (de kompasnaald-iconen zijn verborgen), een reveal die van links
-    binnenkomt, en een eigen logo (een spiraal naar binnen met koperen
-    kern, het woordmerk in kleine letters). Kleurschema's: "Crème &
+    binnenkomt, en een eigen logo (een spiraal die naar binnen draait en
+    eindigt in een koperen punt dat opgloeit; hij tekent zichzelf bij het
+    laden, draait mee met het scrollen, en het woordmerk staat in kleine
+    letters). Kleurschema's: "Crème &
     terracotta", "Bos & crème" en "Terracotta & klei" — afgeleid van de
     kleuren in het logo-ontwerp.
 
