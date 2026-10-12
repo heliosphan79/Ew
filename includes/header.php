@@ -61,6 +61,10 @@ if ($currentPath === '') {
 .theme-preview-bar a.is-active{opacity:1;background:rgba(255,255,255,0.18);font-weight:600;}
 .theme-preview-bar-exit{opacity:1;font-weight:600;border:1px solid rgba(255,255,255,0.4);}
 .theme-preview-bar-sep{opacity:0.4;}
+/* De balk ligt over de bovenkant van de pagina: een sticky of vaste header
+   (die op top:0 plakt) schuift er daarom onder uit. --preview-bar-h wordt
+   hieronder gemeten, want de balk wordt op smalle schermen twee regels. */
+.theme-preview-bar ~ .site-header{top:var(--preview-bar-h,44px) !important;}
 </style>
 <div class="theme-preview-bar">
     <span>Voorbeeld van thema: <strong><?= e($activeTheme['name']) ?></strong></span>
@@ -71,6 +75,11 @@ if ($currentPath === '') {
     <span class="theme-preview-bar-sep">·</span>
     <a href="/admin/theme-preview-exit.php?return=<?= rawurlencode($currentPath) ?>" class="theme-preview-bar-exit">Stoppen met voorbeeld</a>
 </div>
+<script>
+(function(){var b=document.querySelector('.theme-preview-bar');if(!b)return;
+function f(){document.documentElement.style.setProperty('--preview-bar-h',b.offsetHeight+'px');}
+f();window.addEventListener('resize',f);})();
+</script>
 <?php endif; ?>
 <header class="site-header">
     <div class="wrap site-header-row">

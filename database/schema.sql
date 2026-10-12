@@ -183,9 +183,9 @@ INSERT IGNORE INTO themes (slug, name, description, logo_file, schemes, is_built
 INSERT IGNORE INTO themes (slug, name, description, logo_file, schemes, is_builtin) VALUES (
     'huiskamer',
     'Huiskamer',
-    'Een vaste donkere zijbalk met genummerd menu en een leesvoortgang-ring, een lichte linnen pagina, foto''s als scheef opgehangen kiekjes, een grote gecentreerde quote en een schermvullend mobiel menu — warm en eerlijk, als een huiskamer. Test-thema.',
+    'Een vaste, lichte zijbalk met rustig menu en leesvoortgang-ring, een linnen pagina, foto''s als scheef opgehangen kiekjes, een grote gecentreerde quote, een schermvullend mobiel menu en een spiraal-logo — warm en eerlijk, als een huiskamer. Test-thema.',
     'logo.svg',
-    '[{"key":"a","label":"A — Bos & linnen"},{"key":"b","label":"B — Nacht & zand"},{"key":"c","label":"C — Leisteen & rozemarijn"}]',
+    '[{"key":"a","label":"A — Crème & terracotta"},{"key":"b","label":"B — Bos & crème"},{"key":"c","label":"C — Terracotta & klei"}]',
     0
 );
 

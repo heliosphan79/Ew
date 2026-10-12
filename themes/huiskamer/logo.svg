@@ -1,23 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" aria-hidden="true">
-    <!-- Twee fauteuils tegenover elkaar, met een kopje ertussen: een
-         huiskamergesprek. Gevulde vormen (geen dunne lijnen) zodat het ook
-         op 44px leesbaar blijft; lichte tint op een halfdoorzichtige donkere
-         schijf, dus bruikbaar op elke zijbalkkleur en zichtbaar op wit
-         (beheerpaneel). -->
-    <circle cx="60" cy="60" r="58" fill="rgba(0,0,0,0.3)"/>
-    <g fill="#f1ead9">
-        <!-- linker fauteuil: rugleuning, zitting, poten -->
-        <rect x="16" y="36" width="12" height="40" rx="6"/>
-        <rect x="16" y="62" width="34" height="14" rx="6"/>
-        <rect x="20" y="76" width="5" height="9" rx="2"/>
-        <rect x="42" y="76" width="5" height="9" rx="2"/>
-        <!-- rechter fauteuil, gespiegeld -->
-        <rect x="92" y="36" width="12" height="40" rx="6"/>
-        <rect x="70" y="62" width="34" height="14" rx="6"/>
-        <rect x="73" y="76" width="5" height="9" rx="2"/>
-        <rect x="95" y="76" width="5" height="9" rx="2"/>
-        <!-- kopje op een laag tafeltje -->
-        <rect x="54" y="66" width="12" height="10" rx="3"/>
-        <rect x="50" y="78" width="20" height="4" rx="2"/>
-    </g>
+    <!-- Een spiraal naar binnen: je gedachten uitrollen, tot je bij de kern
+         komt. Inkt + een koperen kern; een logo-afbeelding kan niet per
+         kleurschema herkleuren, dit werkt op elke lichte zijbalktint.
+         Bij het laden tekent de spiraal zichzelf van binnen naar buiten
+         (animatie zit in dit bestand: werkt ook in een gewone img, scripts
+         niet nodig); het meedraaien met het scrollen en de draai bij hover
+         staan in style.css. -->
+    <style>
+        .spiral { stroke-dasharray: 1; stroke-dashoffset: 0; animation: draw 2s cubic-bezier(.3,.6,.25,1) 1 backwards; }
+        .core { transform-box: fill-box; transform-origin: center; animation: pop 2s ease-out 1 backwards; }
+        @keyframes draw { from { stroke-dashoffset: 1.02; } to { stroke-dashoffset: 0; } }
+        @keyframes pop { 0%, 12% { opacity: 0; transform: scale(0); } 40% { opacity: 1; transform: scale(1.35); } 100% { opacity: 1; transform: scale(1); } }
+        @media (prefers-reduced-motion: reduce) { .spiral, .core { animation: none; } }
+    </style>
+    <path class="spiral" pathLength="1" d="M69.4 56.6 L69.9 57.4 L70.4 58.4 L70.7 59.4 L71.0 60.4 L71.2 61.5 L71.2 62.6 L71.1 63.7 L71.0 64.9 L70.6 66.1 L70.2 67.2 L69.7 68.3 L69.0 69.4 L68.2 70.4 L67.3 71.3 L66.3 72.2 L65.2 73.0 L64.0 73.7 L62.7 74.2 L61.4 74.7 L59.9 75.0 L58.5 75.2 L57.0 75.2 L55.5 75.1 L53.9 74.8 L52.4 74.4 L50.9 73.8 L49.5 73.0 L48.1 72.2 L46.8 71.1 L45.6 69.9 L44.5 68.6 L43.5 67.2 L42.7 65.7 L41.9 64.0 L41.4 62.3 L41.0 60.5 L40.8 58.7 L40.8 56.8 L40.9 54.9 L41.3 53.0 L41.8 51.1 L42.5 49.3 L43.4 47.5 L44.5 45.8 L45.8 44.2 L47.2 42.7 L48.8 41.3 L50.6 40.1 L52.4 39.1 L54.4 38.2 L56.5 37.5 L58.7 37.0 L60.9 36.8 L63.1 36.7 L65.4 36.9 L67.7 37.3 L69.9 37.9 L72.1 38.7 L74.3 39.8 L76.3 41.1 L78.2 42.5 L80.0 44.2 L81.7 46.1 L83.1 48.1 L84.4 50.3 L85.5 52.6 L86.3 55.1 L86.9 57.6 L87.2 60.2 L87.4 62.8 L87.2 65.5 L86.8 68.1 L86.1 70.8 L85.2 73.3 L84.0 75.8 L82.6 78.2 L80.9 80.5 L79.0 82.6 L76.9 84.5 L74.5 86.2 L72.1 87.7 L69.4 89.0 L66.6 90.0 L63.8 90.8 L60.8 91.2 L57.8 91.4 L54.7 91.3 L51.7 90.9 L48.6 90.2 L45.7 89.2 L42.8 87.9 L40.1 86.3 L37.5 84.5 L35.0 82.3 L32.8 80.0 L30.8 77.4 L29.0 74.6 L27.5 71.7 L26.3 68.6 L25.4 65.3 L24.8 62.0 L24.5 58.6 L24.6 55.2 L25.0 51.7 L25.7 48.3 L26.7 45.0 L28.1 41.7 L29.8 38.6 L31.8 35.6 L34.1 32.9 L36.7 30.3 L39.5 28.0 L42.6 25.9 L45.8 24.2 L49.3 22.8 L52.9 21.7 L56.6 20.9 L60.3 20.5 L64.1 20.5 L68.0 20.8 L71.8 21.5 L75.5 22.6 L79.2 24.0 L82.7 25.8 L86.0 28.0 L89.1 30.4 L92.0 33.2 L94.7 36.3 L97.0 39.6 L99.0 43.1 L100.7 46.9 L102.0 50.8 L102.9 54.9 L103.5 59.0 L103.6 63.2 L103.4 67.4 L102.7 71.6 L101.6 75.7 L100.1 79.8 L98.3 83.7 L96.0 87.4 L93.4 90.9 L90.4 94.2 L87.2 97.1 L83.6 99.8 L79.8 102.1 L75.7 104.0 L71.5 105.6 L67.1 106.7 L62.6 107.4 L58.0 107.7 L53.4 107.5 L48.8 106.9 L44.3 105.9 L39.8 104.4 L35.5 102.5 L31.4 100.1 L27.5 97.4 L23.9 94.3 L20.6 90.8" fill="none" stroke="#2b2a26" stroke-width="5.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle class="core" cx="60" cy="60" r="6.2" fill="#ad6847"/>
 </svg>
