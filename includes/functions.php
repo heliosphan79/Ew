@@ -251,12 +251,44 @@ function normalize_theme_variant(?string $variant): string
 // regardless of what a theme zip contains (see render_logo_mark()).
 const THEME_LOGO_EXTENSIONS = ['svg', 'png', 'jpg', 'jpeg', 'webp'];
 
+// Preview mode: a logged-in admin can browse the public site rendered with
+// any theme (and cycle through its 3 schemes) without changing what other
+// visitors see — get_active_theme() prefers this over site_settings'
+// stored choice whenever it's active. State lives only in the admin's own
+// session (preview_theme_id/preview_scheme), set/cleared by
+// admin/theme-preview.php and admin/theme-preview-exit.php; it's never
+// written to the database, so it can't leak into what a non-admin sees.
+function is_previewing_theme(): bool
+{
+    return is_logged_in() && !empty($_SESSION['preview_theme_id']);
+}
+
+// The colour scheme actually rendered for the current page: normally the
+// page's own stored "a/b/c" choice, but while previewing a theme the
+// admin's chosen preview scheme (if any) overrides it — so cycling A/B/C
+// in the preview banner works regardless of what each page is configured
+// to use.
+function resolve_effective_theme_variant(?string $pageVariant): string
+{
+    if (is_previewing_theme() && !empty($_SESSION['preview_scheme'])) {
+        $scheme = (string) $_SESSION['preview_scheme'];
+        if (in_array($scheme, ['a', 'b', 'c'], true)) {
+            return $scheme;
+        }
+    }
+    return normalize_theme_variant($pageVariant);
+}
+
 // The site's active visual theme — its stylesheet, optional custom logo,
 // and the labels for its 3 colour schemes (admin/themes.php). Falls back
 // to the built-in theme when no theme is actively chosen, or the chosen
 // one no longer exists (deleted, or a damaged install never got the
 // migration's seed row) — same never-break-the-site fallback discipline
-// as every other optional setting in this project.
+// as every other optional setting in this project. During preview mode
+// (see is_previewing_theme()) the previewed theme id wins over the stored
+// active_theme_id; if that previewed theme turns out to be gone (deleted
+// mid-preview), the session preview state is cleared so the banner and
+// fallback theme stay consistent with each other.
 function get_active_theme(mysqli $mysqli): array
 {
     static $theme = null;
@@ -264,7 +296,8 @@ function get_active_theme(mysqli $mysqli): array
         return $theme;
     }
 
-    $activeId = get_site_settings($mysqli)['active_theme_id'] ?? null;
+    $previewId = is_previewing_theme() ? (int) $_SESSION['preview_theme_id'] : null;
+    $activeId = $previewId ?? (get_site_settings($mysqli)['active_theme_id'] ?? null);
 
     $row = null;
     if ($activeId !== null) {
@@ -273,6 +306,9 @@ function get_active_theme(mysqli $mysqli): array
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
         $stmt->close();
+    }
+    if ($row === null && $previewId !== null) {
+        unset($_SESSION['preview_theme_id'], $_SESSION['preview_scheme']);
     }
     if ($row === null) {
         $row = $mysqli->query(

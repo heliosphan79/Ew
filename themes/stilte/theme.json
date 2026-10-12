@@ -1,0 +1,9 @@
+{
+    "name": "Stilte",
+    "description": "Radicale eenvoud: geen schaduwen, nauwelijks zichtbare lijnen, dunne lettertypes en veel witruimte voor een rustig, zwevend geheel. Test-thema voor het thema-systeem.",
+    "schemes": [
+        {"key": "a", "label": "A — Mist"},
+        {"key": "b", "label": "B — Schaduw"},
+        {"key": "c", "label": "C — Water"}
+    ]
+}
