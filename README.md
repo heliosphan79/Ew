@@ -17,6 +17,7 @@ config/                     configuratie (config.php bevat echte databasegegeven
 database/schema.sql          database-structuur, eenmalig importeren (nieuwe installatie)
 database/migrations/         wijzigingen op een bestaande database (zie hieronder)
 includes/                    gedeelde PHP-code (db-connectie, helpers, auth, blok-rendering, publieke layout)
+themes/                      visuele thema's (CSS + logo per thema) — zie "Thema's" hieronder
 index.php                   homepagina
 pagina.php                  toont een individuele pagina op basis van ?slug=
 contact.php                 contactformulier
@@ -205,17 +206,17 @@ laten uploaden via FTP, zonder zelf een FTP-client te gebruiken
   opmaak terechtkomen — enkel deze bewust beperkte stijlen zijn mogelijk.
   Links volgen dezelfde `is_safe_url()`-controle als overal elders
   (geen `javascript:`).
-- **3 frontend-varianten**, per pagina instelbaar (dropdown in de
-  pagina-editor), gebaseerd op Wendy's eigen ontwerp: A "Crème, salie &
-  terracotta" (het nieuwe ontwerp), B "Koraal" en C "Salie-groen" (de twee
-  eerdere kleurstudies). Alle drie delen dezelfde rustige, ruime opbouw —
-  enkel kleuren, typografie en afronding wisselen; de contactpagina volgt
-  automatisch de variant van de homepagina voor een consistente
-  uitstraling. De lettertypes uit Wendy's ontwerp (Source Serif 4/Figtree
-  voor A, Lora/Work Sans voor B en C) zijn benaderd met stevige
-  systeem-fallbackstacks — geen Google Fonts-CDN, dezelfde privacy-afweging
-  als de rest van dit project. Zelf hosten van de echte lettertypebestanden
-  kan als vervolgstap voor pixel-exacte typografie.
+- **Volledig instelbare thema's**, elk met 3 kleurschema's (per pagina
+  instelbaar). Het ingebouwde thema "Eigen-Wijzer (klassiek)" is Wendy's
+  eigen ontwerp — A "Crème, salie & terracotta", B "Koraal" en C
+  "Salie-groen". Een thema bepaalt lettertypes, kleuren, logo en een deel
+  van de vormgeving; andere thema's kunnen er sterk anders uitzien (scherpe
+  hoeken vs. ronde, platte vs. zware schaduwen, serif vs. sans-koppen, ...)
+  zolang ze dezelfde HTML/blok-structuur aanhouden. Zie "Thema's" hieronder
+  voor het volledige systeem (uploaden, beheren, zelf een thema bouwen).
+  De lettertypes gebruiken stevige systeem-fallbackstacks — geen Google
+  Fonts-CDN of andere lettertype-bestanden, dezelfde privacy-afweging als
+  de rest van dit project.
 - **Subtiele animatie**: blokken faden rustig in bij scroll (één keer,
   IntersectionObserver, met een no-JS/`prefers-reduced-motion`-fallback
   zodat content altijd zichtbaar blijft), en knoppen/links geven een
@@ -224,11 +225,13 @@ laten uploaden via FTP, zonder zelf een FTP-client te gebruiken
 - **Mobile-first CSS**: basisstijlen zijn geschreven voor kleine schermen,
   met `min-width`-media queries die layout (nav, knoppenrij, contentbreedte)
   geleidelijk verrijken voor tablet/desktop.
-- **Logo & navigatie** (Wendy's "Kompasnaald"-ontwerp): een SVG-logo (ring +
-  naald) met wordmerk, waarvan alle kleuren via `var(--text)`/`var(--accent)`/
-  `var(--bg)` lopen — past dus automatisch mee met de frontend-variant.
-  Speelse, bewust subtiele logo-animatie: de naald zwaait uit en komt tot
-  rust bij het laden van de pagina (eenmalig), en draait een volle toer bij
+- **Logo & navigatie** (Wendy's "Kompasnaald"-ontwerp, het ingebouwde
+  thema's eigen logo — zie "Thema's" hieronder voor een eigen logo per
+  thema): een SVG-logo (ring + naald) met wordmerk, waarvan alle kleuren
+  via `var(--text)`/`var(--accent)`/`var(--bg)` lopen — past dus
+  automatisch mee met het gekozen kleurschema. Speelse, bewust subtiele
+  logo-animatie: de naald zwaait uit en komt tot rust bij het laden van
+  de pagina (eenmalig), en draait een volle toer bij
   hover/focus. Op mobiel (<640px) wordt het menu een ronde knop die opent
   tot een kruis-in-ring (CSS, geen library) met een uitklappaneel en
   gestaffelde item-reveal; vanaf 640px blijft het de horizontale balk.
@@ -567,6 +570,70 @@ bio) — allemaal onzichtbaar op de site zelf, enkel voor zoekmachines/AI,
 en elk veld apart optioneel. Zie
 [SEO & vindbaarheid voor AI-zoekfuncties](#seo--vindbaarheid-voor-ai-zoekfuncties)
 hieronder voor hoe dit precies in het JSON-LD terechtkomt.
+
+## Thema's (volledige look & feel instelbaar)
+
+"Thema's" in het beheerpaneel bepaalt de volledige visuele stijl van de
+site — niet enkel kleuren, maar ook lettertypes, logo en een deel van de
+vormgeving (afronding, schaduwen, knopvormen, ...). Elk thema heeft
+daarbinnen altijd 3 kleurschema's (dezelfde "per pagina instelbaar"-
+kleurschema's als voorheen — zie "Kleurschema" in de pagina-editor).
+Enkel het actieve thema is zichtbaar op de site; de andere blijven
+geïnstalleerd en kan je op elk moment activeren.
+
+- **Een thema is een map** onder `themes/<slug>/` met `theme.json`
+  (naam, omschrijving, de 3 kleurschema-labels), `style.css` (een
+  volledig, zelfstandig stylesheet — zelfde class-namen/structuur als elk
+  ander thema, enkel de ontwerptokens en uitwerking verschillen) en
+  optioneel een `logo.svg`/`.png`/`.jpg`/`.webp`. Het volledige contract
+  (welke CSS-variabelen verplicht zijn, hoe de 3 kleurschema's werken, de
+  regel "geen eigen lettertypebestanden") staat in `themes/README.md` —
+  de eenvoudigste manier om een nieuw thema te bouwen is
+  `themes/eigen-wijzer-klassiek/style.css` te kopiëren als startpunt.
+- **Nieuw thema installeren**: een `.zip`-bestand uploaden met exact die
+  bestanden op het hoogste niveau (geen submappen). Validatie gebeurt
+  volledig server-side vóór er iets weggeschreven wordt
+  (`admin/theme-upload.php`):
+  - enkel de exacte bestandsnamen `theme.json`/`style.css`/`logo.<ext>`
+    zijn toegestaan — alles anders in de zip (een ander bestand, een
+    submap, een pad-traversal-poging) wordt geweigerd, zonder dat er al
+    iets op schijf terechtkomt;
+  - `theme.json` moet geldige JSON zijn met een naam en exact 3
+    kleurschema's (sleutels a/b/c, elk met een label);
+  - het logo wordt niet vertrouwd op zijn bestandsextensie, maar
+    gecontroleerd op zijn echte inhoud (MIME-sniffing + een
+    geldigheidscheck) — en wordt op de site altijd als gewone `<img>`
+    getoond, nooit inline in de pagina geplakt, dus eventuele
+    `<script>`/event-handler-code in een SVG-logo kan sowieso nooit
+    uitgevoerd worden;
+  - `themes/.htaccess` (hetzelfde patroon als `uploads/.htaccess`)
+    verhindert dat een bestand in `themes/` ooit als PHP uitgevoerd kan
+    worden, wat er ook in een zip zou zitten.
+  - Bestaat de afgeleide mapnaam (slug) al, dan krijgt het nieuwe thema
+    automatisch een cijfer erachter — nooit een bestaand thema overschrijven.
+- **Activeren/verwijderen**: één klik in de lijst. Het ingebouwde thema
+  kan niet verwijderd worden; verwijder je het actieve thema, dan valt de
+  site automatisch terug op het ingebouwde thema (nooit een kapotte of
+  lege stijl).
+- **3 test-thema's** zijn meegeleverd om het systeem uit te proberen,
+  naast het ingebouwde "Eigen-Wijzer (klassiek)":
+  - **Noir Editoriaal** — scherpe hoeken, harde "offset"-schaduwen, vette
+    hoofdletter-koppen in een brede sans-serif met een kranten-achtige
+    serif leestekst. Kleurschema's: "Scherp wit", "Inkt" (volledig
+    donker) en "Oker".
+  - **Zacht & Rond** — grote afgeronde hoeken, zachte gekleurde
+    schaduwen, een rond leestype (`ui-rounded`) en pastelkleuren.
+    Kleurschema's: "Perzik", "Lavendel" en "Muntgroen".
+  
+  Beide zijn bewust het tegenovergestelde van elkaar én van het
+  ingetogen klassieke thema, om aan te tonen hoe ver je met puur CSS
+  (zelfde HTML, geen maatwerk-templates) kan gaan.
+- **Bewust geen volledige template-overrides** (andere HTML-structuur per
+  thema): dat zou een eigen, beperkte templatetaal vergen om een
+  zip-upload veilig te houden — een project van weken, niet dagen, en een
+  aanzienlijk groter aanvalsoppervlak op gedeelde hosting zonder
+  sandboxing. CSS-only (dezelfde blokken/structuur, volledig vrije
+  opmaak) is de bewuste, haalbare afweging.
 
 ## Privacypagina
 

@@ -1,0 +1,9 @@
+Options -Indexes
+
+# Theme files (style.css, logo.*, theme.json) are served directly but
+# never executed as scripts, whatever their extension — same defense in
+# depth as uploads/.htaccess, in case a disguised file ever slipped past
+# the allowlist in admin/theme-upload.php.
+<FilesMatch "\.(php|phtml|php\d|phar|cgi|pl|py|sh)$">
+    Require all denied
+</FilesMatch>

@@ -48,6 +48,10 @@
                 'settings-messages.php' => 'settings',
                 'settings-schema.php' => 'settings',
                 'mail-settings.php' => 'mail-settings',
+                'themes.php' => 'themes',
+                'theme-upload.php' => 'themes',
+                'theme-activate.php' => 'themes',
+                'theme-delete.php' => 'themes',
             ];
             $adminNavActive = $adminNavGroups[$adminNavCurrent] ?? '';
             $adminNavLinks = [
@@ -57,6 +61,7 @@
                 'calendar' => ['calendar.php', 'calendar', 'Kalender'],
                 'events' => ['events.php', 'users', 'Evenementen'],
                 'newsletters' => ['newsletters.php', 'mail', 'Nieuwsbrief'],
+                'themes' => ['themes.php', 'palette', "Thema's"],
                 'settings' => ['settings.php', 'settings', 'Instellingen'],
                 'mail-settings' => ['mail-settings.php', 'mail', 'E-mail'],
             ];

@@ -6,6 +6,7 @@ require_login();
 $pages = $mysqli->query(
     'SELECT id, slug, title, theme_variant, published, is_homepage, is_privacy_page, show_in_menu, nav_order, updated_at FROM pages ORDER BY nav_order ASC, title ASC'
 )->fetch_all(MYSQLI_ASSOC);
+$themeSchemeLabels = active_theme_scheme_labels(get_active_theme($mysqli));
 
 $pageTitle = "Pagina's";
 require __DIR__ . '/includes/header.php';
@@ -32,7 +33,7 @@ require __DIR__ . '/includes/header.php';
             <th></th>
             <th>Titel</th>
             <th>Slug</th>
-            <th>Variant</th>
+            <th>Kleurschema</th>
             <th>Status</th>
             <th>Rol</th>
             <th>In menu</th>
@@ -49,7 +50,7 @@ require __DIR__ . '/includes/header.php';
                     <?php $liveUrl = $page['is_homepage'] ? '/' : '/pagina/' . $page['slug']; ?>
                     <a href="<?= e($liveUrl) ?>" target="_blank" rel="noopener"><code><?= e($liveUrl) ?></code></a>
                 </td>
-                <td><?= e(THEME_VARIANTS[$page['theme_variant']] ?? $page['theme_variant']) ?></td>
+                <td><?= e($themeSchemeLabels[$page['theme_variant']] ?? $page['theme_variant']) ?></td>
                 <td><?= $page['published'] ? '<span class="badge badge-ok">Gepubliceerd</span>' : '<span class="badge badge-draft">Concept</span>' ?></td>
                 <td>
                     <?php

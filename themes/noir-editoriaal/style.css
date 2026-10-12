@@ -1,0 +1,1169 @@
+/* ==========================================================================
+   Noir Editoriaal — test-thema voor het thema-systeem.
+   Bewust het tegenovergestelde van het klassieke, warme ontwerp: scherpe
+   hoeken (geen afgeronde randen), harde "offset"-schaduwen i.p.v. zachte,
+   vetgedrukte hoofdletter-titels in een breed sans-serif, en een
+   kranten-achtige combinatie van een serif leestekst met vette sans
+   koppen. Zelfde HTML/class-structuur als elk ander thema (zie
+   themes/README.md) — enkel de ontwerptokens en een handvol structurele
+   details (de scherpe pil-vormen hieronder) zijn anders.
+   ========================================================================== */
+
+:root {
+    /* Kleurschema A "Scherp wit" — ook de terugval zonder data-theme */
+    --bg: #ffffff;
+    --surface: #f1f0ec;
+    --text: #111111;
+    --text-muted: #555550;
+    --text-subtle: #83827c;
+    --accent: #d6422f;
+    --accent-hover: #ac3526;
+    --accent-contrast: #ffffff;
+    --btn-primary-bg: var(--accent);
+    --btn-primary-hover: var(--accent-hover);
+    --border: #111111;
+    --eyebrow-color: var(--accent);
+    --quote-bg: #111111;
+    --quote-text: #ffffff;
+    --radius: 0;
+    --shadow: 6px 6px 0 #111111;
+    --font-heading: "Arial Black", Impact, "Helvetica Neue", Arial, sans-serif;
+    --font-body: Georgia, "Times New Roman", Times, serif;
+
+    --color-error: #b42318;
+    --color-success: #1a7f37;
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --dur: 400ms;
+    --content-width: 720px;
+}
+
+/* Kleurschema B "Inkt" — donkere omkering, zelfde rode accentkleur */
+body[data-theme="b"] {
+    --bg: #121212;
+    --surface: #1c1c1c;
+    --text: #f2f2f0;
+    --text-muted: #a8a8a2;
+    --text-subtle: #7a7a74;
+    --accent: #ff5c4d;
+    --accent-hover: #ff7a6d;
+    --accent-contrast: #121212;
+    --btn-primary-bg: var(--accent);
+    --btn-primary-hover: var(--accent-hover);
+    --border: #3a3a38;
+    --eyebrow-color: var(--accent);
+    --quote-bg: #ff5c4d;
+    --quote-text: #121212;
+    --radius: 0;
+    --shadow: 6px 6px 0 #000000;
+    --font-heading: "Arial Black", Impact, "Helvetica Neue", Arial, sans-serif;
+    --font-body: Georgia, "Times New Roman", Times, serif;
+}
+
+/* Kleurschema C "Oker" — lichte, warmere variant met mosterdgele accentkleur */
+body[data-theme="c"] {
+    --bg: #faf8f3;
+    --surface: #ffffff;
+    --text: #1a1a16;
+    --text-muted: #5c5c52;
+    --text-subtle: #8a8a7a;
+    --accent: #c98a1f;
+    --accent-hover: #a16f17;
+    --accent-contrast: #1a1a16;
+    --btn-primary-bg: var(--accent);
+    --btn-primary-hover: var(--accent-hover);
+    --border: #1a1a16;
+    --eyebrow-color: var(--accent);
+    --quote-bg: #1a1a16;
+    --quote-text: #faf8f3;
+    --radius: 0;
+    --shadow: 6px 6px 0 #1a1a16;
+    --font-heading: "Arial Black", Impact, "Helvetica Neue", Arial, sans-serif;
+    --font-body: Georgia, "Times New Roman", Times, serif;
+}
+
+/* Vette, brede hoofdletter-koppen — het meest kenmerkende verschil met
+   het klassieke thema, waar h1/h2/h3 juist een rustig, dun serif gebruiken. */
+h1, h2, h3 {
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    font-weight: 900;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+}
+
+body {
+    margin: 0;
+    color: var(--text);
+    background: var(--bg);
+    font-family: var(--font-body);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { font-family: var(--font-heading); line-height: 1.25; }
+
+.wrap {
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: 0 1.25rem;
+}
+
+/* ---------- Logo (compass needle) + shared "needle" direction icon ----------
+   Colors are set via var(--text)/var(--accent)/var(--bg) rather than fixed
+   hexes, so the mark re-skins automatically with each theme variant. */
+
+.ew-logo-ring { stroke: var(--text); }
+.ew-logo-needle-a { fill: var(--accent); }
+.ew-logo-needle-b { fill: var(--text); }
+.ew-logo-center { fill: var(--bg); }
+.ew-logo-needle { transform-origin: 60px 60px; transform: rotate(38deg); }
+.ew-logo-accent { color: var(--accent); }
+
+/* Extra rotation layered on top of the needle's own settle/hover spin (see
+   below) — driven by scroll progress via main.js, which sets
+   --needle-scroll-rotate on <html>. A separate wrapper group, so it can't
+   collide with the needle's own transform/animation. The transition
+   smooths out the per-scroll-event jumps into a lagging, fluid follow. */
+.ew-logo-needle-scroll {
+    transform-origin: 60px 60px;
+    transform: rotate(var(--needle-scroll-rotate, 0deg));
+    transition: transform 300ms var(--ease);
+}
+
+.ew-needle-icon { flex: none; }
+.ew-needle-icon .ew-needle-a { fill: var(--text); }
+.ew-needle-icon .ew-needle-b { fill: var(--accent); }
+.ew-needle-diag {
+    transform-origin: 10px 10px;
+    transform: rotate(-38deg);
+    transition: transform var(--dur) var(--ease);
+}
+
+/* Logo-intro: ring draws itself, needle swings out and settles — once, on
+   page load. */
+@keyframes ew-logo-draw { 0% { stroke-dashoffset: 315; } 55%, 100% { stroke-dashoffset: 0; } }
+@keyframes ew-logo-settle {
+    0%, 8% { transform: rotate(-150deg); }
+    40% { transform: rotate(62deg); }
+    55% { transform: rotate(26deg); }
+    67% { transform: rotate(44deg); }
+    78% { transform: rotate(35deg); }
+    88%, 100% { transform: rotate(38deg); }
+}
+
+.ew-logo-ring {
+    stroke-dasharray: 315;
+    transform-origin: 60px 60px;
+    transform: rotate(-90deg);
+    animation: ew-logo-draw 1.4s ease-out 1 both;
+}
+/* fill-mode: backwards (not both) deliberately — holding the 0% keyframe
+   before the animation starts avoids a flash of the resting angle, but
+   NOT holding the 100% keyframe afterwards matters: with "both", the
+   completed animation keeps outranking the plain :hover rule below in
+   the cascade, so hovering the logo more than ~1.4s after page load would
+   silently never rotate it. Verified with "both" vs "backwards" across
+   repeated trials, sampling mid-transition (not just before/after —
+   rotate(398deg) and rotate(38deg) share the same final matrix, 398 mod
+   360 = 38, so a before/after-only check can't tell the two apart). */
+.ew-logo-needle { animation: ew-logo-settle 1.4s cubic-bezier(.2, .8, .2, 1) 1 backwards; }
+
+.site-logo:hover .ew-logo-needle,
+.site-logo:focus-visible .ew-logo-needle {
+    transform: rotate(398deg);
+    transition: transform 0.9s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+/* The wordmark stayed inert while only the needle spun on hover — this
+   ties both into a single reaction instead of a half-responding logo. */
+.ew-logo-word { transition: color var(--dur) var(--ease); }
+.site-logo:hover .ew-logo-word,
+.site-logo:focus-visible .ew-logo-word { color: var(--accent); }
+
+/* Shrinks slightly in step with the sticky header's own "lift" on scroll
+   (see .site-header.is-scrolled) — same trigger, no extra JS. Anchored
+   left so it settles in place rather than drifting. */
+.site-logo { transition: transform var(--dur) var(--ease); transform-origin: left center; }
+.site-header.is-scrolled .site-logo { transform: scale(0.88); }
+
+@media (prefers-reduced-motion: reduce) {
+    .ew-logo-word,
+    .site-logo { transition: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ew-logo-ring,
+    .ew-logo-needle,
+    .ew-logo-needle-scroll,
+    .ew-needle-diag { animation: none !important; transition: none !important; }
+    .ew-logo-ring { stroke-dashoffset: 0; }
+    .ew-logo-needle { transform: rotate(38deg); }
+    .ew-logo-needle-scroll { transform: none !important; }
+}
+
+/* ---------- Header / nav (shared site chrome, mobile-first) ---------- */
+
+.site-header {
+    position: -webkit-sticky; /* older/mobile Safari ignores unprefixed "sticky" */
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 0;
+    transition: padding var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+/* Added by main.js once the page scrolls past the top — a light "lift"
+   (shrinks slightly, gains a shadow) so the sticky chrome reads as
+   responding to scroll rather than just sitting there. Pure CSS fallback
+   if JS is off: header stays sticky, just without this extra motion. */
+.site-header.is-scrolled {
+    padding: 0.6rem 0;
+    box-shadow: var(--shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .site-header { transition: none; }
+}
+
+.site-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.site-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+}
+
+.ew-logo-word {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text);
+}
+
+.menu-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.6s cubic-bezier(.5, -0.3, .3, 1.4);
+}
+.menu-btn::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    transform: scale(0);
+    opacity: 0;
+    transition: transform 0.45s ease 0.15s, opacity 0.3s ease 0.15s;
+}
+.menu-btn-ln {
+    position: absolute;
+    left: 10px;
+    width: 20px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--text);
+    transition: top 0.3s ease, transform 0.4s ease 0.15s, opacity 0.2s ease, background 0.3s ease;
+}
+.menu-btn-ln.l1 { top: 13px; }
+.menu-btn-ln.l2 { top: 19px; }
+.menu-btn-ln.l3 { top: 25px; }
+.menu-btn[aria-expanded="true"] { transform: rotate(180deg); }
+.menu-btn[aria-expanded="true"]::before { transform: scale(1); opacity: 1; }
+/* Longer than the hamburger bars (24px vs 20px, recentered) so the X fills
+   enough of the ring to read clearly as a close icon — at the bars' own
+   width it looked more like a crossed-out/"not allowed" circle. */
+.menu-btn[aria-expanded="true"] .l1 { top: 19px; left: 8px; width: 24px; transform: rotate(45deg); background: var(--accent); }
+.menu-btn[aria-expanded="true"] .l2 { opacity: 0; }
+.menu-btn[aria-expanded="true"] .l3 { top: 19px; left: 8px; width: 24px; transform: rotate(-45deg); background: var(--accent); }
+.menu-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .menu-btn,
+    .menu-btn-ln,
+    .menu-btn::before { transition: none; }
+}
+
+.site-nav {
+    display: flex;
+    gap: 1rem;
+}
+
+.site-nav a {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.92rem;
+    white-space: nowrap;
+    padding-bottom: 0.15rem;
+    border-bottom: 2px solid transparent;
+    transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible,
+.site-nav a.is-active { color: var(--accent); border-color: var(--accent); }
+
+.site-nav a.is-active { font-weight: 600; }
+
+.site-nav a:hover .ew-needle-diag,
+.site-nav a:focus-visible .ew-needle-diag,
+.site-nav a.is-active .ew-needle-diag { transform: rotate(0deg); }
+
+/* Mobile (<640px): the nav becomes a collapsible panel toggled by .menu-btn;
+   icons only make sense in this stacked layout. */
+@media (max-width: 639.98px) {
+    .menu-btn { display: block; }
+
+    .site-nav {
+        flex-basis: 100%;
+        flex-direction: column;
+        gap: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s cubic-bezier(.2, .8, .2, 1);
+    }
+    .site-nav.is-open { max-height: 28rem; }
+
+    .site-nav a {
+        padding: 0.85rem 0.1rem;
+        border-bottom: 1px solid var(--border);
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: opacity 0.3s ease, transform 0.3s ease, color var(--dur) var(--ease);
+    }
+    .site-nav a:last-child { border-bottom: none; }
+    .site-nav.is-open a { opacity: 1; transform: none; }
+    .site-nav.is-open a:nth-child(1) { transition-delay: 0.08s; }
+    .site-nav.is-open a:nth-child(2) { transition-delay: 0.12s; }
+    .site-nav.is-open a:nth-child(3) { transition-delay: 0.16s; }
+    .site-nav.is-open a:nth-child(4) { transition-delay: 0.2s; }
+    .site-nav.is-open a:nth-child(5) { transition-delay: 0.24s; }
+    .site-nav.is-open a:nth-child(6) { transition-delay: 0.28s; }
+    .site-nav.is-open a:nth-child(7) { transition-delay: 0.32s; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .site-nav, .site-nav a { transition: none; }
+    }
+}
+
+@media (min-width: 640px) {
+    .menu-btn { display: none; }
+    .site-nav {
+        align-items: center;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .site-nav::-webkit-scrollbar { display: none; }
+    .site-nav .ew-needle-icon { display: none; }
+}
+
+main.wrap {
+    padding: 2.5rem 1.25rem 4rem;
+    min-height: 50vh;
+}
+
+@media (min-width: 640px) {
+    main.wrap { padding: 3.5rem 1.25rem 5rem; }
+}
+
+.page-content h1 {
+    margin-top: 0;
+    font-size: 1.75rem;
+}
+
+@media (min-width: 640px) {
+    .page-content h1 { font-size: 2.25rem; }
+}
+
+.site-footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.footer-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.footer-contact span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.footer-contact-icon {
+    flex-shrink: 0;
+    opacity: 0.75;
+}
+
+.footer-contact a {
+    color: inherit;
+}
+
+/* ---------- Flash / form-errors (shared) ---------- */
+
+.flash {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+}
+
+.flash-success { background: #e6f4ea; color: var(--color-success); }
+.flash-error { background: #fdecea; color: var(--color-error); }
+
+.form-errors {
+    background: #fdecea;
+    color: var(--color-error);
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+}
+
+/* ---------- Contact form (mobile-first, single column) ---------- */
+
+.contact-form { display: flex; flex-direction: column; gap: 0.4rem; max-width: 480px; }
+
+/* With a background the form becomes a card — match the full content width
+   every other card-style block uses, instead of staying capped at the
+   narrower width that suits a plain, unstyled form. */
+.contact-form.block-bg-accent,
+.contact-form.block-bg-surface {
+    max-width: none;
+}
+
+.contact-form label { font-weight: 600; margin-top: 0.75rem; font-size: 0.9rem; }
+
+.contact-form input,
+.contact-form textarea {
+    padding: 0.65rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.contact-form button {
+    margin-top: 1.25rem;
+    align-self: flex-start;
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border: none;
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+
+.contact-form button:hover { opacity: 0.9; }
+.contact-form button:active { transform: scale(0.97); }
+
+.form-checkbox-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-weight: 400;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.form-checkbox-row input[type="checkbox"] { margin-top: 0.2rem; flex-shrink: 0; }
+
+/* On an accent background the button would otherwise be the exact same
+   color as its own card (both use --accent) and disappear into it — flip
+   to a light button so it still reads as a distinct, clickable element. */
+.contact-form.block-bg-accent button { background: var(--bg); color: var(--accent); }
+
+/* ==========================================================================
+   Content blocks — shared structure across all 3 variants; only the
+   custom-property tokens (and a few per-variant touches below) differ.
+   ========================================================================== */
+
+/* scroll-margin-top keeps a #anchor jump (e.g. a CTA button linking to a
+   block's anchor id) from landing flush under the sticky header, which
+   would otherwise hide the first line of the target block. */
+.block { margin-bottom: clamp(2rem, 6vw, 3.25rem); scroll-margin-top: 90px; }
+.block:last-child { margin-bottom: 0; }
+
+.block-text h2 { font-size: 1.4rem; margin-bottom: 0.75rem; }
+.block-text p { margin: 0 0 1rem; }
+.block-text p:last-child { margin-bottom: 0; }
+
+/* Inline markup (**vet**, *cursief*, [link](url)) inside free-text fields
+   — text/list/media-text bodies, column text rows, and event descriptions. */
+.block-text a:not(.btn),
+.block-list a:not(.btn),
+.block-media-text a:not(.btn),
+.col-row a:not(.btn),
+.event-description a:not(.btn) {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+.block-text a:hover:not(.btn),
+.block-list a:hover:not(.btn),
+.block-media-text a:hover:not(.btn),
+.col-row a:hover:not(.btn),
+.event-description a:hover:not(.btn) { color: var(--accent-hover); }
+
+/* Fixed aspect-ratio + object-fit:cover (rather than the photo's own,
+   uncontrolled ratio) keeps block heights predictable regardless of what
+   gets uploaded — a tall portrait next to a wide landscape elsewhere on
+   the same page no longer produces wildly different block proportions —
+   and reserves the space up front, avoiding a layout shift while it loads. */
+.block-image { overflow: hidden; border-radius: var(--radius); }
+.block-image img {
+    width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius); display: block;
+    transition: transform 600ms var(--ease);
+}
+.block-image:hover img { transform: scale(1.04); }
+.block-image figcaption {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.block-quote {
+    background: var(--quote-bg);
+    color: var(--quote-text);
+    border-radius: var(--radius);
+    padding: 2rem 1.25rem;
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    position: relative;
+}
+.block-quote::before {
+    content: "\201C";
+    display: block;
+    font-family: var(--font-heading);
+    font-size: 3rem;
+    line-height: 1;
+    opacity: 0.5;
+    margin-bottom: -0.75rem;
+}
+.block-quote p {
+    font-size: 1.15rem;
+    font-family: var(--font-heading);
+    font-style: italic;
+    margin: 0 0 0.5rem;
+    color: inherit;
+}
+.block-quote cite {
+    display: block;
+    font-style: normal;
+    font-size: 0.85rem;
+    opacity: 0.75;
+    color: inherit;
+}
+
+.eyebrow {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--eyebrow-color);
+    margin-bottom: 0.5rem;
+}
+
+.block-list h3 { font-size: 1.1rem; margin-bottom: 0.75rem; }
+.block-list ul { margin: 0; padding-left: 1.25rem; }
+
+.list-check { list-style: none; padding-left: 0 !important; }
+.list-check li { position: relative; padding-left: 1.75rem; margin-bottom: 0.5rem; }
+.list-check li:last-child { margin-bottom: 0; }
+.list-check li::before {
+    content: "\2713";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+/* Bullet style: a schuine "naald"-icoon i.p.v. een standaardbullet, dezelfde
+   -38°-hoek als het logo — rechttrekkend bij hover (zie .ew-needle-diag). */
+.list-bullet { list-style: none; padding-left: 0 !important; }
+.list-bullet li { display: flex; gap: 0.7rem; align-items: flex-start; margin-bottom: 0.5rem; }
+.list-bullet li:last-child { margin-bottom: 0; }
+.list-bullet li .ew-needle-icon { margin-top: 0.2em; }
+.list-bullet li:hover .ew-needle-diag { transform: rotate(0deg); }
+
+/* Bullets typed inline inside a free-text field (- item, zie
+   render_inline_markup()) — zelfde .list-bullet-stijl, maar met
+   alinea-ritme (margin) i.p.v. de kale ul van het losstaande Lijst-blok,
+   want deze staat tussenin gewone <p>-alinea's, niet alleen in een .block. */
+.text-list { margin: 0 0 1rem; }
+.text-list:last-child { margin-bottom: 0; }
+
+.block-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+@media (min-width: 480px) {
+    .block-buttons { flex-direction: row; flex-wrap: wrap; }
+}
+
+/* Alignment for a Buttons block, standalone (.block-buttons) or nested in
+   a column (.col-row-buttons) — align-items controls the stacked-column
+   mobile layout, justify-content the side-by-side row layout from 480px
+   up, so both need setting for either axis to actually apply. */
+.buttons-align-center { align-items: center; }
+.buttons-align-right { align-items: flex-end; }
+@media (min-width: 480px) {
+    .buttons-align-center { justify-content: center; }
+    .buttons-align-right { justify-content: flex-end; }
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.6rem;
+    border-radius: var(--radius);
+    border: 2px solid transparent;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+        background-color var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.btn-primary { background: var(--btn-primary-bg); color: var(--accent-contrast); }
+.btn-primary:hover { background: var(--btn-primary-hover); }
+.btn-secondary { background: transparent; color: var(--text); border-color: var(--text); }
+.btn-secondary:hover { background: var(--text); color: var(--bg); }
+
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.btn:active { transform: translateY(0) scale(0.97); transition-duration: 100ms; }
+
+/* ---------- Map block (Google Maps embed) ---------- */
+
+.block-map h2 { font-size: 1.4rem; margin-bottom: 0.75rem; }
+
+.map-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+.map-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* Breaks the map out to full viewport width, ignoring .wrap's max-width —
+   relies on main.wrap being centered via margin:auto. */
+.map-stretch .map-frame {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    border-radius: 0;
+    box-shadow: none;
+    aspect-ratio: 21 / 9;
+}
+
+/* ---------- Media + text block (photo beside text) ---------- */
+
+.block-media-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.media-text-figure { margin: 0; overflow: hidden; border-radius: var(--radius); }
+.media-text-figure img {
+    width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius); display: block;
+    transition: transform 600ms var(--ease);
+}
+.media-text-figure:hover img { transform: scale(1.04); }
+.media-text-figure figcaption {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.media-text-content h2 { font-size: 1.4rem; margin-bottom: 0.75rem; }
+.media-text-content p { margin: 0 0 1rem; }
+.media-text-content p:last-child { margin-bottom: 0; }
+
+@media (min-width: 640px) {
+    .block-media-text {
+        flex-direction: row;
+        align-items: center;
+        gap: 2.5rem;
+    }
+    .block-media-text.media-text-right { flex-direction: row-reverse; }
+    .media-text-figure,
+    .media-text-content { flex: 1 1 0; min-width: 0; }
+}
+
+/* ---------- Columns block (2 or 3 side-by-side columns) ----------
+   Desktop uses CSS subgrid so columns share row tracks: a longer heading
+   in one column grows that row for every column equally, and whatever
+   comes after (body, buttons, ...) still starts at the same height in
+   each column — no JS, degrades to plain stacked columns without subgrid
+   support (see @supports fallback below). */
+
+.block-columns {
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 2rem;
+}
+
+.block-columns .column > .col-row { margin-bottom: 0.75rem; }
+.block-columns .column > .col-row:last-child { margin-bottom: 0; }
+.block-columns .column > .col-row > .block { margin-bottom: 0; }
+
+.col-row-heading .eyebrow { margin-bottom: 0.4rem; }
+.col-row-heading h3 {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-weight: 400;
+    font-size: 1.2rem;
+    line-height: 1.3;
+}
+.col-row-body p { margin: 0 0 0.75rem; }
+.col-row-body p:last-child { margin-bottom: 0; }
+.col-row-buttons { display: flex; flex-direction: column; gap: 0.6rem; }
+
+@media (min-width: 480px) {
+    .col-row-buttons { flex-direction: row; flex-wrap: wrap; }
+}
+
+@media (min-width: 640px) {
+    .block-columns { column-gap: 2rem; row-gap: 0.75rem; grid-template-rows: repeat(8, auto); }
+    .block-columns.columns-2 { grid-template-columns: repeat(2, 1fr); }
+    .block-columns.columns-3 { grid-template-columns: repeat(3, 1fr); }
+
+    .block-columns .column {
+        display: grid;
+        grid-template-rows: subgrid;
+        grid-row: span 8;
+        min-width: 0;
+    }
+    .block-columns .column > .col-row { margin-bottom: 0; }
+
+    /* A column with a background (block-bg-accent/-surface) gets its padding
+       from that shared rule below, but padding only on that one column would
+       inset its content while its plain siblings stay flush — desyncing the
+       row starts they're meant to share via subgrid. So once any column in
+       the block carries a background, every column gets the same padding,
+       whether it has a visible "card" look or not. */
+    .block-columns.has-column-bg .column {
+        padding: 1.75rem;
+    }
+}
+
+/* No subgrid support: fall back to independent columns, each stacking its
+   own rows normally (today's behavior pre-subgrid, still fully usable —
+   just without the cross-column row alignment). */
+@supports not (grid-template-rows: subgrid) {
+    @media (min-width: 640px) {
+        .block-columns .column { display: block; }
+        .block-columns .column > .col-row { margin-bottom: 0.75rem; }
+        .block-columns .column > .col-row:last-child { margin-bottom: 0; }
+    }
+}
+
+/* ---------- Optional background treatment (any block, or a single column
+   of a columns-block) — uses the theme's own tokens so it re-skins per
+   variant rather than a fixed color. Declared after the individual block
+   styles above so it wins when both set a background (e.g. a quote block
+   with "accent" chosen takes the accent look over its own default). ---------- */
+
+.block-bg-accent,
+.block-bg-surface {
+    padding: 1.75rem;
+    border-radius: var(--radius);
+}
+
+/* Horizontal padding matches .wrap's own side padding, cancelled out by an
+   equal negative margin — this keeps the eyebrow/title/body text flush
+   with any neighbouring block that has no background, instead of
+   indenting it, while the colored/shadowed box still reads as a distinct
+   card (vertical padding keeps that framing). Scoped to top-level .block
+   elements only: a .column inside a columns-block also carries
+   .block-bg-accent/-surface, but that context has its own padding rule
+   (see .has-column-bg .column) tuned for the subgrid row alignment — a
+   negative margin there would misalign or overlap the columns' grid
+   tracks, so this must not reach it. */
+.block.block-bg-accent,
+.block.block-bg-surface {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+}
+
+.block-bg-accent {
+    background: var(--accent);
+    color: var(--accent-contrast);
+}
+.block-bg-accent .eyebrow { color: var(--accent-contrast); opacity: 0.85; }
+.block-bg-accent a:not(.btn) { color: var(--accent-contrast); }
+
+.block-bg-surface {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow);
+}
+
+/* ---------- Calendar block (appointment booking) ---------- */
+
+.calendar-widget {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+    .calendar-widget { flex-direction: row; align-items: flex-start; }
+}
+
+.calendar-loading { color: var(--text-muted); font-size: 0.92rem; }
+
+.cal-grid {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem;
+    flex: 0 0 auto;
+    width: 100%;
+}
+
+@media (min-width: 640px) {
+    .cal-grid { width: 310px; }
+}
+
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.9rem; }
+.cal-month-label { font-family: var(--font-heading); font-size: 0.95rem; font-weight: 600; color: var(--text); }
+.cal-nav {
+    background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--text-muted);
+    padding: 0.2rem 0.5rem; line-height: 1;
+}
+.cal-nav:hover { color: var(--accent); }
+
+.cal-weekdays, .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.25rem; }
+.cal-weekdays { font-size: 0.68rem; color: var(--text-muted); text-align: center; margin-bottom: 0.4rem; }
+
+.cal-day {
+    appearance: none; background: none; border: 1px solid transparent; border-radius: var(--radius);
+    padding: 0.45rem 0; font-size: 0.82rem; color: var(--text); cursor: pointer; font-family: inherit;
+}
+.cal-day:not(:disabled) { border-color: var(--border); }
+.cal-day:not(:disabled):hover { border-color: var(--accent); }
+.cal-day.is-selected { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
+.cal-day:disabled { color: var(--border); cursor: default; }
+
+.cal-side { flex: 1; min-width: 0; }
+
+.cal-times-label { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 0.75rem; }
+.cal-time-list { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem; }
+.cal-time {
+    appearance: none; background: var(--bg); border: 1px solid var(--border); border-radius: 100px;
+    padding: 0.5rem 1rem; font-size: 0.85rem; color: var(--text); cursor: pointer; font-family: inherit;
+}
+.cal-time:hover { border-color: var(--accent); }
+.cal-time.is-selected { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); font-weight: 600; }
+
+.cal-form { display: flex; flex-direction: column; gap: 0.4rem; max-width: 420px; }
+.cal-form label { font-weight: 600; margin-top: 0.75rem; font-size: 0.85rem; }
+.cal-form input,
+.cal-form textarea {
+    padding: 0.6rem 0.7rem; border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text);
+}
+.cal-form button {
+    margin-top: 1rem; align-self: flex-start; background: var(--btn-primary-bg); color: var(--accent-contrast);
+    border: none; padding: 0.7rem 1.5rem; border-radius: var(--radius); font-size: 0.92rem; font-weight: 600; cursor: pointer;
+}
+.cal-form button:hover { background: var(--btn-primary-hover); }
+.cal-form button:disabled { opacity: 0.6; cursor: default; }
+.cal-form-status { font-size: 0.85rem; color: var(--text-muted); margin: 0.6rem 0 0; min-height: 1.1em; }
+.cal-form-status.is-error { color: var(--color-error); }
+
+.cal-confirmed {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.25rem 1.5rem; color: var(--text); font-weight: 600;
+}
+
+/* ---------- Events block (lectures/workshops, with optional registration) ---------- */
+
+.events-list { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.event-card {
+    background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.5rem;
+    transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.event-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+/* Once the staggered reveal below has settled the card at translateY(0),
+   that rule's higher specificity would otherwise win over the plain
+   :hover above and silence the lift — this repeats it at matching
+   specificity so hovering still works after the reveal has run. */
+html.js .block-events[data-animate].is-visible .event-card:hover { transform: translateY(-3px); }
+.event-card h3 { font-family: var(--font-heading); font-size: 1.2rem; margin: 0 0 0.5rem; }
+/* Now rendered via render_text_paragraphs() (same lichte opmaak as the
+   Tekst block: **vet**, *cursief*, [link](url), "- " bullets), so this
+   wraps one or more <p>/<ul> children instead of being a single <p>. */
+.event-description { margin: 0 0 1rem; }
+.event-description:last-child { margin-bottom: 0; }
+.event-description p { margin: 0 0 1rem; }
+.event-description p:last-child { margin-bottom: 0; }
+
+/* Groups the "practical info" (session date(s), location, price) —
+   deliberately placed after the title/description, not before: a visitor
+   reads what the event is about first, then the logistics. */
+.event-practical { margin: 0 0 1rem; }
+.event-practical:empty { margin: 0; }
+
+/* Dates on the left, location on the right (a Google-Maps-style chip) —
+   wraps to a stacked layout on narrow cards instead of squeezing both
+   side by side. */
+.event-dates-location {
+    display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between;
+    gap: 0.4rem 1.25rem; margin: 0 0 0.6rem;
+}
+.event-dates-location:last-child { margin-bottom: 0; }
+
+/* One line per session, each with the same compass-needle bullet used for
+   lists elsewhere on the site (.list-bullet) — normal body text, not the
+   smaller muted style this used to have, which looked out of place right
+   next to an actual .list-bullet list elsewhere on the page. */
+.event-sessions-list { margin: 0; }
+.event-sessions-list.list-bullet li { margin-bottom: 0.3rem; }
+.event-sessions-list.list-bullet li:last-child { margin-bottom: 0; }
+
+.event-location {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 100px;
+    padding: 0.3rem 0.9rem 0.3rem 0.6rem; margin: 0;
+    font-size: 0.9rem; color: var(--text);
+}
+.event-pin-icon { flex: none; color: var(--accent); }
+
+/* Clear but not shouty: a muted pill rather than bold price text. */
+.event-price {
+    display: inline-block; margin: 0;
+    font-size: 0.85rem; color: var(--text-muted);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 100px;
+    padding: 0.3rem 0.9rem;
+}
+
+.event-badge {
+    display: inline-block; padding: 0.2rem 0.7rem; border-radius: 100px;
+    font-size: 0.78rem; font-weight: 600; margin-bottom: 1rem;
+}
+.badge-spots { background: var(--bg); border: 1px solid var(--border); color: var(--text-muted); }
+.badge-full { background: var(--color-error); color: #fff; }
+
+/* Styled to look like .btn-primary, not a plain text link — registering is
+   the main action of this block, so it should carry the same visual weight
+   as every other call-to-action on the site, not less. */
+.event-register { margin-top: 0.25rem; }
+.event-register summary {
+    display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; list-style: none;
+    font-weight: 600; font-size: 0.95rem; color: var(--accent-contrast);
+    background: var(--btn-primary-bg); border-radius: var(--radius);
+    padding: 0.8rem 1.6rem;
+    transition: background var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.event-register summary:hover { background: var(--btn-primary-hover); }
+.event-register summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.event-register summary::-webkit-details-marker { display: none; }
+.event-register summary::after {
+    content: "›"; font-size: 1.15rem; line-height: 1; transition: transform var(--dur) var(--ease);
+}
+.event-register[open] summary::after { transform: rotate(90deg); }
+
+.event-register form {
+    display: flex; flex-direction: column; gap: 0.4rem; max-width: 380px; margin-top: 1rem;
+}
+.event-register label { font-weight: 600; margin-top: 0.6rem; font-size: 0.85rem; }
+.event-register input {
+    padding: 0.6rem 0.7rem; border: 1px solid var(--border); border-radius: var(--radius);
+    font-size: 0.95rem; font-family: inherit; background: var(--bg); color: var(--text);
+}
+.event-register button {
+    margin-top: 1rem; align-self: flex-start; background: var(--btn-primary-bg); color: var(--accent-contrast);
+    border: none; padding: 0.65rem 1.4rem; border-radius: var(--radius); font-size: 0.9rem; font-weight: 600; cursor: pointer;
+}
+.event-register button:hover { background: var(--btn-primary-hover); }
+
+/* Shown just above the submit button on contact/event/calendar forms —
+   an informational link, not a required checkbox (see render_privacy_note()
+   in functions.php and its JS twin in calendar-block.js). */
+.form-privacy-note { font-size: 0.82rem; color: var(--text-muted); margin: 0.75rem 0 0; }
+.form-privacy-note a { color: inherit; text-decoration: underline; }
+
+/* ---------- FAQ block ---------- */
+
+.faq-list { display: flex; flex-direction: column; gap: 0.75rem; max-width: 720px; }
+
+.faq-item {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 0.2rem 1.25rem;
+}
+.faq-item summary {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    cursor: pointer; list-style: none; font-weight: 600; font-size: 1rem; color: var(--text);
+    padding: 1rem 0;
+}
+.faq-item summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+    content: "›"; flex-shrink: 0; font-size: 1.2rem; line-height: 1; color: var(--accent);
+    transition: transform var(--dur) var(--ease);
+}
+.faq-item[open] summary::after { transform: rotate(90deg); }
+.faq-answer { color: var(--text-muted); padding: 0 0 1.1rem; line-height: 1.55; }
+
+/* ---------- Scroll-triggered reveal (progressive enhancement) ----------
+   The "js" class is added by an inline script in <head> before paint, so
+   content stays fully visible if JavaScript is unavailable. Motion is a
+   single, small, one-time fade-up per block — calm, not attention-grabbing. */
+
+html.js [data-animate] {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 700ms var(--ease), transform 700ms var(--ease);
+}
+
+html.js [data-animate].is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Staggered reveal: once a block becomes visible, its repeating children
+   (columns, list items, event cards) settle in one after another instead
+   of all at once — still a single trigger per block (see main.js), just
+   offset per child. Delay is capped at the 6th item so a long list doesn't
+   leave trailing items invisible long after the block scrolled into view. */
+html.js .block-columns[data-animate] .column,
+html.js .block-list[data-animate] li,
+html.js .block-events[data-animate] .event-card {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 500ms var(--ease), transform 500ms var(--ease);
+}
+html.js .block-columns[data-animate].is-visible .column,
+html.js .block-list[data-animate].is-visible li,
+html.js .block-events[data-animate].is-visible .event-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+html.js .block-columns[data-animate].is-visible .column:nth-child(2),
+html.js .block-list[data-animate].is-visible li:nth-child(2),
+html.js .block-events[data-animate].is-visible .event-card:nth-child(2) { transition-delay: 80ms; }
+html.js .block-columns[data-animate].is-visible .column:nth-child(3),
+html.js .block-list[data-animate].is-visible li:nth-child(3),
+html.js .block-events[data-animate].is-visible .event-card:nth-child(3) { transition-delay: 160ms; }
+html.js .block-list[data-animate].is-visible li:nth-child(4),
+html.js .block-events[data-animate].is-visible .event-card:nth-child(4) { transition-delay: 240ms; }
+html.js .block-list[data-animate].is-visible li:nth-child(5),
+html.js .block-events[data-animate].is-visible .event-card:nth-child(5) { transition-delay: 320ms; }
+html.js .block-list[data-animate].is-visible li:nth-child(n+6),
+html.js .block-events[data-animate].is-visible .event-card:nth-child(n+6) { transition-delay: 400ms; }
+
+@media (prefers-reduced-motion: reduce) {
+    html.js [data-animate] {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+    html.js .block-columns[data-animate] .column,
+    html.js .block-list[data-animate] li,
+    html.js .block-events[data-animate] .event-card {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+}
+
+/* ---------- Cookie-toestemmingsbanner (Google Analytics) ---------- */
+
+.cookie-consent {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.cookie-consent-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+}
+
+.cookie-consent-inner p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text);
+    flex: 1 1 260px;
+}
+
+.cookie-consent-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex: 0 0 auto;
+}
+
+/* ---------- Scherpe hoeken ook voor de "pil"-vormige elementen ----------
+   Deze gebruiken bewust een vaste 100px i.p.v. var(--radius), want in het
+   klassieke thema moeten ze altijd een pil blijven ongeacht de gekozen
+   --radius. Voor dit scherpe thema overschrijven we ze hier expliciet
+   naar 0, zodat écht niets op de pagina nog afgeronde hoeken heeft. */
+.event-location,
+.event-price,
+.cal-time,
+.event-badge,
+.badge {
+    border-radius: 0;
+}

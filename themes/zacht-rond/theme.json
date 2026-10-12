@@ -1,0 +1,9 @@
+{
+    "name": "Zacht & Rond",
+    "description": "Grote afgeronde hoeken, zachte gekleurde schaduwen, een rond leestype en pastelkleuren — vriendelijk en speels tegenover het ingetogen klassieke thema. Test-thema voor het thema-systeem.",
+    "schemes": [
+        {"key": "a", "label": "A — Perzik"},
+        {"key": "b", "label": "B — Lavendel"},
+        {"key": "c", "label": "C — Muntgroen"}
+    ]
+}

@@ -1,0 +1,9 @@
+{
+    "name": "Noir Editoriaal",
+    "description": "Scherpe hoeken, harde schaduwen en vette hoofdletter-koppen — een strak, kranten-achtig tegengewicht voor het warme klassieke thema. Test-thema voor het thema-systeem.",
+    "schemes": [
+        {"key": "a", "label": "A — Scherp wit"},
+        {"key": "b", "label": "B — Inkt (donker)"},
+        {"key": "c", "label": "C — Oker"}
+    ]
+}
