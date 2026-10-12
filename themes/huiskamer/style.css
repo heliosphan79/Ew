@@ -145,15 +145,19 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.2; font-weight: 40
    eigen tekens vervangen (zie .site-nav a::before en .list-bullet). */
 
 .ew-needle-icon { display: none; }
-.ew-logo-accent { color: var(--accent); }
+/* Het koppelteken in "eigen-wijzer" blijft inkt, net als de rest van het
+   woordmerk (zie .ew-logo-word); enkel bij hover kleurt het geheel mee. */
+.ew-logo-accent { color: inherit; }
 
+/* De spiraal draait bij hover rustig een kwartslag verder — uitrollen,
+   niet wiebelen. */
 .ew-logo-custom {
-    width: 44px;
-    height: 44px;
-    transition: transform var(--dur) var(--ease);
+    width: 54px;
+    height: 54px;
+    transition: transform 900ms var(--ease);
 }
 .site-logo:hover .ew-logo-custom,
-.site-logo:focus-visible .ew-logo-custom { transform: rotate(-6deg) scale(1.06); }
+.site-logo:focus-visible .ew-logo-custom { transform: rotate(90deg); }
 
 /* Valt de header toch terug op het ingebouwde kompas-logo (logo.svg
    ontbreekt), dan krijgt het de zijbalk-kleuren. */
@@ -206,13 +210,18 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.2; font-weight: 40
     z-index: 2;
 }
 
+/* Woordmerk: kleine letters in een strakke, ronde sans ("eigen-wijzer"),
+   bewust anders dan de serif-koppen op de pagina zelf. De site-naam komt
+   als "Eigen-Wijzer" uit de instellingen; text-transform maakt er de
+   kleine-letters-versie van. */
 .ew-logo-word {
-    font-family: var(--font-heading);
-    font-style: italic;
-    font-weight: 400;
-    font-size: 1.35rem;
+    font-family: "Avenir Next", Avenir, "Century Gothic", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    text-transform: lowercase;
+    font-weight: 500;
+    font-size: 1.6rem;
+    line-height: 1;
     color: var(--sidebar-text);
-    letter-spacing: 0.01em;
+    letter-spacing: -0.015em;
 }
 
 /* Menuknop: twee korte lijntjes die bij openen een kruisje vormen. */
