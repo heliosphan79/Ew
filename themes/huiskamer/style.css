@@ -2,21 +2,21 @@
    Huiskamer — test-thema voor het thema-systeem.
    Een heel andere lay-out dan de 4 andere thema's, met exact dezelfde
    HTML (zie themes/README.md): op een breed scherm wordt de header een
-   vaste, donkere zijbalk links (logo bovenaan, menu verticaal eronder,
+   vaste, lichte (getinte) zijbalk links (logo bovenaan, menu verticaal eronder,
    onderaan een "leesvoortgang"-dial die meedraait met het scrollen), met
    de inhoud rechts op een lichte linnen-achtige paginakleur. Op een
-   smal scherm klapt het menu open als een volledig scherm met genummerde
-   koppen i.p.v. een uitschuifpaneel. Verder: foto's als lichtjes scheef
+   smal scherm klapt het menu open als een volledig scherm met grote
+   cursieve koppen i.p.v. een uitschuifpaneel. Verder: foto's als lichtjes scheef
    opgehangen "kiekjes" die rechttrekken bij hover, een quote als groot
    middenstuk met een serif-aanhalingsteken, pil-vormige knoppen met een
    pijl, eigen bolletjes als bullets (de kompasnaald-iconen zijn hier
    verborgen), en een reveal die zacht van links komt i.p.v. van onder.
-   Het logo (twee fauteuils tegenover elkaar) past bij de donkere zijbalk
-   in alle 3 kleurschema's — zie logo.svg.
+   Het logo staat los van het kleurschema (een <img>) en is daarom in
+   inkt + één warm accent getekend, dat op elke lichte zijbalktint werkt.
    ========================================================================== */
 
 :root {
-    /* Kleurschema A "Bos & linnen" — ook de terugval zonder data-theme */
+    /* Kleurschema A "Zand & koper" — ook de terugval zonder data-theme */
     --bg: #f6f1e8;
     --surface: #fffdf8;
     --text: #2a2b26;
@@ -43,67 +43,70 @@
     --content-width: 680px;
 
     /* Eigen tokens van dit thema (bovenop het verplichte contract): de
-       donkere zijbalk/mobiele bovenbalk en de breedte van de zijbalk op
-       een breed scherm. */
-    --sidebar-bg: #22382e;
-    --sidebar-bg-deep: #1a2c24;
-    --sidebar-text: #ece6d8;
-    --sidebar-muted: rgba(236, 230, 216, 0.6);
-    --sidebar-w: 300px;
+       getinte zijbalk/mobiele bovenbalk (licht, per kleurschema een
+       andere tint) en de breedte van de zijbalk op een breed scherm. */
+    --sidebar-bg: #ece3d2;
+    --sidebar-bg-deep: #e4d9c4;
+    --sidebar-text: #2f2b25;
+    --sidebar-muted: rgba(47, 43, 37, 0.5);
+    --sidebar-line: rgba(47, 43, 37, 0.12);
+    --sidebar-w: 320px;
 }
 
-/* Kleurschema B "Nacht & zand" — inktblauwe zijbalk, zandkleurige pagina */
+/* Kleurschema B "Salie & linnen" — bleek saliegroene zijbalk, linnen pagina */
 body[data-theme="b"] {
-    --bg: #f5f1ea;
-    --surface: #fffdf9;
-    --text: #23262c;
-    --text-muted: #5f6470;
-    --text-subtle: #8f949e;
-    --accent: #c08a3e;
-    --accent-hover: #9c6e2c;
+    --bg: #f5f3ea;
+    --surface: #fdfcf7;
+    --text: #272b25;
+    --text-muted: #5f665c;
+    --text-subtle: #8d9486;
+    --accent: #5f7d55;
+    --accent-hover: #496641;
     --accent-contrast: #fffdf9;
     --btn-primary-bg: var(--accent);
     --btn-primary-hover: var(--accent-hover);
-    --border: #e4ded3;
+    --border: #e0e2d4;
     --eyebrow-color: var(--accent);
     --quote-bg: transparent;
     --quote-text: var(--text);
     --radius: 14px;
-    --shadow: 0 10px 30px rgba(35, 38, 44, 0.08);
+    --shadow: 0 10px 30px rgba(39, 43, 37, 0.08);
     --font-heading: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
     --font-body: "Avenir Next", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
 
-    --sidebar-bg: #1f2733;
-    --sidebar-bg-deep: #171d27;
-    --sidebar-text: #ebe6dc;
-    --sidebar-muted: rgba(235, 230, 220, 0.6);
+    --sidebar-bg: #dfe6d3;
+    --sidebar-bg-deep: #d5ddc7;
+    --sidebar-text: #272b25;
+    --sidebar-muted: rgba(39, 43, 37, 0.5);
+    --sidebar-line: rgba(39, 43, 37, 0.12);
 }
 
-/* Kleurschema C "Leisteen & rozemarijn" — grijsgroene zijbalk, kruidig groen accent */
+/* Kleurschema C "Klei & rozenhout" — zacht kleiroze zijbalk, warm klei-accent */
 body[data-theme="c"] {
-    --bg: #f2f4f0;
-    --surface: #fbfcfa;
-    --text: #252b29;
-    --text-muted: #5f6a66;
-    --text-subtle: #8c9793;
-    --accent: #6f8f6a;
-    --accent-hover: #557252;
+    --bg: #f8f3ef;
+    --surface: #fffcf9;
+    --text: #2c2623;
+    --text-muted: #6b605a;
+    --text-subtle: #978b84;
+    --accent: #a5594a;
+    --accent-hover: #86443a;
     --accent-contrast: #fbfcfa;
     --btn-primary-bg: var(--accent);
     --btn-primary-hover: var(--accent-hover);
-    --border: #dde3df;
+    --border: #eadfd8;
     --eyebrow-color: var(--accent);
     --quote-bg: transparent;
     --quote-text: var(--text);
     --radius: 14px;
-    --shadow: 0 10px 30px rgba(37, 43, 41, 0.08);
+    --shadow: 0 10px 30px rgba(44, 38, 35, 0.08);
     --font-heading: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
     --font-body: "Avenir Next", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
 
-    --sidebar-bg: #2f3a3c;
-    --sidebar-bg-deep: #252e30;
-    --sidebar-text: #e9ece8;
-    --sidebar-muted: rgba(233, 236, 232, 0.6);
+    --sidebar-bg: #ecdcd3;
+    --sidebar-bg-deep: #e4d1c6;
+    --sidebar-text: #2c2623;
+    --sidebar-muted: rgba(44, 38, 35, 0.5);
+    --sidebar-line: rgba(44, 38, 35, 0.12);
 }
 
 * { box-sizing: border-box; }
@@ -181,9 +184,10 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.2; font-weight: 40
     background: var(--sidebar-bg);
     color: var(--sidebar-text);
     padding: 0.9rem 0;
+    border-bottom: 1px solid var(--sidebar-line);
     transition: box-shadow var(--dur) var(--ease);
 }
-.site-header.is-scrolled { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); }
+.site-header.is-scrolled { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08); }
 
 .site-header-row {
     display: flex;
@@ -250,12 +254,12 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.2; font-weight: 40
     .menu-btn-ln { transition: none; }
 }
 
-/* Het menu zelf: genummerde, cursieve koppen. De nummering (01, 02, …)
-   komt uit een CSS-counter — geen extra HTML nodig. */
+/* Het menu zelf: rustige koppen in het koplettertype; de actieve is
+   cursief. Lange paginatitels (bv. "Huiskamerontmoetingen") breken
+   desnoods af met een afbreekstreepje i.p.v. uit de zijbalk te lopen. */
 .site-nav {
     display: flex;
     gap: 1.5rem;
-    counter-reset: nav-item;
 }
 
 .site-nav a {
@@ -267,26 +271,19 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.2; font-weight: 40
     font-family: var(--font-heading);
     font-size: 1.05rem;
     white-space: nowrap;
-    opacity: 0.78;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    overflow-wrap: break-word;
+    opacity: 0.72;
     transition: opacity var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
-.site-nav a::before {
-    counter-increment: nav-item;
-    content: counter(nav-item, decimal-leading-zero);
-    font-family: var(--font-body);
-    font-size: 0.68rem;
-    letter-spacing: 0.12em;
-    color: var(--accent);
-    opacity: 0.9;
-}
-
 .site-nav a:hover,
 .site-nav a:focus-visible,
-.site-nav a.is-active { opacity: 1; color: #fff; }
+.site-nav a.is-active { opacity: 1; color: var(--accent-hover); }
 .site-nav a.is-active { font-style: italic; }
 
 /* Smal scherm (<640px): het menu wordt een volledig scherm in de
-   zijbalk-kleur, met grote genummerde koppen die één voor één
+   zijbalk-kleur, met grote cursieve koppen die één voor één
    binnenkomen. De knop en het logo blijven erboven staan (z-index). */
 @media (max-width: 639.98px) {
     .menu-btn { display: block; }
@@ -318,13 +315,12 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.2; font-weight: 40
         font-style: italic;
         line-height: 1.3;
         padding: 0.35rem 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        border-bottom: 1px solid var(--sidebar-line);
         width: 100%;
         opacity: 0;
         transform: translateX(-14px);
         transition: opacity 0.4s ease, transform 0.4s var(--ease), color var(--dur) var(--ease);
     }
-    .site-nav a::before { font-size: 0.8rem; align-self: center; }
     .site-nav a:last-child { border-bottom: none; }
     .site-nav.is-open a { opacity: 0.85; transform: none; }
     .site-nav.is-open a.is-active,
@@ -364,6 +360,8 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.2; font-weight: 40
         width: var(--sidebar-w);
         padding: 2.25rem 0;
         box-shadow: none;
+        border-bottom: 0;
+        border-right: 1px solid var(--sidebar-line);
         overflow-y: auto;
     }
     .site-header.is-scrolled { box-shadow: none; }
@@ -389,10 +387,9 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.2; font-weight: 40
         overflow: visible;
     }
     .site-nav a {
-        font-size: 1.3rem;
+        font-size: 1.2rem;
         white-space: normal;
     }
-    .site-nav a::before { min-width: 1.6rem; }
     .site-nav a:hover,
     .site-nav a:focus-visible { transform: translateX(4px); }
 
@@ -411,7 +408,7 @@ h1, h2, h3 { font-family: var(--font-heading); line-height: 1.2; font-weight: 40
         height: 34px;
         border-radius: 50%;
         background:
-            conic-gradient(var(--accent) calc(var(--needle-scroll-rotate, 0deg) * 2.535), rgba(255, 255, 255, 0.12) 0);
+            conic-gradient(var(--accent) calc(var(--needle-scroll-rotate, 0deg) * 2.535), var(--sidebar-line) 0);
         -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%);
         mask: radial-gradient(circle, transparent 58%, #000 60%);
         transition: background 200ms linear;
