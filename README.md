@@ -215,8 +215,10 @@ laten uploaden via FTP, zonder zelf een FTP-client te gebruiken
   zolang ze dezelfde HTML/blok-structuur aanhouden. Zie "Thema's" hieronder
   voor het volledige systeem (uploaden, beheren, zelf een thema bouwen).
   De lettertypes gebruiken stevige systeem-fallbackstacks — geen Google
-  Fonts-CDN of andere lettertype-bestanden, dezelfde privacy-afweging als
-  de rest van dit project.
+  Fonts-CDN of externe lettertype-bestanden, dezelfde privacy-afweging als
+  de rest van dit project. Een thema kan wel een vrij gelicenseerd
+  lettertype *insluiten* in zijn `style.css` (data-URI, geen aanvraag naar
+  een derde partij) — zie `themes/README.md`.
 - **Subtiele animatie**: blokken faden rustig in bij scroll (één keer,
   IntersectionObserver, met een no-JS/`prefers-reduced-motion`-fallback
   zodat content altijd zichtbaar blijft), en knoppen/links geven een

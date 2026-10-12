@@ -78,14 +78,20 @@ lettertypes, andere afstand/ritme, andere knopvormen, andere
 kaartschaduwen, zelfs een heel andere lay-out via CSS Grid/Flexbox
 (volgorde, uitlijning) binnen de bestaande HTML-structuur.
 
-**Geen eigen lettertypebestanden.** Om dezelfde privacy-afweging aan te
-houden als het bestaande ontwerp (geen Google Fonts-CDN, geen
-derde-partij-lettertypeserver), gebruikt `--font-heading`/`--font-body`
-een systeem-fallbackstack (bv. `Georgia, 'Times New Roman', serif` of
-`-apple-system, 'Segoe UI', Roboto, sans-serif`) — geen `@font-face` naar
-een extern bestand. Dat levert nog altijd duidelijk verschillende
-typografische karakters op (klassiek serif vs. strak geometrisch vs.
-rond-vriendelijk, ...), enkel zonder maatwerk-lettertypebestanden.
+**Geen externe lettertypes, wél ingesloten.** Om dezelfde privacy-afweging
+aan te houden als het bestaande ontwerp (geen Google Fonts-CDN, geen
+derde-partij-lettertypeserver, geen los lettertypebestand in de zip),
+gebruikt `--font-heading`/`--font-body` standaard een systeem-fallbackstack
+(bv. `Georgia, 'Times New Roman', serif` of
+`-apple-system, 'Segoe UI', Roboto, sans-serif`). Wil je toch een eigen,
+vrij gelicenseerd lettertype (bv. een OFL-font van Google Fonts), dan sluit
+je het **in `style.css` zelf in** als `@font-face` met een `data:`-URI
+(`src: url(data:font/woff2;base64,...)`) — een geënte subset (bv. enkel
+latin, één gewicht) is meestal 10-20 KB. Dat past binnen de
+bestandsgrootte-limiet van `style.css` (300 KB), er gaat geen enkele
+aanvraag naar een derde partij, en je neemt de licentievermelding op in een
+commentaar erboven. Een `@font-face` naar een extern bestand of URL mag niet.
+Zie `themes/huiskamer/style.css` (Hanken Grotesk) voor een voorbeeld.
 
 ## logo.svg / .png / .jpg / .webp (optioneel)
 
