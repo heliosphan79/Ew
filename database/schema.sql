@@ -153,8 +153,9 @@ INSERT IGNORE INTO themes (id, slug, name, description, logo_file, schemes, is_b
     1
 );
 
--- Twee meegeleverde demo-thema's (themes/noir-editoriaal/,
--- themes/zacht-rond/) om het thema-systeem meteen te kunnen uitproberen.
+-- Drie meegeleverde demo-thema's (themes/noir-editoriaal/,
+-- themes/zacht-rond/, themes/stilte/) om het thema-systeem meteen te
+-- kunnen uitproberen.
 INSERT IGNORE INTO themes (slug, name, description, logo_file, schemes, is_builtin) VALUES (
     'noir-editoriaal',
     'Noir Editoriaal',
@@ -169,6 +170,14 @@ INSERT IGNORE INTO themes (slug, name, description, logo_file, schemes, is_built
     'Grote afgeronde hoeken, zachte gekleurde schaduwen, een rond leestype en pastelkleuren — vriendelijk en speels tegenover het ingetogen klassieke thema. Test-thema voor het thema-systeem.',
     'logo.svg',
     '[{"key":"a","label":"A — Perzik"},{"key":"b","label":"B — Lavendel"},{"key":"c","label":"C — Muntgroen"}]',
+    0
+);
+INSERT IGNORE INTO themes (slug, name, description, logo_file, schemes, is_builtin) VALUES (
+    'stilte',
+    'Stilte',
+    'Radicale eenvoud: geen schaduwen, nauwelijks zichtbare lijnen, dunne lettertypes en veel witruimte voor een rustig, zwevend geheel. Test-thema voor het thema-systeem.',
+    'logo.svg',
+    '[{"key":"a","label":"A — Mist"},{"key":"b","label":"B — Schaduw"},{"key":"c","label":"C — Water"}]',
     0
 );
 

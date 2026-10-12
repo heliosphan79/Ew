@@ -623,7 +623,7 @@ geïnstalleerd en kan je op elk moment activeren.
   (`admin/theme-preview.php`/`theme-preview-exit.php`), het actieve thema
   in de database (zichtbaar voor alle bezoekers) verandert pas echt bij
   "Activeren". "Stoppen met voorbeeld" in de balk sluit het af.
-- **3 test-thema's** zijn meegeleverd om het systeem uit te proberen,
+- **4 test-thema's** zijn meegeleverd om het systeem uit te proberen,
   naast het ingebouwde "Eigen-Wijzer (klassiek)":
   - **Noir Editoriaal** — scherpe hoeken, harde "offset"-schaduwen, vette
     hoofdletter-koppen in een brede sans-serif met een kranten-achtige
@@ -632,10 +632,18 @@ geïnstalleerd en kan je op elk moment activeren.
   - **Zacht & Rond** — grote afgeronde hoeken, zachte gekleurde
     schaduwen, een rond leestype (`ui-rounded`) en pastelkleuren.
     Kleurschema's: "Perzik", "Lavendel" en "Muntgroen".
-  
-  Beide zijn bewust het tegenovergestelde van elkaar én van het
-  ingetogen klassieke thema, om aan te tonen hoe ver je met puur CSS
-  (zelfde HTML, geen maatwerk-templates) kan gaan.
+  - **Stilte** — radicale eenvoud: geen schaduwen, nauwelijks zichtbare
+    randen (kaarten vallen bijna samen met de paginakleur), dunne,
+    lichte koppen in één gedeelde systeemlettertypestack (i.p.v. een
+    contrasterend kop-/leeslettertype zoals de andere 3 thema's), een
+    "lege" primaire knop i.p.v. een gevuld vlak, een quote-blok met
+    enkel een lijntje links, en merkbaar meer witruimte tussen blokken.
+    Kleurschema's: "Mist" (lichtgrijsblauw), "Schaduw" (donker
+    paarsgrijs) en "Water" (bleek groenblauw).
+
+  Alle drie zijn bewust (onderling en t.o.v. het ingetogen klassieke
+  thema) zo verschillend mogelijk, om aan te tonen hoe ver je met puur
+  CSS (zelfde HTML, geen maatwerk-templates) kan gaan.
 - **Bewust geen volledige template-overrides** (andere HTML-structuur per
   thema): dat zou een eigen, beperkte templatetaal vergen om een
   zip-upload veilig te houden — een project van weken, niet dagen, en een
