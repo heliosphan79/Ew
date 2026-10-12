@@ -615,6 +615,14 @@ geïnstalleerd en kan je op elk moment activeren.
   kan niet verwijderd worden; verwijder je het actieve thema, dan valt de
   site automatisch terug op het ingebouwde thema (nooit een kapotte of
   lege stijl).
+- **Voorbeeld bekijken zonder te activeren**: "Voorbeeld" bij een thema
+  (opent in een nieuw tabblad) toont de volledige site met dát thema en
+  een schakelbalk boven de pagina om de 3 kleurschema's (A/B/C) te
+  doorlopen, zonder dat andere bezoekers hier iets van zien — dit is
+  puur sessie-gebonden voor de ingelogde beheerder
+  (`admin/theme-preview.php`/`theme-preview-exit.php`), het actieve thema
+  in de database (zichtbaar voor alle bezoekers) verandert pas echt bij
+  "Activeren". "Stoppen met voorbeeld" in de balk sluit het af.
 - **3 test-thema's** zijn meegeleverd om het systeem uit te proberen,
   naast het ingebouwde "Eigen-Wijzer (klassiek)":
   - **Noir Editoriaal** — scherpe hoeken, harde "offset"-schaduwen, vette

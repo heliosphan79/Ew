@@ -52,6 +52,8 @@
                 'theme-upload.php' => 'themes',
                 'theme-activate.php' => 'themes',
                 'theme-delete.php' => 'themes',
+                'theme-preview.php' => 'themes',
+                'theme-preview-exit.php' => 'themes',
             ];
             $adminNavActive = $adminNavGroups[$adminNavCurrent] ?? '';
             $adminNavLinks = [

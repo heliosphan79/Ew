@@ -55,6 +55,7 @@ require __DIR__ . '/includes/header.php';
                 <?php if ($theme['is_builtin']): ?><p class="field-hint" style="margin:0.2rem 0 0;">Ingebouwd</p><?php endif; ?>
             </td>
             <td class="admin-table-actions">
+                <a href="theme-preview.php?id=<?= (int) $theme['id'] ?>" target="_blank" rel="noopener" class="button-secondary">Voorbeeld</a>
                 <?php if ((int) $theme['id'] !== $activeThemeId): ?>
                     <form method="post" action="theme-activate.php">
                         <?= csrf_field() ?>
