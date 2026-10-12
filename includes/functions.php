@@ -96,6 +96,7 @@ const ADMIN_ICON_PATHS = [
     'mail' => '<path d="M22 2L11 13"></path><path d="M22 2l-7 20-4-9-9-4 20-7z"></path>',
     'upload' => '<path d="M12 16V4"></path><path d="M6 10l6-6 6 6"></path><path d="M4 20h16"></path>',
     'copy' => '<rect x="8" y="8" width="13" height="13" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>',
+    'palette' => '<path d="M12 2a10 10 0 1 0 0 20c1.1 0 2-0.9 2-2 0-0.5-0.2-1-0.5-1.4-0.3-0.4-0.5-0.9-0.5-1.4 0-1.1 0.9-2 2-2h2.3c1.9 0 3.5-1.6 3.5-3.5C20.8 6.2 16.9 2 12 2z"></path><circle cx="6.5" cy="11.5" r="1.4"></circle><circle cx="9.5" cy="7.5" r="1.4"></circle><circle cx="14.5" cy="7.5" r="1.4"></circle><circle cx="17.5" cy="11.5" r="1.4"></circle>',
 ];
 
 function admin_icon(string $name, string $class = ''): string
@@ -242,6 +243,112 @@ const THEME_VARIANTS = [
 function normalize_theme_variant(?string $variant): string
 {
     return array_key_exists((string) $variant, THEME_VARIANTS) ? $variant : 'a';
+}
+
+// File extensions a theme's logo may use — also the allowlist enforced at
+// upload time (admin/theme-upload.php). SVG is served via <img>, never
+// inlined, so embedded <script>/event-handler markup never executes
+// regardless of what a theme zip contains (see render_logo_mark()).
+const THEME_LOGO_EXTENSIONS = ['svg', 'png', 'jpg', 'jpeg', 'webp'];
+
+// The site's active visual theme — its stylesheet, optional custom logo,
+// and the labels for its 3 colour schemes (admin/themes.php). Falls back
+// to the built-in theme when no theme is actively chosen, or the chosen
+// one no longer exists (deleted, or a damaged install never got the
+// migration's seed row) — same never-break-the-site fallback discipline
+// as every other optional setting in this project.
+function get_active_theme(mysqli $mysqli): array
+{
+    static $theme = null;
+    if ($theme !== null) {
+        return $theme;
+    }
+
+    $activeId = get_site_settings($mysqli)['active_theme_id'] ?? null;
+
+    $row = null;
+    if ($activeId !== null) {
+        $stmt = $mysqli->prepare('SELECT id, slug, name, logo_file, schemes FROM themes WHERE id = ?');
+        $stmt->bind_param('i', $activeId);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+    }
+    if ($row === null) {
+        $row = $mysqli->query(
+            'SELECT id, slug, name, logo_file, schemes FROM themes WHERE is_builtin = 1 LIMIT 1'
+        )->fetch_assoc();
+    }
+
+    if ($row === null) {
+        // Last-resort fallback for a damaged install missing even the
+        // seeded built-in row — the site keeps rendering (with the
+        // classic stylesheet's own path) instead of a hard crash.
+        $theme = [
+            'id' => null,
+            'slug' => 'eigen-wijzer-klassiek',
+            'name' => 'Eigen-Wijzer (klassiek)',
+            'logo_file' => null,
+            'schemes' => array_map(fn($key, $label) => ['key' => $key, 'label' => $label], array_keys(THEME_VARIANTS), THEME_VARIANTS),
+        ];
+        return $theme;
+    }
+
+    $schemes = json_decode((string) $row['schemes'], true);
+    $row['schemes'] = is_array($schemes) ? $schemes : [];
+    $theme = $row;
+    return $theme;
+}
+
+// Absolute (root-relative) URL of the active theme's stylesheet.
+function active_theme_css_url(array $activeTheme): string
+{
+    return '/themes/' . rawurlencode((string) $activeTheme['slug']) . '/style.css';
+}
+
+// key => label map for the active theme's 3 colour schemes, used by the
+// page editor's "Frontend-variant" dropdown and the pages list — falls
+// back to THEME_VARIANTS' labels for any key the active theme somehow
+// doesn't define, so the dropdown is never missing an option.
+function active_theme_scheme_labels(array $activeTheme): array
+{
+    $labels = THEME_VARIANTS;
+    foreach ((array) ($activeTheme['schemes'] ?? []) as $scheme) {
+        $key = (string) ($scheme['key'] ?? '');
+        if (array_key_exists($key, $labels) && (string) ($scheme['label'] ?? '') !== '') {
+            $labels[$key] = (string) $scheme['label'];
+        }
+    }
+    return $labels;
+}
+
+// The clickable home-link logo mark in the header. The built-in, animated
+// compass-needle SVG is used whenever the active theme doesn't supply its
+// own logo file (logo_file IS NULL) — either because it's the built-in
+// theme itself, or a custom theme that didn't bother including one. A
+// custom logo always renders as a plain <img>, never inlined — an
+// uploaded SVG's embedded <script>/event-handler attributes (if any)
+// never execute in that context, so no server-side SVG sanitization is
+// needed. The trade-off: a custom logo can't recolor itself per colour
+// scheme via CSS variables the way the built-in mark does — its colours
+// are whatever the theme author baked into the file.
+function render_logo_mark(array $activeTheme): string
+{
+    $logoFile = $activeTheme['logo_file'] ?? null;
+    if ($logoFile === null) {
+        return '<svg class="ew-logo" width="36" height="36" viewBox="0 0 120 120" aria-hidden="true">'
+            . '<circle class="ew-logo-ring" cx="60" cy="60" r="50" fill="none" stroke-width="5"></circle>'
+            . '<g class="ew-logo-needle-scroll">'
+            . '<g class="ew-logo-needle">'
+            . '<polygon class="ew-logo-needle-a" points="60,20 70,60 50,60"></polygon>'
+            . '<polygon class="ew-logo-needle-b" points="50,60 70,60 60,100"></polygon>'
+            . '</g></g>'
+            . '<circle class="ew-logo-center" cx="60" cy="60" r="4.5"></circle>'
+            . '</svg>';
+    }
+
+    $url = '/themes/' . rawurlencode((string) $activeTheme['slug']) . '/' . rawurlencode((string) $logoFile);
+    return '<img class="ew-logo ew-logo-custom" src="' . e($url) . '" width="36" height="36" alt="">';
 }
 
 // Optional background treatment, settable on any block (and individually
@@ -1597,7 +1704,7 @@ function get_site_settings(mysqli $mysqli): array
                 price_range, area_served, linkedin_url, google_business_url,
                 person_name, person_job_title, person_expertise, person_bio,
                 contact_success_message, event_registration_success_message,
-                booking_success_message, newsletter_unsubscribe_message
+                booking_success_message, newsletter_unsubscribe_message, active_theme_id
              FROM site_settings WHERE id = 1'
         )->fetch_assoc();
         $settings = [
@@ -1624,6 +1731,7 @@ function get_site_settings(mysqli $mysqli): array
             'event_registration_success_message' => $row['event_registration_success_message'] ?? '',
             'booking_success_message' => $row['booking_success_message'] ?? '',
             'newsletter_unsubscribe_message' => $row['newsletter_unsubscribe_message'] ?? '',
+            'active_theme_id' => $row['active_theme_id'] !== null ? (int) $row['active_theme_id'] : null,
         ];
     }
     return $settings;
@@ -1940,7 +2048,8 @@ function sessionToDateTime(array $session): string
 
 const NEWSLETTER_BLOCK_TYPES = ['text', 'image', 'quote', 'list', 'buttons', 'newsletter_events'];
 
-// Mirrors .block-bg-accent/.block-bg-surface from assets/css/style.css as
+// Mirrors .block-bg-accent/.block-bg-surface from the active theme's
+// style.css (every theme defines these, see themes/README) as
 // inline styles: e-mail clients ignore classes and CSS custom properties,
 // so the admin's "Achtergrond" field (shared with the page editor, via
 // sanitize_block_background()) needs its own, fixed-color translation here

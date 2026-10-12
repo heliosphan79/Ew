@@ -3,3 +3,14 @@ uploads/*
 !uploads/.gitkeep
 !uploads/.htaccess
 .DS_Store
+
+# Thema's die via het beheerpaneel geüpload worden (admin/theme-upload.php)
+# horen net als uploads/ niet in git — enkel het ingebouwde thema en de
+# twee meegeleverde demo-thema's (zie README "Thema's") zijn wél
+# versiebeheerde code.
+themes/*
+!themes/.htaccess
+!themes/README.md
+!themes/eigen-wijzer-klassiek/
+!themes/noir-editoriaal/
+!themes/zacht-rond/

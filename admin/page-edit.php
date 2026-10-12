@@ -184,12 +184,13 @@ require __DIR__ . '/includes/header.php';
             <input type="text" id="meta_description" name="meta_description" value="<?= e($form['meta_description']) ?>" maxlength="300" data-meta-description-input>
             <p class="field-hint" data-meta-description-hint></p>
 
-            <label for="theme_variant">Frontend-variant</label>
+            <label for="theme_variant">Kleurschema</label>
             <select id="theme_variant" name="theme_variant">
-                <?php foreach (THEME_VARIANTS as $key => $label): ?>
+                <?php foreach (active_theme_scheme_labels(get_active_theme($mysqli)) as $key => $label): ?>
                     <option value="<?= e($key) ?>" <?= $form['theme_variant'] === $key ? 'selected' : '' ?>><?= e($label) ?></option>
                 <?php endforeach; ?>
             </select>
+            <p class="field-hint">Binnen het actieve thema (zie "Thema's" in het zijmenu) — niet het thema zelf.</p>
 
             <div class="page-form-row">
                 <label class="checkbox-label">
