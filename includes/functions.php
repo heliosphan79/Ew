@@ -289,14 +289,21 @@ function resolve_effective_theme_variant(?string $pageVariant): string
 // active_theme_id; if that previewed theme turns out to be gone (deleted
 // mid-preview), the session preview state is cleared so the banner and
 // fallback theme stay consistent with each other.
-function get_active_theme(mysqli $mysqli): array
+//
+// $ignorePreview = true returns the theme stored in site_settings even
+// while the admin is previewing another one — for admin pages (the
+// themes list's "Actief" badge, the scheme labels in the page editor),
+// which must describe the live site, never the admin's own preview.
+function get_active_theme(mysqli $mysqli, bool $ignorePreview = false): array
 {
-    static $theme = null;
-    if ($theme !== null) {
-        return $theme;
+    static $cache = [];
+    $cacheKey = $ignorePreview ? 'stored' : 'effective';
+    if (isset($cache[$cacheKey])) {
+        return $cache[$cacheKey];
     }
+    $theme = &$cache[$cacheKey];
 
-    $previewId = is_previewing_theme() ? (int) $_SESSION['preview_theme_id'] : null;
+    $previewId = !$ignorePreview && is_previewing_theme() ? (int) $_SESSION['preview_theme_id'] : null;
     $activeId = $previewId ?? (get_site_settings($mysqli)['active_theme_id'] ?? null);
 
     $row = null;

@@ -40,7 +40,7 @@ if ($id > 0) {
     } elseif ((int) $theme['is_builtin'] === 1) {
         set_flash('error', 'Het ingebouwde thema kan niet verwijderd worden.');
     } else {
-        $wasActive = get_active_theme($mysqli)['id'] === $id;
+        $wasActive = get_active_theme($mysqli, true)['id'] === $id;
 
         $stmt = $mysqli->prepare('DELETE FROM themes WHERE id = ?');
         $stmt->bind_param('i', $id);
