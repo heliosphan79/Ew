@@ -623,7 +623,7 @@ geïnstalleerd en kan je op elk moment activeren.
   (`admin/theme-preview.php`/`theme-preview-exit.php`), het actieve thema
   in de database (zichtbaar voor alle bezoekers) verandert pas echt bij
   "Activeren". "Stoppen met voorbeeld" in de balk sluit het af.
-- **4 test-thema's** zijn meegeleverd om het systeem uit te proberen,
+- **5 test-thema's** zijn meegeleverd om het systeem uit te proberen,
   naast het ingebouwde "Eigen-Wijzer (klassiek)":
   - **Noir Editoriaal** — scherpe hoeken, harde "offset"-schaduwen, vette
     hoofdletter-koppen in een brede sans-serif met een kranten-achtige
@@ -640,10 +640,26 @@ geïnstalleerd en kan je op elk moment activeren.
     enkel een lijntje links, en merkbaar meer witruimte tussen blokken.
     Kleurschema's: "Mist" (lichtgrijsblauw), "Schaduw" (donker
     paarsgrijs) en "Water" (bleek groenblauw).
+  - **Huiskamer** — een heel andere *lay-out* met dezelfde HTML: op een
+    breed scherm wordt de header een vaste donkere zijbalk links (logo
+    bovenaan, genummerd verticaal menu via CSS-counters, onderaan een
+    "leesvoortgang"-ring die zich vult naarmate je scrolt — gevoed door
+    de `--needle-scroll-rotate`-waarde die `main.js` al voor het
+    kompas-logo zet), met de inhoud rechts op een lichte linnen-achtige
+    pagina. Op een smal scherm klapt het menu open als een volledig
+    scherm met grote cursieve koppen. Verder: foto's als lichtjes scheef
+    opgehangen "kiekjes" die rechttrekken bij hover, een grote
+    gecentreerde quote, pil-knoppen met pijl, eigen ringetjes als bullets
+    (de kompasnaald-iconen zijn verborgen), een reveal die van links
+    binnenkomt, en een eigen logo (twee fauteuils tegenover elkaar).
+    Kleurschema's: "Bos & linnen", "Nacht & zand" en "Leisteen &
+    rozemarijn".
 
-  Alle drie zijn bewust (onderling en t.o.v. het ingetogen klassieke
+  Alle vier zijn bewust (onderling en t.o.v. het ingetogen klassieke
   thema) zo verschillend mogelijk, om aan te tonen hoe ver je met puur
-  CSS (zelfde HTML, geen maatwerk-templates) kan gaan.
+  CSS (zelfde HTML, geen maatwerk-templates) kan gaan — Huiskamer laat
+  daarbij zien dat ook de paginalay-out en het menu-gedrag zelf
+  volledig anders kunnen.
 - **Bewust geen volledige template-overrides** (andere HTML-structuur per
   thema): dat zou een eigen, beperkte templatetaal vergen om een
   zip-upload veilig te houden — een project van weken, niet dagen, en een
