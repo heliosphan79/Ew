@@ -3,5 +3,5 @@
 -- uitgevoerd is (op een verse install staat dit al goed via schema.sql).
 UPDATE themes
 SET description = 'Een vaste, lichte zijbalk met rustig menu en leesvoortgang-ring, een linnen pagina, foto''s als scheef opgehangen kiekjes, een grote gecentreerde quote, een schermvullend mobiel menu en een spiraal-logo — warm en eerlijk, als een huiskamer. Test-thema.',
-    schemes = '[{"key":"a","label":"A — Zand & koper"},{"key":"b","label":"B — Salie & linnen"},{"key":"c","label":"C — Klei & rozenhout"}]'
+    schemes = '[{"key":"a","label":"A — Crème & terracotta"},{"key":"b","label":"B — Bos & crème"},{"key":"c","label":"C — Terracotta & klei"}]'
 WHERE slug = 'huiskamer';

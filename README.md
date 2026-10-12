@@ -654,8 +654,9 @@ geïnstalleerd en kan je op elk moment activeren.
     gecentreerde quote, pil-knoppen met pijl, eigen ringetjes als bullets
     (de kompasnaald-iconen zijn verborgen), een reveal die van links
     binnenkomt, en een eigen logo (een spiraal naar binnen met koperen
-    kern, het woordmerk in kleine letters). Kleurschema's: "Zand &
-    koper", "Salie & linnen" en "Klei & rozenhout".
+    kern, het woordmerk in kleine letters). Kleurschema's: "Crème &
+    terracotta", "Bos & crème" en "Terracotta & klei" — afgeleid van de
+    kleuren in het logo-ontwerp.
 
   Alle vier zijn bewust (onderling en t.o.v. het ingetogen klassieke
   thema) zo verschillend mogelijk, om aan te tonen hoe ver je met puur
