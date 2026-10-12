@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" aria-hidden="true">
+    <!-- Twee fauteuils tegenover elkaar, met een kopje ertussen: een
+         huiskamergesprek. Gevulde vormen (geen dunne lijnen) zodat het ook
+         op 44px leesbaar blijft; lichte tint op een halfdoorzichtige donkere
+         schijf, dus bruikbaar op elke zijbalkkleur en zichtbaar op wit
+         (beheerpaneel). -->
+    <circle cx="60" cy="60" r="58" fill="rgba(0,0,0,0.3)"/>
+    <g fill="#f1ead9">
+        <!-- linker fauteuil: rugleuning, zitting, poten -->
+        <rect x="16" y="36" width="12" height="40" rx="6"/>
+        <rect x="16" y="62" width="34" height="14" rx="6"/>
+        <rect x="20" y="76" width="5" height="9" rx="2"/>
+        <rect x="42" y="76" width="5" height="9" rx="2"/>
+        <!-- rechter fauteuil, gespiegeld -->
+        <rect x="92" y="36" width="12" height="40" rx="6"/>
+        <rect x="70" y="62" width="34" height="14" rx="6"/>
+        <rect x="73" y="76" width="5" height="9" rx="2"/>
+        <rect x="95" y="76" width="5" height="9" rx="2"/>
+        <!-- kopje op een laag tafeltje -->
+        <rect x="54" y="66" width="12" height="10" rx="3"/>
+        <rect x="50" y="78" width="20" height="4" rx="2"/>
+    </g>
+</svg>

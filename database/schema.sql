@@ -153,9 +153,9 @@ INSERT IGNORE INTO themes (id, slug, name, description, logo_file, schemes, is_b
     1
 );
 
--- Drie meegeleverde demo-thema's (themes/noir-editoriaal/,
--- themes/zacht-rond/, themes/stilte/) om het thema-systeem meteen te
--- kunnen uitproberen.
+-- Vier meegeleverde demo-thema's (themes/noir-editoriaal/,
+-- themes/zacht-rond/, themes/stilte/, themes/huiskamer/) om het
+-- thema-systeem meteen te kunnen uitproberen.
 INSERT IGNORE INTO themes (slug, name, description, logo_file, schemes, is_builtin) VALUES (
     'noir-editoriaal',
     'Noir Editoriaal',
@@ -178,6 +178,14 @@ INSERT IGNORE INTO themes (slug, name, description, logo_file, schemes, is_built
     'Radicale eenvoud: geen schaduwen, nauwelijks zichtbare lijnen, dunne lettertypes en veel witruimte voor een rustig, zwevend geheel. Test-thema voor het thema-systeem.',
     'logo.svg',
     '[{"key":"a","label":"A — Mist"},{"key":"b","label":"B — Schaduw"},{"key":"c","label":"C — Water"}]',
+    0
+);
+INSERT IGNORE INTO themes (slug, name, description, logo_file, schemes, is_builtin) VALUES (
+    'huiskamer',
+    'Huiskamer',
+    'Een vaste donkere zijbalk met genummerd menu en een leesvoortgang-ring, een lichte linnen pagina, foto''s als scheef opgehangen kiekjes, een grote gecentreerde quote en een schermvullend mobiel menu — warm en eerlijk, als een huiskamer. Test-thema.',
+    'logo.svg',
+    '[{"key":"a","label":"A — Bos & linnen"},{"key":"b","label":"B — Nacht & zand"},{"key":"c","label":"C — Leisteen & rozemarijn"}]',
     0
 );
 

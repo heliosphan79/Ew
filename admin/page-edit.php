@@ -186,7 +186,7 @@ require __DIR__ . '/includes/header.php';
 
             <label for="theme_variant">Kleurschema</label>
             <select id="theme_variant" name="theme_variant">
-                <?php foreach (active_theme_scheme_labels(get_active_theme($mysqli)) as $key => $label): ?>
+                <?php foreach (active_theme_scheme_labels(get_active_theme($mysqli, true)) as $key => $label): ?>
                     <option value="<?= e($key) ?>" <?= $form['theme_variant'] === $key ? 'selected' : '' ?>><?= e($label) ?></option>
                 <?php endforeach; ?>
             </select>

@@ -6,7 +6,7 @@ require_login();
 $pages = $mysqli->query(
     'SELECT id, slug, title, theme_variant, published, is_homepage, is_privacy_page, show_in_menu, nav_order, updated_at FROM pages ORDER BY nav_order ASC, title ASC'
 )->fetch_all(MYSQLI_ASSOC);
-$themeSchemeLabels = active_theme_scheme_labels(get_active_theme($mysqli));
+$themeSchemeLabels = active_theme_scheme_labels(get_active_theme($mysqli, true));
 
 $pageTitle = "Pagina's";
 require __DIR__ . '/includes/header.php';

@@ -7,7 +7,7 @@ $themes = $mysqli->query(
     'SELECT id, slug, name, description, logo_file, schemes, is_builtin FROM themes ORDER BY is_builtin DESC, name ASC'
 )->fetch_all(MYSQLI_ASSOC);
 
-$activeThemeId = get_active_theme($mysqli)['id'];
+$activeThemeId = get_active_theme($mysqli, true)['id'];
 
 $pageTitle = "Thema's";
 require __DIR__ . '/includes/header.php';

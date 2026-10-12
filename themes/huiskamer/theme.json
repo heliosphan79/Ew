@@ -1,0 +1,9 @@
+{
+    "name": "Huiskamer",
+    "description": "Een vaste donkere zijbalk met genummerd menu en een leesvoortgang-ring, een lichte linnen pagina, foto's als scheef opgehangen kiekjes, een grote gecentreerde quote en een schermvullend mobiel menu — warm en eerlijk, als een huiskamer. Test-thema.",
+    "schemes": [
+        {"key": "a", "label": "A — Bos & linnen"},
+        {"key": "b", "label": "B — Nacht & zand"},
+        {"key": "c", "label": "C — Leisteen & rozemarijn"}
+    ]
+}
