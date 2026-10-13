@@ -69,11 +69,24 @@ require __DIR__ . '/includes/header.php';
                     <?php endif; ?>
                 </td>
                 <td><?= (int) $nl['sent_count'] ?> / <?= (int) $nl['total_recipients'] ?></td>
-                <td><?= (int) $nl['opened_count'] ?></td>
+                <td>
+                    <?php if ($nl['status'] === 'draft'): ?>
+                        <span class="field-hint">—</span>
+                    <?php else: ?>
+                        <a href="newsletter-report.php?id=<?= (int) $nl['id'] ?>" title="Bekijk wie geopend heeft">
+                            <?= (int) $nl['opened_count'] ?><?php if ((int) $nl['sent_count'] > 0): ?> <span class="field-hint">(<?= (int) round((int) $nl['opened_count'] / (int) $nl['sent_count'] * 100) ?>%)</span><?php endif; ?>
+                        </a>
+                    <?php endif; ?>
+                </td>
                 <td class="admin-table-actions">
                     <a class="icon-btn icon-btn-accent" href="newsletter-edit.php?id=<?= (int) $nl['id'] ?>" title="<?= $nl['status'] === 'draft' ? 'Bewerken' : 'Bekijken' ?>">
                         <?= admin_icon($nl['status'] === 'draft' ? 'edit' : 'eye') ?><span class="visually-hidden">Bekijken</span>
                     </a>
+                    <?php if ($nl['status'] !== 'draft'): ?>
+                    <a class="icon-btn" href="newsletter-report.php?id=<?= (int) $nl['id'] ?>" title="Rapport: wie opende en klikte">
+                        <?= admin_icon('chart') ?><span class="visually-hidden">Rapport</span>
+                    </a>
+                    <?php endif; ?>
                     <form method="post" action="newsletter-copy.php">
                         <?= csrf_field() ?>
                         <input type="hidden" name="id" value="<?= (int) $nl['id'] ?>">
