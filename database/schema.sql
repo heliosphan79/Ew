@@ -301,6 +301,11 @@ CREATE TABLE IF NOT EXISTS newsletters (
     -- functions.php) — enkel wat betrouwbaar rendert in e-mailclients.
     content    MEDIUMTEXT NOT NULL,
     status     ENUM('draft', 'sending', 'sent', 'cancelled') NOT NULL DEFAULT 'draft',
+    -- 'all' = alle actieve abonnees; 'groups' = enkel de gekozen groepen in
+    -- newsletter_target_groups (zie newsletter_recipient_ids()). Expliciete
+    -- vlag i.p.v. "geen rijen = iedereen": een later verwijderde groep mag
+    -- nooit stilletjes tot een verzending naar iedereen leiden.
+    audience   ENUM('all', 'groups') NOT NULL DEFAULT 'all',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     sent_at    DATETIME DEFAULT NULL,
@@ -335,6 +340,33 @@ CREATE TABLE IF NOT EXISTS newsletter_clicks (
     url        VARCHAR(500) NOT NULL,
     clicked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (send_id) REFERENCES newsletter_sends(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Groepen voor abonnees (zie database/migrations/028_newsletter_groups.sql
+-- voor de uitleg): een abonnee kan in meerdere groepen zitten, een
+-- nieuwsbrief gaat naar iedereen of naar de unie van gekozen groepen.
+CREATE TABLE IF NOT EXISTS newsletter_groups (
+    id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name       VARCHAR(100) NOT NULL UNIQUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS newsletter_subscriber_groups (
+    subscriber_id INT UNSIGNED NOT NULL,
+    group_id      INT UNSIGNED NOT NULL,
+    PRIMARY KEY (subscriber_id, group_id),
+    KEY idx_group (group_id),
+    FOREIGN KEY (subscriber_id) REFERENCES newsletter_subscribers(id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES newsletter_groups(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS newsletter_target_groups (
+    newsletter_id INT UNSIGNED NOT NULL,
+    group_id      INT UNSIGNED NOT NULL,
+    PRIMARY KEY (newsletter_id, group_id),
+    KEY idx_group (group_id),
+    FOREIGN KEY (newsletter_id) REFERENCES newsletters(id) ON DELETE CASCADE,
+    FOREIGN KEY (group_id) REFERENCES newsletter_groups(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- E-mailinstellingen (SMTP-server, afzender, reply-to, ontvanger voor

@@ -398,6 +398,36 @@ database van de site zelf.
   worden naar een nieuw concept met dezelfde inhoud (onderwerp voorafgegaan
   door "Kopie van"), zodat een periodieke nieuwsbrief niet elke keer van nul
   opgebouwd moet worden.
+- **Groepen en doelgroepen**: abonnees kunnen in groepen ingedeeld worden
+  ("Nieuwsbrief → Groepen beheren", `admin/newsletter-groups.php`), zodat
+  verschillende nieuwsbrieven naar verschillende doelgroepen gaan — een
+  andere versie maak je door een nieuwsbrief te dupliceren en aan te passen.
+  - Een abonnee kan in **meerdere groepen** zitten. Indelen kan per abonnee
+    (potlood-icoon bij de groepen), in bulk (meerdere abonnees aanvinken,
+    groep kiezen, "Toevoegen aan"/"Verwijderen uit groep"), bij het
+    handmatig toevoegen, of via **CSV-import**: een derde kolom met
+    groepsnamen gescheiden door `;` (bv.
+    `jan@voorbeeld.be,Jan,Counseling;Huiskamer`; onbekende groepen worden
+    aangemaakt, hoofdletters maken niet uit) en/of een keuzelijst om alle
+    geïmporteerde adressen aan één groep toe te voegen. Bestaande en
+    uitgeschreven adressen worden door de import nooit overschreven — enkel
+    hun groepen worden aangevuld. De abonneelijst is te filteren per groep
+    of op "Zonder groep".
+  - Elke nieuwsbrief kiest bij het opstellen zijn **ontvangers**: "Alle
+    abonnees" (standaard, ook voor al bestaande nieuwsbrieven) of "Alleen
+    deze groepen". Bij meerdere groepen gaat het naar de **unie**: wie in
+    meerdere gekozen groepen zit, krijgt de mail één keer. De keuze wordt
+    bij het concept bewaard; "Verstuur" gebruikt altijd de bewaarde keuze
+    (en wordt geblokkeerd zolang er een niet-bewaarde wijziging is), toont
+    naar wie en hoeveel abonnees het gaat, en vraagt dat ter bevestiging.
+    Een gekopieerde nieuwsbrief neemt de doelgroep over.
+  - **Veiligheid**: een nieuwsbrief met doelgroep "groepen" waarvan alle
+    gekozen groepen later zijn verwijderd (of zonder actieve leden) wordt
+    niet verstuurd — hij valt nooit stilletjes terug op "alle abonnees"
+    (daarom een expliciete `audience`-kolom i.p.v. "geen rijen = iedereen").
+    Abonnees zonder groep ontvangen enkel nieuwsbrieven aan "alle
+    abonnees". Afmelden blijft ongewijzigd: de afmeldlink schrijft de
+    abonnee uit voor alle nieuwsbrieven.
 - **Versturen gebeurt in batches**, niet in één keer: op gedeelde hosting
   zonder cron zou één verzoek dat honderden losse SMTP-verbindingen opzet,
   simpelweg de PHP-uitvoeringslimiet overschrijden. Een klik op "Verstuur"
