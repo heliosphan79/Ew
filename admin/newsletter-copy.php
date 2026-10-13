@@ -10,7 +10,7 @@ csrf_verify();
 
 $id = (int) ($_POST['id'] ?? 0);
 
-$stmt = $mysqli->prepare('SELECT subject, content FROM newsletters WHERE id = ? LIMIT 1');
+$stmt = $mysqli->prepare('SELECT subject, content, audience FROM newsletters WHERE id = ? LIMIT 1');
 $stmt->bind_param('i', $id);
 $stmt->execute();
 $source = $stmt->get_result()->fetch_assoc();
@@ -26,11 +26,16 @@ if (!$source) {
 // copied, and newsletter_sends/newsletter_clicks (per-send history) are
 // about the source newsletter, not relevant to a new one.
 $subject = 'Kopie van ' . $source['subject'];
-$stmt = $mysqli->prepare("INSERT INTO newsletters (subject, content, status, created_at) VALUES (?, ?, 'draft', NOW())");
-$stmt->bind_param('ss', $subject, $source['content']);
+$stmt = $mysqli->prepare("INSERT INTO newsletters (subject, content, audience, status, created_at) VALUES (?, ?, ?, 'draft', NOW())");
+$stmt->bind_param('sss', $subject, $source['content'], $source['audience']);
 $stmt->execute();
 $newId = $stmt->insert_id;
 $stmt->close();
+
+// De doelgroep gaat mee: een kopie is meestal een variant of vervolg voor
+// dezelfde (of een aanpasbare) groep. Bij het versturen toont de editor en
+// de bevestiging altijd expliciet naar wie het gaat.
+$mysqli->query('INSERT INTO newsletter_target_groups (newsletter_id, group_id) SELECT ' . (int) $newId . ', group_id FROM newsletter_target_groups WHERE newsletter_id = ' . (int) $id);
 
 set_flash('success', 'Nieuwsbrief gekopieerd als nieuw concept.');
 redirect('newsletter-edit.php?id=' . $newId);

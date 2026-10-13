@@ -12,6 +12,17 @@ $newsletters = $mysqli->query(
      ORDER BY n.created_at DESC"
 )->fetch_all(MYSQLI_ASSOC);
 
+// Doelgroep per nieuwsbrief: één query voor alle gekozen groepen i.p.v.
+// een query per rij.
+$groupNamesById = [];
+foreach (newsletter_get_groups($mysqli) as $g) {
+    $groupNamesById[(int) $g['id']] = $g['name'];
+}
+$targetsByNewsletter = [];
+foreach ($mysqli->query('SELECT newsletter_id, group_id FROM newsletter_target_groups')->fetch_all(MYSQLI_ASSOC) as $row) {
+    $targetsByNewsletter[(int) $row['newsletter_id']][] = (int) $row['group_id'];
+}
+
 $pageTitle = 'Nieuwsbrief';
 require __DIR__ . '/includes/header.php';
 ?>
@@ -23,6 +34,7 @@ require __DIR__ . '/includes/header.php';
 
 <p>
     <a href="newsletter-subscribers.php"><?= admin_icon('users') ?> Abonnees beheren</a>
+    · <a href="newsletter-groups.php">Groepen beheren</a>
 </p>
 
 <?php if (empty($newsletters)): ?>
@@ -33,6 +45,7 @@ require __DIR__ . '/includes/header.php';
         <thead>
         <tr>
             <th>Onderwerp</th>
+            <th>Ontvangers</th>
             <th>Status</th>
             <th>Verzonden / totaal</th>
             <th>Geopend</th>
@@ -43,6 +56,7 @@ require __DIR__ . '/includes/header.php';
         <?php foreach ($newsletters as $nl): ?>
             <tr>
                 <td><?= e($nl['subject']) ?></td>
+                <td><?= e(newsletter_audience_label((string) $nl['audience'], $targetsByNewsletter[(int) $nl['id']] ?? [], $groupNamesById)) ?></td>
                 <td>
                     <?php if ($nl['status'] === 'sent'): ?>
                         <span class="badge badge-ok">Verzonden</span>

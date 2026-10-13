@@ -2460,3 +2460,200 @@ function newsletter_subscribe(mysqli $mysqli, string $email, string $source, ?st
     $stmt->execute();
     $stmt->close();
 }
+
+// ---------------------------------------------------------------------
+// Nieuwsbrief-groepen: abonnees indelen zodat verschillende nieuwsbrieven
+// naar verschillende doelgroepen kunnen (admin/newsletter-groups.php).
+// Een abonnee kan in meerdere groepen zitten; een nieuwsbrief gaat naar
+// "alle actieve abonnees" (audience = 'all') of naar de unie van de
+// gekozen groepen (audience = 'groups') — zie newsletter_recipient_ids().
+// ---------------------------------------------------------------------
+
+const NEWSLETTER_GROUP_NAME_MAX = 100;
+
+// Alle groepen met het aantal leden: active_count telt enkel wie nu
+// daadwerkelijk een mail zou krijgen (status 'subscribed'), total_count
+// ook uitgeschreven leden.
+function newsletter_get_groups(mysqli $mysqli): array
+{
+    return $mysqli->query(
+        "SELECT g.id, g.name,
+            COUNT(sg.subscriber_id) AS total_count,
+            COALESCE(SUM(s.status = 'subscribed'), 0) AS active_count
+         FROM newsletter_groups g
+         LEFT JOIN newsletter_subscriber_groups sg ON sg.group_id = g.id
+         LEFT JOIN newsletter_subscribers s ON s.id = sg.subscriber_id
+         GROUP BY g.id, g.name
+         ORDER BY g.name ASC"
+    )->fetch_all(MYSQLI_ASSOC);
+}
+
+// Reduceert ruwe formulierinvoer (bv. $_POST['group_ids']) tot een lijst
+// ids van groepen die echt bestaan — een vervalst of verouderd id wordt
+// stilletjes genegeerd i.p.v. een foutmelding of een kapotte INSERT.
+function newsletter_filter_group_ids(mysqli $mysqli, mixed $raw): array
+{
+    if (!is_array($raw)) {
+        return [];
+    }
+    $ids = array_values(array_unique(array_filter(array_map('intval', $raw), fn(int $id) => $id > 0)));
+    if (empty($ids)) {
+        return [];
+    }
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $stmt = $mysqli->prepare("SELECT id FROM newsletter_groups WHERE id IN ($placeholders)");
+    $stmt->bind_param(str_repeat('i', count($ids)), ...$ids);
+    $stmt->execute();
+    $found = array_map('intval', array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'id'));
+    $stmt->close();
+    return $found;
+}
+
+// Zoekt een groep op naam (niet hoofdlettergevoelig, door de collatie van
+// de UNIQUE-kolom) en maakt ze aan als ze nog niet bestaat. null bij een
+// lege of te lange naam.
+function newsletter_find_or_create_group(mysqli $mysqli, string $name): ?int
+{
+    $name = trim(preg_replace('/\s+/u', ' ', $name) ?? '');
+    if ($name === '' || mb_strlen($name) > NEWSLETTER_GROUP_NAME_MAX) {
+        return null;
+    }
+    $stmt = $mysqli->prepare('SELECT id FROM newsletter_groups WHERE name = ?');
+    $stmt->bind_param('s', $name);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if ($row) {
+        return (int) $row['id'];
+    }
+    $stmt = $mysqli->prepare('INSERT INTO newsletter_groups (name) VALUES (?)');
+    $stmt->bind_param('s', $name);
+    $stmt->execute();
+    $id = (int) $mysqli->insert_id;
+    $stmt->close();
+    return $id;
+}
+
+function newsletter_subscriber_id_by_email(mysqli $mysqli, string $email): ?int
+{
+    $stmt = $mysqli->prepare('SELECT id FROM newsletter_subscribers WHERE email = ?');
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ? (int) $row['id'] : null;
+}
+
+// Voegt de abonnees toe aan de groepen — al bestaande koppelingen blijven
+// gewoon staan (INSERT IGNORE), dus herhaaldelijk toevoegen is veilig.
+function newsletter_add_to_groups(mysqli $mysqli, array $subscriberIds, array $groupIds): void
+{
+    $stmt = $mysqli->prepare('INSERT IGNORE INTO newsletter_subscriber_groups (subscriber_id, group_id) VALUES (?, ?)');
+    foreach ($subscriberIds as $subscriberId) {
+        foreach ($groupIds as $groupId) {
+            $sid = (int) $subscriberId;
+            $gid = (int) $groupId;
+            $stmt->bind_param('ii', $sid, $gid);
+            $stmt->execute();
+        }
+    }
+    $stmt->close();
+}
+
+function newsletter_remove_from_groups(mysqli $mysqli, array $subscriberIds, array $groupIds): void
+{
+    $stmt = $mysqli->prepare('DELETE FROM newsletter_subscriber_groups WHERE subscriber_id = ? AND group_id = ?');
+    foreach ($subscriberIds as $subscriberId) {
+        foreach ($groupIds as $groupId) {
+            $sid = (int) $subscriberId;
+            $gid = (int) $groupId;
+            $stmt->bind_param('ii', $sid, $gid);
+            $stmt->execute();
+        }
+    }
+    $stmt->close();
+}
+
+// Vervangt de volledige groepslijst van één abonnee door $groupIds.
+function newsletter_set_subscriber_groups(mysqli $mysqli, int $subscriberId, array $groupIds): void
+{
+    $stmt = $mysqli->prepare('DELETE FROM newsletter_subscriber_groups WHERE subscriber_id = ?');
+    $stmt->bind_param('i', $subscriberId);
+    $stmt->execute();
+    $stmt->close();
+    newsletter_add_to_groups($mysqli, [$subscriberId], $groupIds);
+}
+
+function newsletter_target_group_ids(mysqli $mysqli, int $newsletterId): array
+{
+    $stmt = $mysqli->prepare('SELECT group_id FROM newsletter_target_groups WHERE newsletter_id = ?');
+    $stmt->bind_param('i', $newsletterId);
+    $stmt->execute();
+    $ids = array_map('intval', array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'group_id'));
+    $stmt->close();
+    return $ids;
+}
+
+function newsletter_set_target_groups(mysqli $mysqli, int $newsletterId, array $groupIds): void
+{
+    $stmt = $mysqli->prepare('DELETE FROM newsletter_target_groups WHERE newsletter_id = ?');
+    $stmt->bind_param('i', $newsletterId);
+    $stmt->execute();
+    $stmt->close();
+    $stmt = $mysqli->prepare('INSERT IGNORE INTO newsletter_target_groups (newsletter_id, group_id) VALUES (?, ?)');
+    foreach ($groupIds as $groupId) {
+        $gid = (int) $groupId;
+        $stmt->bind_param('ii', $newsletterId, $gid);
+        $stmt->execute();
+    }
+    $stmt->close();
+}
+
+// De ids van de actieve abonnees die deze doelgroep krijgt: iedereen
+// ('all'), of de UNIE van de gekozen groepen ('groups') — wie in meerdere
+// gekozen groepen zit, komt maar één keer voor (DISTINCT). Zonder (nog
+// bestaande) groepen levert 'groups' bewust niemand op, nooit "iedereen".
+function newsletter_recipient_ids(mysqli $mysqli, string $audience, array $groupIds): array
+{
+    if ($audience !== 'groups') {
+        return array_map('intval', array_column(
+            $mysqli->query("SELECT id FROM newsletter_subscribers WHERE status = 'subscribed'")->fetch_all(MYSQLI_ASSOC),
+            'id'
+        ));
+    }
+
+    $groupIds = array_values(array_unique(array_map('intval', $groupIds)));
+    if (empty($groupIds)) {
+        return [];
+    }
+    $placeholders = implode(',', array_fill(0, count($groupIds), '?'));
+    $stmt = $mysqli->prepare(
+        "SELECT DISTINCT s.id
+         FROM newsletter_subscribers s
+         JOIN newsletter_subscriber_groups sg ON sg.subscriber_id = s.id
+         WHERE s.status = 'subscribed' AND sg.group_id IN ($placeholders)"
+    );
+    $stmt->bind_param(str_repeat('i', count($groupIds)), ...$groupIds);
+    $stmt->execute();
+    $ids = array_map('intval', array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'id'));
+    $stmt->close();
+    return $ids;
+}
+
+// Leesbare omschrijving van de doelgroep van een nieuwsbrief-rij (met
+// kolom 'audience') — "Alle abonnees" of de namen van de gekozen groepen.
+// $groupNamesById: id => naam, bv. uit newsletter_get_groups(), zodat een
+// lijst met veel nieuwsbrieven geen query per rij nodig heeft.
+function newsletter_audience_label(string $audience, array $targetGroupIds, array $groupNamesById): string
+{
+    if ($audience !== 'groups') {
+        return 'Alle abonnees';
+    }
+    $names = [];
+    foreach ($targetGroupIds as $gid) {
+        if (isset($groupNamesById[$gid])) {
+            $names[] = $groupNamesById[$gid];
+        }
+    }
+    return empty($names) ? 'Geen groep (verwijderd)' : implode(', ', $names);
+}
