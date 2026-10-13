@@ -468,6 +468,26 @@ database van de site zelf.
   (nieuwsbrief, abonnee)-combinatie, nooit aan het e-mailadres zelf.
   Zichtbaar in het nieuwsbrievenoverzicht en op de detailpagina van een
   verzonden nieuwsbrief.
+- **Rapport: wie opende en klikte** (`admin/newsletter-report.php`, via het
+  grafiek-icoon in het overzicht of "Wie opende en klikte" bij een
+  verzonden nieuwsbrief): samenvatting (verzonden, geopend, geklikt, met
+  percentages t.o.v. wie de mail effectief kreeg), een overzicht van de
+  aangeklikte links (hoeveel personen en klikken per link), en een lijst
+  per ontvanger met het tijdstip van de eerste open en het aantal klikken
+  (bij hover: welke links). Filterbaar op Iedereen / Geopend / Niet
+  geopend / Geklikt, en als CSV te downloaden (puntkomma-gescheiden, met
+  BOM voor Excel; cellen die met `=`, `+`, `-` of `@` beginnen worden
+  geneutraliseerd tegen formule-injectie). Ontvangers die later zijn
+  uitgeschreven krijgen een label; wie nooit een mail kreeg (geannuleerde
+  verzending) staat als "niet verstuurd" en telt niet als "niet geopend".
+  **Let op: open-tracking is indicatief.** Mailprogramma's die afbeeldingen
+  blokkeren geven een gemiste open; andere (zoals Apple Mail met
+  Privacybescherming) laden afbeeldingen automatisch en kunnen een open
+  tonen zonder dat de mail gelezen is. Een klik telt altijd ook als open en
+  is de betrouwbaarste maatstaf. Enkel de eerste open wordt bewaard (geen
+  aantal keren). Verwijder je een abonnee, dan verdwijnen ook zijn
+  verzendgegevens uit de rapporten. Omdat dit per persoon bijhoudt wie wat
+  opent, hoort dit vermeld te worden in het privacybeleid.
 - **Afmelden is verplicht, niet optioneel**: elke verzonden mail krijgt
   automatisch een voettekst met een one-click-afmeldlink (geen login, geen
   bevestigingsstap) — wettelijk vereist voor commerciële e-mail, dus

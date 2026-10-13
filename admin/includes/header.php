@@ -44,6 +44,7 @@
                 'newsletter-edit.php' => 'newsletters',
                 'newsletter-subscribers.php' => 'newsletters',
                 'newsletter-groups.php' => 'newsletters',
+                'newsletter-report.php' => 'newsletters',
                 'settings.php' => 'settings',
                 'settings-seo.php' => 'settings',
                 'settings-messages.php' => 'settings',

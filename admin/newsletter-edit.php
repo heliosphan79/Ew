@@ -222,7 +222,7 @@ require __DIR__ . '/includes/header.php';
                 <?php endif; ?>
             <?php else: ?>
                 <p>Verzonden op <?= e(date('d/m/Y H:i', strtotime($newsletter['sent_at']))) ?> aan <?= (int) ($sendStats['total'] ?? 0) ?> abonnees.
-                Geopend door <?= (int) ($sendStats['opened'] ?? 0) ?>.</p>
+                Geopend door <a href="newsletter-report.php?id=<?= (int) $id ?>"><?= (int) ($sendStats['opened'] ?? 0) ?> (bekijk wie)</a>.</p>
                 <?php if (!empty($newsletter['last_send_error'])): ?>
                     <p class="field-hint">
                         Let op: de mailserver meldde een fout bij (een deel van) de laatste batch —
@@ -240,6 +240,7 @@ require __DIR__ . '/includes/header.php';
         <p>
             <a href="newsletters.php" class="button-secondary">Terug naar overzicht</a>
             <a href="newsletter-preview.php?id=<?= (int) $id ?>" class="button-secondary" target="_blank" rel="noopener"><?= admin_icon('eye') ?> Voorvertoning</a>
+            <a href="newsletter-report.php?id=<?= (int) $id ?>" class="button-secondary"><?= admin_icon('chart') ?> Wie opende en klikte</a>
         </p>
 
         <form method="post" action="newsletter-test-send.php" class="page-form">
